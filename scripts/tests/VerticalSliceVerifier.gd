@@ -29,6 +29,7 @@ func _ready() -> void:
 	_check_save_roundtrip()
 	_check_equipment_loop()
 	await _check_playable_core_loop()
+	await _check_touch_controls()
 	await _check_player_animation_contract()
 	await _check_projectile_pool_limit()
 	_finish()
@@ -139,6 +140,37 @@ func _check_playable_core_loop() -> void:
 	_expect(GameState.current_scene_id == "wasteland", "playable loop restores wasteland scene after reload")
 	GameState.set_scene("village", "from_wasteland")
 	_expect(GameState.current_scene_id == "village", "playable loop can return to village state")
+	instance.queue_free()
+	await get_tree().process_frame
+
+func _check_touch_controls() -> void:
+	GameState.reset_new_run(false)
+	var instance := VILLAGE_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	var required_actions: Array[String] = [
+		"move_up",
+		"move_down",
+		"move_left",
+		"move_right",
+		"attack_melee",
+		"attack_ranged",
+		"interact",
+		"open_inventory",
+		"save_game"
+	]
+	for action_name in required_actions:
+		_expect(InputMap.has_action(action_name), "input action exists: " + action_name)
+	var move_buttons := get_tree().get_nodes_in_group("touch_move_control")
+	var action_buttons := get_tree().get_nodes_in_group("touch_action_control")
+	_expect(move_buttons.size() >= 4, "touch controls include 4 movement buttons")
+	_expect(action_buttons.size() >= 5, "touch controls include 5 action buttons")
+	var seen_actions: Dictionary = {}
+	for button in move_buttons + action_buttons:
+		if button.has_meta("input_action"):
+			seen_actions[String(button.get_meta("input_action"))] = true
+	for action_name in required_actions:
+		_expect(seen_actions.has(action_name), "touch control maps action: " + action_name)
 	instance.queue_free()
 	await get_tree().process_frame
 

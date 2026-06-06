@@ -21,6 +21,7 @@ func _process(_delta: float) -> void:
 
 func _build_hud() -> void:
 	var root := Control.new()
+	root.name = "HudRoot"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
 
@@ -53,7 +54,30 @@ func _build_hud() -> void:
 	inventory_list = VBoxContainer.new()
 	inventory_panel.add_child(inventory_list)
 
+	_add_touch_dpad(root)
+	_add_action_buttons(root)
+
+func _add_touch_dpad(root: Control) -> void:
+	var dpad := GridContainer.new()
+	dpad.name = "TouchMoveDPad"
+	dpad.columns = 3
+	dpad.position = Vector2(28, 516)
+	dpad.add_theme_constant_override("h_separation", 4)
+	dpad.add_theme_constant_override("v_separation", 4)
+	root.add_child(dpad)
+	_add_dpad_spacer(dpad)
+	_add_hold_button(dpad, "上", "move_up")
+	_add_dpad_spacer(dpad)
+	_add_hold_button(dpad, "左", "move_left")
+	_add_dpad_spacer(dpad)
+	_add_hold_button(dpad, "右", "move_right")
+	_add_dpad_spacer(dpad)
+	_add_hold_button(dpad, "下", "move_down")
+	_add_dpad_spacer(dpad)
+
+func _add_action_buttons(root: Control) -> void:
 	var touch_box := HBoxContainer.new()
+	touch_box.name = "TouchActionButtons"
 	touch_box.position = Vector2(840, 610)
 	touch_box.add_theme_constant_override("separation", 8)
 	root.add_child(touch_box)
@@ -63,16 +87,41 @@ func _build_hud() -> void:
 	_add_touch_button(touch_box, "背包", "open_inventory")
 	_add_touch_button(touch_box, "存檔", "save_game")
 
+func _add_dpad_spacer(parent: Control) -> void:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(58, 52)
+	parent.add_child(spacer)
+
+func _add_hold_button(parent: Control, label: String, action: String) -> void:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size = Vector2(58, 52)
+	button.add_to_group("touch_control")
+	button.add_to_group("touch_move_control")
+	button.set_meta("input_action", action)
+	button.button_down.connect(_hold_action.bind(action))
+	button.button_up.connect(_release_action.bind(action))
+	parent.add_child(button)
+
 func _add_touch_button(parent: Control, label: String, action: String) -> void:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(72, 48)
+	button.add_to_group("touch_control")
+	button.add_to_group("touch_action_control")
+	button.set_meta("input_action", action)
 	button.pressed.connect(_pulse_action.bind(action))
 	parent.add_child(button)
 
 func _pulse_action(action: String) -> void:
 	Input.action_press(action)
 	await get_tree().create_timer(0.08).timeout
+	Input.action_release(action)
+
+func _hold_action(action: String) -> void:
+	Input.action_press(action)
+
+func _release_action(action: String) -> void:
 	Input.action_release(action)
 
 func _refresh() -> void:
