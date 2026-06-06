@@ -28,6 +28,7 @@ func _ready() -> void:
 	})
 	_check_save_roundtrip()
 	_check_equipment_loop()
+	await _check_playable_core_loop()
 	await _check_player_animation_contract()
 	await _check_projectile_pool_limit()
 	_finish()
@@ -94,6 +95,52 @@ func _check_equipment_loop() -> void:
 	GameState.add_item("spark_cutter", 1)
 	_expect(GameState.equip_item("spark_cutter"), "crafted melee weapon can be equipped")
 	_expect(GameState.get_stat_bonus("attack") >= 15, "equipment stat bonus updates attack")
+
+func _check_playable_core_loop() -> void:
+	GameState.reset_new_run(false)
+	GameState.current_scene_id = "wasteland"
+	var instance := WASTELAND_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var players := get_tree().get_nodes_in_group("player")
+	var enemies := get_tree().get_nodes_in_group("enemy")
+	var pickups_before := get_tree().get_nodes_in_group("pickup").size()
+	_expect(not players.is_empty(), "playable loop has player")
+	_expect(not enemies.is_empty(), "playable loop has enemy")
+	if players.is_empty() or enemies.is_empty():
+		instance.queue_free()
+		await get_tree().process_frame
+		return
+	var player := players[0]
+	var enemy := enemies[0]
+	player.global_position = Vector2(640, 640)
+	enemy.global_position = player.global_position + Vector2(32, 0)
+	enemy.hp = 1
+	player.last_direction = Vector2.RIGHT
+	var defeated_before := GameState.defeated_enemies
+	player._melee_attack()
+	await get_tree().create_timer(0.12).timeout
+	_expect(GameState.defeated_enemies == defeated_before + 1, "playable loop melee defeats enemy")
+	_expect(get_tree().get_nodes_in_group("pickup").size() >= pickups_before, "playable loop keeps or creates pickup resources")
+	var ammo_before := GameState.ammo
+	player.ranged_timer = 0.0
+	player._ranged_attack()
+	await get_tree().process_frame
+	_expect(GameState.ammo == ammo_before - 1, "playable loop ranged attack consumes ammo")
+	var pools := get_tree().get_nodes_in_group("projectile_pool")
+	if not pools.is_empty():
+		_expect(int(pools[0].active_count) >= 1, "playable loop ranged attack spawns projectile")
+	GameState.player_position = player.global_position
+	var saved := SaveManager.save_game()
+	GameState.current_scene_id = "village"
+	var loaded := _load_save_without_scene_change()
+	_expect(saved and loaded, "playable loop can save and reload after combat")
+	_expect(GameState.current_scene_id == "wasteland", "playable loop restores wasteland scene after reload")
+	GameState.set_scene("village", "from_wasteland")
+	_expect(GameState.current_scene_id == "village", "playable loop can return to village state")
+	instance.queue_free()
+	await get_tree().process_frame
 
 func _check_player_animation_contract() -> void:
 	GameState.reset_new_run(false)
