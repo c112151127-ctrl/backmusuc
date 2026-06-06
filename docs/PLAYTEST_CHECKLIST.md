@@ -8,10 +8,17 @@
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
 ```
 
+若需要重新產生目前的像素 PNG 素材，先執行：
+
+```powershell
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
+```
+
 通過條件：
 
 - 裝備、資源、敵人、事件、野外地圖參數能載入。
 - 配方與公會委託 JSON 能載入，並能完成鍛造、合成、交易、改裝、拆解流程。
+- 已烘焙 PNG 素材存在：玩家 5 動作 x 8 方向 x 3 frame、6 種敵人、資源 icon、村莊/廢土 tileset。
 - 村莊至少有 7 個互動點與玩家。
 - 野外至少有 30 個敵人、42 個資源/掉落、5 個互動點與玩家。
 - 公會至少有 3 個互動點與玩家。
@@ -22,6 +29,7 @@
 - Android 觸控 UI 有左下方向 D-pad 與右下動作按鈕，並對應正式 InputMap action。
 - `export_presets.cfg` 能被 Godot 載入，且包含 Windows Desktop 與 Android preset。
 - 玩家有 `idle/move/melee/shoot/swap_tool` 五種動作，每種 8 方向，每個方向至少 3 frame。
+- 玩家動畫優先使用 `assets/sprites/player/recycler_player_multiaction_8dir.png` 的 baked atlas，PNG 缺失時才 fallback 到執行期生成。
 - 野外子彈池會在 200 顆投射物達上限後拒絕繼續生成。
 
 Godot 4.6 的 `--script` 模式不會提供專案 autoload 的全域名稱，因此本專案驗證以 `--scene` 載入驗證場景與手動試玩為主。

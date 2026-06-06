@@ -11,6 +11,7 @@ func _ready() -> void:
 	print("[VERIFY] Waste Recycler vertical slice verification started")
 	DataRegistry.load_all()
 	_check_data_registry()
+	_check_baked_assets()
 	_check_export_presets()
 	await _check_scene("village", VILLAGE_SCENE, {
 		"interactable": 7,
@@ -45,6 +46,12 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
+
+func _check_baked_assets() -> void:
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(480, 320), "baked player atlas exists at 5 actions x 8 directions x 3 frames")
+	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(216, 34), "baked enemy atlas has 6 enemy types")
+	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(96, 24), "baked item icon atlas has 4 resource icons")
+	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
 
 func _check_export_presets() -> void:
 	var config := ConfigFile.new()
@@ -233,6 +240,8 @@ func _check_player_animation_contract() -> void:
 					_expect(frame_set.has_animation(animation_name), "player animation exists: " + animation_name)
 					if frame_set.has_animation(animation_name):
 						_expect(frame_set.get_frame_count(animation_name) >= 3, "player animation has frames: " + animation_name)
+			var first_frame := frame_set.get_frame_texture("idle_0", 0)
+			_expect(first_frame is AtlasTexture, "player animation frames use baked PNG atlas when available")
 	instance.queue_free()
 	await get_tree().process_frame
 
@@ -261,6 +270,15 @@ func _expect(condition: bool, label: String) -> void:
 	else:
 		failures.append(label)
 		push_error("[FAIL] " + label)
+
+func _expect_png_size(path: String, expected_size: Vector2i, label: String) -> void:
+	_expect(FileAccess.file_exists(path), label + " file exists")
+	if not FileAccess.file_exists(path):
+		return
+	var image := Image.load_from_file(path)
+	_expect(image != null, label + " loads as Image")
+	if image != null:
+		_expect(image.get_size() == expected_size, "%s size is %s" % [label, expected_size])
 
 func _finish() -> void:
 	if failures.is_empty():

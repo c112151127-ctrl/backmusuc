@@ -3,6 +3,7 @@ class_name WastelandEnemy
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const PICKUP_SCRIPT := preload("res://scripts/components/Pickup.gd")
+const ENEMY_ATLAS_PATH := "res://assets/sprites/enemies/polluted_enemy_six_types.png"
 
 var enemy_id := "scrap_biter"
 var enemy_type := "melee"
@@ -30,9 +31,33 @@ func _ready() -> void:
 	collision.shape = shape
 	add_child(collision)
 	var sprite := Sprite2D.new()
-	sprite.texture = PIXEL.new().enemy_texture(enemy_type)
+	sprite.texture = _enemy_texture(enemy_type)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(sprite)
+
+func _enemy_texture(type_id: String) -> Texture2D:
+	var atlas: Texture2D = _load_atlas_texture(ENEMY_ATLAS_PATH)
+	if atlas == null:
+		return PIXEL.new().enemy_texture(type_id)
+	var index := PixelArtFactory.ENEMY_TYPES.find(type_id)
+	if index < 0:
+		index = 0
+	var frame_size := PixelArtFactory.ENEMY_FRAME_SIZE
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = Rect2(index * frame_size.x, 0, frame_size.x, frame_size.y)
+	return texture
+
+func _load_atlas_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var loaded: Texture2D = load(path) as Texture2D
+		if loaded != null:
+			return loaded
+	if FileAccess.file_exists(path):
+		var image: Image = Image.load_from_file(path)
+		if image != null:
+			return ImageTexture.create_from_image(image)
+	return null
 
 func _physics_process(delta: float) -> void:
 	if target == null or not is_instance_valid(target):

@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/components/Projectile.gd")
+const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
 
 @export var move_speed: float = 180.0
 
@@ -106,6 +107,7 @@ func _build_sprite_frames() -> void:
 		"shoot": 2,
 		"swap_tool": 3
 	}
+	var atlas: Texture2D = _load_atlas_texture(PLAYER_ATLAS_PATH)
 	for action_name in actions.keys():
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
@@ -113,8 +115,34 @@ func _build_sprite_frames() -> void:
 			frames.set_animation_speed(animation_name, 6.0 if action_name in ["idle", "move"] else 10.0)
 			frames.set_animation_loop(animation_name, action_name in ["idle", "move"])
 			for frame_index in range(3):
-				frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, int(actions[action_name]), frame_index))
+				if atlas != null:
+					frames.add_frame(animation_name, _atlas_frame(atlas, int(actions[action_name]), direction_index, frame_index))
+				else:
+					frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, int(actions[action_name]), frame_index))
 	sprite.sprite_frames = frames
+
+func _atlas_frame(atlas: Texture2D, action_index: int, direction_index: int, frame_index: int) -> AtlasTexture:
+	var frame_size := PixelArtFactory.PLAYER_FRAME_SIZE
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = Rect2(
+		(action_index * 3 + frame_index) * frame_size.x,
+		direction_index * frame_size.y,
+		frame_size.x,
+		frame_size.y
+	)
+	return texture
+
+func _load_atlas_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var loaded: Texture2D = load(path) as Texture2D
+		if loaded != null:
+			return loaded
+	if FileAccess.file_exists(path):
+		var image: Image = Image.load_from_file(path)
+		if image != null:
+			return ImageTexture.create_from_image(image)
+	return null
 
 func _update_animation() -> void:
 	var direction_index := _direction_index()
