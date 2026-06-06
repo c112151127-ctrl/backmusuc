@@ -4,7 +4,7 @@ class_name PixelArtFactory
 const PLAYER_FRAME_SIZE := Vector2i(32, 40)
 const ENEMY_FRAME_SIZE := Vector2i(36, 34)
 const ITEM_FRAME_SIZE := Vector2i(24, 24)
-const PLAYER_ACTIONS := ["idle", "move", "melee", "shoot", "swap_tool"]
+const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
 const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
 
@@ -126,14 +126,7 @@ func _draw_player_arms(image: Image, direction_index: int, action_index: int, fr
 	for y in range(15, 28):
 		image.set_pixel(left_arm_x, y, palette[3])
 		image.set_pixel(right_arm_x, y, palette[3])
-	if action_index == 1:
-		var raw_blade_x: int = 5 + frame_index * 5 if dir_side < 0 else 26 - frame_index * 5
-		var blade_x: int = clamp(raw_blade_x, 0, PLAYER_FRAME_SIZE.x - 1)
-		for y in range(10, 31):
-			image.set_pixel(blade_x, y, palette[4])
-			if blade_x + dir_side >= 0 and blade_x + dir_side < PLAYER_FRAME_SIZE.x:
-				image.set_pixel(blade_x + dir_side, y, Color8(238, 241, 215))
-	elif action_index == 2:
+	if action_index == 2:
 		var muzzle_y: int = clamp(18 + frame_index, 0, PLAYER_FRAME_SIZE.y - 1)
 		var start_x: int = 22 if dir_side > 0 else 2
 		for x in range(start_x, start_x + 9):
@@ -141,6 +134,27 @@ func _draw_player_arms(image: Image, direction_index: int, action_index: int, fr
 			var px: int = clamp(raw_px, 0, PLAYER_FRAME_SIZE.x - 1)
 			image.set_pixel(px, muzzle_y, Color8(58, 210, 226))
 	elif action_index == 3:
+		var sheath_x: int = clamp(10 if dir_side > 0 else 21, 0, PLAYER_FRAME_SIZE.x - 1)
+		for y in range(20 - frame_index, 34):
+			image.set_pixel(sheath_x, y, palette[4].darkened(0.25))
+		var hand_x: int = clamp(15 + dir_side * (2 + frame_index), 0, PLAYER_FRAME_SIZE.x - 1)
+		for y in range(16, 24):
+			image.set_pixel(hand_x, y, palette[3].lightened(0.15))
+	elif action_index == 4:
+		var slash_y: int = clamp(12 + frame_index * 5, 0, PLAYER_FRAME_SIZE.y - 1)
+		for i in range(16):
+			var px: int = clamp((6 + i) if dir_side > 0 else (25 - i), 0, PLAYER_FRAME_SIZE.x - 1)
+			var py: int = clamp(slash_y + int(sin(float(i) * 0.55) * 4.0), 0, PLAYER_FRAME_SIZE.y - 1)
+			image.set_pixel(px, py, Color8(238, 241, 215))
+			if py + 1 < PLAYER_FRAME_SIZE.y:
+				image.set_pixel(px, py + 1, palette[4])
+	elif action_index == 5:
 		for y in range(18, 30):
 			var tool_x: int = clamp(15 + frame_index - 1, 0, PLAYER_FRAME_SIZE.x - 1)
 			image.set_pixel(tool_x, y, Color8(237, 145, 68))
+	elif action_index == 6:
+		var reach_x: int = clamp(16 + dir_side * (3 + frame_index), 0, PLAYER_FRAME_SIZE.x - 1)
+		for y in range(14, 26):
+			image.set_pixel(reach_x, y, Color8(76, 221, 148))
+			if reach_x - dir_side >= 0 and reach_x - dir_side < PLAYER_FRAME_SIZE.x:
+				image.set_pixel(reach_x - dir_side, y, palette[3])

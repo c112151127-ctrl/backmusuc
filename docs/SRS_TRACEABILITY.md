@@ -19,12 +19,13 @@
 | 敵人攻擊模式 | `data/enemies/enemies.json` 定義 6 種 `attack_pattern`；`Enemy.gd` 實作追擊、短衝、遠程污染彈、重型大範圍近戰、飛行繞行與混合型行為。 |
 | 敵人上限 30、子彈上限 200 | `Wasteland.gd` 生成 30 敵人；`ProjectilePool.gd` 依 `data/maps/wasteland_params.json` 執行 200 子彈硬上限。 |
 | 像素偽 3D / Y-Sort | 主要場景與玩家節點開啟 `y_sort_enabled`，素材採 32px 像素風。 |
-| 多角度 / 多動作玩家素材 | `Player.gd` 以 `AnimatedSprite2D` 建立 `idle/move/melee/shoot/swap_tool` x 8 方向 x 3 frame；優先讀取 `assets/sprites/player/recycler_player_multiaction_8dir.png` baked atlas，並保留執行期 fallback。 |
+| 多角度 / 多動作玩家素材 | `Player.gd` 以 `AnimatedSprite2D` 建立 `idle/walk/shoot/draw_sword/slash/swap_tool/interact` x 8 方向 x 3 frame；優先讀取 `assets/sprites/player/recycler_player_multiaction_8dir.png` baked atlas，並保留執行期 fallback。 |
+| 玩家動作狀態 | `Player.gd` 狀態機可進入 `IDLE`、`WALK`、`SHOOT`、`DRAW_SWORD`、`SLASH`、`SWAP_TOOL`、`INTERACT`、`HIT`、`DEAD`；目前自動驗證會檢查七種主要玩家動作動畫皆具備 8 方向與 3 frame。 |
 | 像素素材生成 | `scenes/tests/PixelAssetBaker.tscn` 會輸出玩家 atlas、6 種敵人 atlas、物品 icon atlas 與 tileset PNG。 |
 | 可玩性驗證 | `scenes/tests/ValidationRunner.tscn` 自動驗證資料、場景、存檔、配方、任務、公會交付、觸控控制、近戰擊殺、遠程射擊、戰鬥後存讀檔與回村狀態；`scenes/tests/AutomatedPlaytestRunner.tscn` 用 Input action 驅動移動、背包、近戰、射擊並輸出 `docs/automated_playtest_report.json`。 |
 
 ## 尚待下一階段精修
 
-- 正式美術圖匯入後的 frame 切分與動畫樹精修。
+- 正式美術圖匯入後的 frame 切分、動畫樹精修、受擊與死亡動畫補強。
 - Android export template / SDK 實機測試。
 - 更完整 NPC 對話、更多任務分支與平衡調整。

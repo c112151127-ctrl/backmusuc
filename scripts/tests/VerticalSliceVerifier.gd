@@ -83,7 +83,7 @@ func _check_enemy_behavior_contract() -> void:
 		enemy.free()
 
 func _check_baked_assets() -> void:
-	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(480, 320), "baked player atlas exists at 5 actions x 8 directions x 3 frames")
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(672, 320), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(216, 34), "baked enemy atlas has 6 enemy types")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(96, 24), "baked item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
@@ -348,7 +348,7 @@ func _check_player_animation_contract() -> void:
 		_expect(animated_sprite is AnimatedSprite2D, "player uses AnimatedSprite2D")
 		if animated_sprite is AnimatedSprite2D:
 			var frame_set: SpriteFrames = animated_sprite.sprite_frames
-			var actions: Array[String] = ["idle", "move", "melee", "shoot", "swap_tool"]
+			var actions: Array[String] = ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
 			for action_name in actions:
 				for direction_index in range(8):
 					var animation_name := "%s_%d" % [action_name, direction_index]
