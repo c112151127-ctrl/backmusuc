@@ -3,6 +3,7 @@
 | SRS / 設計要求 | 目前證據 |
 | --- | --- |
 | Godot 4.x 單機 2D Roguelike | `project.godot` 使用 Godot 4.6，主場景進入村莊、野外與公會流程。 |
+| Windows / Android 匯出規劃 | `export_presets.cfg` 已提供 Windows Desktop 與 Android preset；`docs/EXPORT_READINESS.md` 記錄目前本機缺少的 export templates 與 Android 工具鏈。 |
 | PC WASD + 滑鼠操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠、近戰、遠程、互動、背包、存檔與讀檔。 |
 | Android 觸控 UI 基礎 | `scenes/ui/HUD.gd` 提供左下方向 D-pad，以及右下近戰、射擊、互動、背包、存檔按鈕。 |
 | 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment`、`HUD.gd` 背包裝備。 |

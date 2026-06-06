@@ -11,6 +11,7 @@ func _ready() -> void:
 	print("[VERIFY] Waste Recycler vertical slice verification started")
 	DataRegistry.load_all()
 	_check_data_registry()
+	_check_export_presets()
 	await _check_scene("village", VILLAGE_SCENE, {
 		"interactable": 7,
 		"player": 1
@@ -41,6 +42,17 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.events.size() >= 4, "event data has random event pool")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
+
+func _check_export_presets() -> void:
+	var config := ConfigFile.new()
+	var loaded := config.load("res://export_presets.cfg")
+	_expect(loaded == OK, "export_presets.cfg loads")
+	if loaded != OK:
+		return
+	_expect(String(config.get_value("preset.0", "name", "")) == "Windows Desktop", "Windows export preset exists")
+	_expect(String(config.get_value("preset.0", "platform", "")) == "Windows Desktop", "Windows export preset platform is valid")
+	_expect(String(config.get_value("preset.1", "name", "")) == "Android", "Android export preset exists")
+	_expect(String(config.get_value("preset.1", "platform", "")) == "Android", "Android export preset platform is valid")
 
 func _check_scene(scene_id: String, packed: PackedScene, group_minimums: Dictionary) -> void:
 	GameState.reset_new_run(false)

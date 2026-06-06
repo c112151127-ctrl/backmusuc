@@ -18,6 +18,7 @@
 - 裝備、鍛造、彈藥消耗循環可運作。
 - 核心循環可自動驗證：野外生成玩家/敵人，近戰擊殺敵人，遠程攻擊生成投射物並消耗彈藥，戰鬥後可存讀檔並回村。
 - Android 觸控 UI 有左下方向 D-pad 與右下動作按鈕，並對應正式 InputMap action。
+- `export_presets.cfg` 能被 Godot 載入，且包含 Windows Desktop 與 Android preset。
 - 玩家有 `idle/move/melee/shoot/swap_tool` 五種動作，每種 8 方向，每個方向至少 3 frame。
 - 野外子彈池會在 200 顆投射物達上限後拒絕繼續生成。
 
