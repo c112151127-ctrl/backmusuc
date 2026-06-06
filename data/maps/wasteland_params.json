@@ -1,0 +1,10 @@
+{
+  "width_tiles": 100,
+  "height_tiles": 80,
+  "tile_size": 32,
+  "enemy_limit": 30,
+  "projectile_limit": 200,
+  "resource_nodes": 42,
+  "event_nodes": 10,
+  "spawn_radius": 900
+}

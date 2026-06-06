@@ -1,0 +1,52 @@
+{
+  "equipment": {
+    "rust_blade": {
+      "name": "鏽蝕回收刀",
+      "slot": "weapon",
+      "attack_mode": "melee",
+      "cooldown": 0.32,
+      "stats": { "attack": 8, "defense": 0, "speed": 0 }
+    },
+    "pipe_rifle": {
+      "name": "管線釘槍",
+      "slot": "ranged",
+      "attack_mode": "ranged",
+      "cooldown": 0.22,
+      "stats": { "attack": 6, "defense": 0, "speed": 0 }
+    },
+    "patched_armor": {
+      "name": "拼補裝甲",
+      "slot": "armor",
+      "attack_mode": "passive",
+      "cooldown": 0.0,
+      "stats": { "attack": 0, "defense": 3, "speed": -4 }
+    },
+    "recycler_glove": {
+      "name": "回收商手套",
+      "slot": "tool",
+      "attack_mode": "tool",
+      "cooldown": 0.0,
+      "stats": { "attack": 1, "defense": 0, "speed": 8 }
+    },
+    "spark_cutter": {
+      "name": "火花切割器",
+      "slot": "weapon",
+      "attack_mode": "melee",
+      "cooldown": 0.42,
+      "stats": { "attack": 14, "defense": 0, "speed": -2 }
+    },
+    "coil_launcher": {
+      "name": "線圈發射器",
+      "slot": "ranged",
+      "attack_mode": "ranged",
+      "cooldown": 0.55,
+      "stats": { "attack": 18, "defense": 0, "speed": -6 }
+    }
+  },
+  "resources": {
+    "scrap": { "name": "廢鐵", "stack": 999 },
+    "ammo": { "name": "彈藥", "stack": 200 },
+    "mutant_core": { "name": "異變核心", "stack": 99 },
+    "bio_crystal": { "name": "生化晶核", "stack": 99 }
+  }
+}

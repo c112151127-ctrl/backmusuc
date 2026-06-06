@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://byg6p2c621y0n"]
+
+[ext_resource type="Script" uid="uid://bslifvbp4egcc" path="res://scenes/player/Player.gd" id="1_dovo2"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lvxji"]
+radius = 11.0
+height = 30.0
+
+[node name="Player" type="CharacterBody2D" unique_id=1306666244]
+y_sort_enabled = true
+script = ExtResource("1_dovo2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1456498863]
+shape = SubResource("CapsuleShape2D_lvxji")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=767709038]
+position = Vector2(0, -14)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -16)
+zoom = Vector2(2, 2)
+enabled = true

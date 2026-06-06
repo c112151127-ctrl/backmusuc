@@ -1,0 +1,52 @@
+{
+  "enemies": {
+    "scrap_biter": {
+      "name": "腐爛掠食者",
+      "type": "melee",
+      "hp": 28,
+      "speed": 82,
+      "damage": 9,
+      "drop_table": { "scrap": 3, "ammo": 1 }
+    },
+    "toxic_runner": {
+      "name": "毒脊爬行獸",
+      "type": "fast",
+      "hp": 18,
+      "speed": 128,
+      "damage": 7,
+      "drop_table": { "scrap": 2, "ammo": 2 }
+    },
+    "spore_gunner": {
+      "name": "孢囊爆裂者",
+      "type": "ranged",
+      "hp": 22,
+      "speed": 62,
+      "damage": 6,
+      "drop_table": { "ammo": 4, "bio_crystal": 1 }
+    },
+    "rust_brute": {
+      "name": "巨噬腐肉獸",
+      "type": "heavy",
+      "hp": 72,
+      "speed": 46,
+      "damage": 16,
+      "drop_table": { "scrap": 8, "mutant_core": 1 }
+    },
+    "rot_wing": {
+      "name": "腐化飛行體",
+      "type": "flying",
+      "hp": 20,
+      "speed": 112,
+      "damage": 8,
+      "drop_table": { "scrap": 2, "bio_crystal": 1 }
+    },
+    "mech_husk": {
+      "name": "汙染機械體",
+      "type": "hybrid",
+      "hp": 46,
+      "speed": 72,
+      "damage": 12,
+      "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 }
+    }
+  }
+}

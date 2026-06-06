@@ -1,0 +1,8 @@
+{
+  "events": [
+    { "id": "merchant", "name": "游牧商人", "reward": { "ammo": 5 } },
+    { "id": "robot", "name": "故障機器人", "reward": { "scrap": 8 } },
+    { "id": "survivor", "name": "殘存人類", "reward": { "mutant_core": 1 } },
+    { "id": "toxic_pool", "name": "毒池樣本", "reward": { "bio_crystal": 1 } }
+  ]
+}
