@@ -55,6 +55,7 @@ func _build_hud() -> void:
 	add_child(notice_timer)
 
 	inventory_panel = PanelContainer.new()
+	inventory_panel.name = "InventoryPanel"
 	inventory_panel.position = Vector2(16, 156)
 	inventory_panel.custom_minimum_size = Vector2(420, 470)
 	inventory_panel.visible = false

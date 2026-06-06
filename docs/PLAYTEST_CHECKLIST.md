@@ -8,6 +8,14 @@
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
 ```
 
+更接近實際試玩的自動化流程：
+
+```powershell
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
+```
+
+通過後會輸出 `docs/automated_playtest_report.json`，記錄村莊移動/背包、合成、公會委託、野外近戰/射擊、30 敵人壓力生成、投射物與戰鬥後存讀檔結果。
+
 若需要重新產生目前的像素 PNG 素材，先執行：
 
 ```powershell
@@ -26,6 +34,7 @@
 - 裝備、鍛造、彈藥消耗循環可運作。
 - 公會可接取委託，野外擊殺與收集會推進任務，回公會可交付領獎。
 - 核心循環可自動驗證：野外生成玩家/敵人，近戰擊殺敵人，遠程攻擊生成投射物並消耗彈藥，戰鬥後可存讀檔並回村。
+- 自動化實戰試玩可用 Input action 驅動玩家移動、開背包、近戰與射擊，並產生 JSON 報告。
 - Android 觸控 UI 有左下方向 D-pad 與右下動作按鈕，並對應正式 InputMap action。
 - `export_presets.cfg` 能被 Godot 載入，且包含 Windows Desktop 與 Android preset。
 - 玩家有 `idle/move/melee/shoot/swap_tool` 五種動作，每種 8 方向，每個方向至少 3 frame。
