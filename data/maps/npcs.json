@@ -1,0 +1,70 @@
+{
+  "npcs": [
+    {
+      "id": "forge_master",
+      "scene": "village",
+      "name": "鍛造老陳",
+      "role": "鍛造師",
+      "line": "廢鐵別急著賣，八塊就能壓成一包彈藥。近戰清怪，遠程保命，兩邊都要準備。",
+      "repeat_line": "先補彈，再出村。廢土不會等你慢慢翻背包。",
+      "reward": { "ammo": 3 },
+      "position": { "x": 520, "y": 330 },
+      "color": "#8f5f34"
+    },
+    {
+      "id": "scrap_merchant",
+      "scene": "village",
+      "name": "游牧商人阿洛",
+      "role": "商人",
+      "line": "路線越深，廢料越好。看到訊號塔就代表附近常有事件點，別只盯著敵人。",
+      "repeat_line": "補給要算成本，彈藥買得到，核心買不到。",
+      "reward": { "scrap": 6 },
+      "position": { "x": 1020, "y": 330 },
+      "color": "#b18a46"
+    },
+    {
+      "id": "repair_robot",
+      "scene": "village",
+      "name": "維修機 R-17",
+      "role": "機器人",
+      "line": "提示：Q 可循環快捷欄，1 到 4 可直接選取裝備。切換錯誤會降低存活率。",
+      "repeat_line": "快捷欄同步正常。建議戰前檢查近戰、遠程、工具、彈藥。",
+      "reward": { "bio_crystal": 1 },
+      "position": { "x": 760, "y": 610 },
+      "color": "#47a4b5"
+    },
+    {
+      "id": "wasteland_survivor",
+      "scene": "village",
+      "name": "倖存者小隊長",
+      "role": "倖存者",
+      "line": "污染體會被聲響吸引。重型慢但打得遠，遠程型會拉開距離，別站著對射。",
+      "repeat_line": "回村不是逃跑，是把資源轉成下一趟的勝率。",
+      "reward": { "mutant_core": 1 },
+      "position": { "x": 1110, "y": 500 },
+      "color": "#6f8f62"
+    },
+    {
+      "id": "guild_clerk",
+      "scene": "guild",
+      "name": "公會櫃台妮亞",
+      "role": "任務櫃台",
+      "line": "委託不是單純殺怪，公會會同時檢查擊倒紀錄和帶回來的資源。",
+      "repeat_line": "接任務、進廢土、回來交付。漏掉任何一步都沒有獎勵。",
+      "reward": { "ammo": 4 },
+      "position": { "x": 505, "y": 330 },
+      "color": "#9b78b8"
+    },
+    {
+      "id": "route_scout",
+      "scene": "guild",
+      "name": "路線偵查員",
+      "role": "偵查員",
+      "line": "同一個 seed 會重現同一批地標、資源、敵人位置。記住路線，下次就能跑得更快。",
+      "repeat_line": "訊號塔和殘骸附近常有好東西，也常有壞東西。",
+      "reward": { "scrap": 8 },
+      "position": { "x": 820, "y": 540 },
+      "color": "#78906f"
+    }
+  ]
+}

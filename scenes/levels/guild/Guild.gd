@@ -5,6 +5,7 @@ const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
+const DIALOGUE_NPC_SCRIPT := preload("res://scripts/components/DialogueNpc.gd")
 const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
 func _ready() -> void:
@@ -17,6 +18,7 @@ func _ready() -> void:
 	_add_counter("reward", "交付櫃台：領取委託獎勵", Vector2(680, 270), Color8(75, 96, 122))
 	_add_counter("to_wasteland", "公會出口：前往廢土", Vector2(910, 430), Color8(92, 88, 56))
 	_add_counter("to_village", "返回村莊廣場", Vector2(600, 560), Color8(64, 110, 70))
+	_spawn_npcs()
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
 	player.global_position = Vector2(600, 430)
@@ -47,6 +49,12 @@ func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void
 	interactable.radius = 70
 	interactable.interacted.connect(_on_interacted)
 	add_child(interactable)
+
+func _spawn_npcs() -> void:
+	for npc_data in DataRegistry.npcs_for_scene("guild"):
+		var npc: Area2D = DIALOGUE_NPC_SCRIPT.new()
+		npc.setup(npc_data)
+		add_child(npc)
 
 func _on_interacted(id: String) -> void:
 	match id:

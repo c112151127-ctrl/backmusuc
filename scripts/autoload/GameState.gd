@@ -22,6 +22,7 @@ var crystals := 0
 var player_position := Vector2.ZERO
 var defeated_enemies := 0
 var discovered_events: Array[String] = []
+var talked_npcs: Array[String] = []
 var active_quest_id := ""
 var completed_quests: Array[String] = []
 var quest_progress: Dictionary = {}
@@ -52,6 +53,7 @@ func reset_new_run(emit_changes := true) -> void:
 	crystals = 0
 	defeated_enemies = 0
 	discovered_events.clear()
+	talked_npcs.clear()
 	active_quest_id = ""
 	completed_quests.clear()
 	quest_progress.clear()
@@ -277,6 +279,23 @@ func active_quest_summary() -> String:
 func notify(message: String) -> void:
 	notification_requested.emit(message)
 
+func talk_to_npc(npc_id: String) -> bool:
+	var npc := DataRegistry.get_npc(npc_id)
+	if npc.is_empty():
+		notify("找不到 NPC: %s" % npc_id)
+		return false
+	var first_time := not talked_npcs.has(npc_id)
+	var message := String(npc.get("line", "")) if first_time else String(npc.get("repeat_line", npc.get("line", "")))
+	if first_time:
+		talked_npcs.append(npc_id)
+		var reward: Dictionary = npc.get("reward", {})
+		for item_id in reward.keys():
+			add_item(String(item_id), int(reward[item_id]))
+	notify("%s：%s" % [String(npc.get("name", npc_id)), message])
+	inventory_changed.emit()
+	stats_changed.emit()
+	return true
+
 func get_save_data() -> Dictionary:
 	return {
 		"version": 1,
@@ -294,6 +313,7 @@ func get_save_data() -> Dictionary:
 		"level": level,
 		"defeated_enemies": defeated_enemies,
 		"discovered_events": discovered_events,
+		"talked_npcs": talked_npcs,
 		"active_quest_id": active_quest_id,
 		"completed_quests": completed_quests,
 		"quest_progress": quest_progress,
@@ -316,6 +336,7 @@ func load_save_data(data: Dictionary) -> bool:
 	level = int(data.get("level", 1))
 	defeated_enemies = int(data.get("defeated_enemies", 0))
 	discovered_events.assign(data.get("discovered_events", []))
+	talked_npcs.assign(data.get("talked_npcs", []))
 	active_quest_id = String(data.get("active_quest_id", ""))
 	completed_quests.assign(data.get("completed_quests", []))
 	quest_progress = data.get("quest_progress", {})

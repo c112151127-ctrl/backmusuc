@@ -5,6 +5,7 @@ const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
+const DIALOGUE_NPC_SCRIPT := preload("res://scripts/components/DialogueNpc.gd")
 const INVENTORY_SCRIPT := preload("res://scripts/systems/InventorySystem.gd")
 const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
@@ -25,6 +26,7 @@ func _ready() -> void:
 	_add_station("to_wasteland", "前往廢土外圍", Vector2(950, 760), Vector2(180, 72), Color8(54, 104, 58))
 	_add_station("to_guild", "前往冒險公會", Vector2(1180, 380), Vector2(180, 96), Color8(90, 82, 120))
 	_add_sign("公告：近戰擊倒污染體會回收彈藥，遠程攻擊會消耗彈藥。", Vector2(610, 180))
+	_spawn_npcs()
 	_add_projectile_pool(200)
 	_spawn_player(Vector2(640, 460))
 	add_child(HUD_SCENE.instantiate())
@@ -67,6 +69,12 @@ func _add_sign(text_value: String, pos: Vector2) -> void:
 	label.position = pos
 	label.add_theme_font_size_override("font_size", 18)
 	add_child(label)
+
+func _spawn_npcs() -> void:
+	for npc_data in DataRegistry.npcs_for_scene("village"):
+		var npc: Area2D = DIALOGUE_NPC_SCRIPT.new()
+		npc.setup(npc_data)
+		add_child(npc)
 
 func _on_station_interacted(id: String) -> void:
 	match id:

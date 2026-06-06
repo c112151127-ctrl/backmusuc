@@ -29,6 +29,14 @@
 			"passed": true
 		},
 		{
+			"label": "village: NPC dialogue can be triggered",
+			"passed": true
+		},
+		{
+			"label": "village: NPC first talk grants reward once",
+			"passed": true
+		},
+		{
 			"label": "village: craft station loop can create weapon",
 			"passed": true
 		},
@@ -103,7 +111,10 @@
 			"position": {
 				"x": 704.399658203125,
 				"y": 460.0
-			}
+			},
+			"talked_npcs": [
+				"forge_master"
+			]
 		},
 		"wasteland": {
 			"ammo_after_ranged": 17,

@@ -14,6 +14,7 @@
 | 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、拆解、存檔、野外入口與公會入口；配方資料在 `data/items/recipes.json`。 |
 | 冒險公會 | `Guild.gd` 實作接取委託、前往廢土與交付獎勵；委託資料在 `data/maps/quests.json`。 |
 | 任務存檔 | `GameState.gd` 會保存 active quest、completed quests 與 quest progress，`SaveManager.gd` 會一起寫入 Base64/checksum 存檔。 |
+| NPC 對話與導引 | `data/maps/npcs.json` 定義村莊與公會 NPC；`DialogueNpc.gd` 生成可交談角色，`GameState.talked_npcs` 保存一次性對話獎勵狀態。 |
 | 混合戰鬥系統 | `Player.gd` 實作近戰與遠程；敵人與投射物腳本可互動。 |
 | 敵人攻擊模式 | `data/enemies/enemies.json` 定義 6 種 `attack_pattern`；`Enemy.gd` 實作追擊、短衝、遠程污染彈、重型大範圍近戰、飛行繞行與混合型行為。 |
 | 敵人上限 30、子彈上限 200 | `Wasteland.gd` 生成 30 敵人；`ProjectilePool.gd` 依 `data/maps/wasteland_params.json` 執行 200 子彈硬上限。 |

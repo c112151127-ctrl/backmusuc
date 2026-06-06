@@ -7,6 +7,7 @@ var map_params: Dictionary = {}
 var events: Array = []
 var recipes: Array = []
 var quests: Array = []
+var npcs: Array = []
 
 func _ready() -> void:
 	load_all()
@@ -20,6 +21,7 @@ func load_all() -> void:
 	map_params = _load_json("res://data/maps/wasteland_params.json")
 	events = _load_json("res://data/maps/events.json").get("events", [])
 	quests = _load_json("res://data/maps/quests.json").get("quests", [])
+	npcs = _load_json("res://data/maps/npcs.json").get("npcs", [])
 
 func get_equipment(item_id: String) -> Dictionary:
 	return equipment.get(item_id, {})
@@ -50,6 +52,19 @@ func quest_ids() -> Array[String]:
 	for quest in quests:
 		ids.append(String(quest.get("id", "")))
 	return ids
+
+func get_npc(npc_id: String) -> Dictionary:
+	for npc in npcs:
+		if String(npc.get("id", "")) == npc_id:
+			return npc
+	return {}
+
+func npcs_for_scene(scene_id: String) -> Array[Dictionary]:
+	var results: Array[Dictionary] = []
+	for npc in npcs:
+		if String(npc.get("scene", "")) == scene_id:
+			results.append(npc)
+	return results
 
 func _load_json(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):

@@ -49,6 +49,9 @@ func _play_village_input_flow() -> void:
 	var active_before := GameState.active_quick_slot
 	await _tap_action("swap_weapon")
 	_expect(GameState.active_quick_slot != active_before, "village: swap input cycles quick slot")
+	var ammo_before := GameState.ammo
+	_expect(GameState.talk_to_npc("forge_master"), "village: NPC dialogue can be triggered")
+	_expect(GameState.ammo == ammo_before + 3, "village: NPC first talk grants reward once")
 	GameState.add_item("bio_crystal", 1)
 	var crafted := InventorySystem.craft_basic_upgrade()
 	_expect(crafted and GameState.inventory.has("spark_cutter"), "village: craft station loop can create weapon")
@@ -56,7 +59,8 @@ func _play_village_input_flow() -> void:
 		"position": _vector_to_data(player.global_position if player != null else Vector2.ZERO),
 		"inventory_open": inventory_panel.visible if inventory_panel != null else false,
 		"has_spark_cutter": GameState.inventory.has("spark_cutter"),
-		"active_quick_slot": GameState.active_quick_slot
+		"active_quick_slot": GameState.active_quick_slot,
+		"talked_npcs": GameState.talked_npcs.duplicate()
 	})
 	village.queue_free()
 	await _settle_frames(2)

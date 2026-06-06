@@ -17,6 +17,7 @@ func _ready() -> void:
 	_check_export_presets()
 	await _check_scene("village", VILLAGE_SCENE, {
 		"interactable": 7,
+		"npc": 4,
 		"player": 1
 	})
 	await _check_scene("wasteland", WASTELAND_SCENE, {
@@ -30,11 +31,13 @@ func _ready() -> void:
 	})
 	await _check_scene("guild", GUILD_SCENE, {
 		"interactable": 3,
+		"npc": 2,
 		"player": 1
 	})
 	_check_save_roundtrip()
 	_check_equipment_loop()
 	_check_recipe_and_quest_loop()
+	_check_npc_dialogue_loop()
 	await _check_playable_core_loop()
 	await _check_wasteland_prop_contract()
 	await _check_enemy_projectile_damage()
@@ -50,6 +53,7 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.events.size() >= 4, "event data has random event pool")
 	_expect(DataRegistry.recipes.size() >= 5, "recipe data has forge craft shop and mod loops")
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
+	_expect(DataRegistry.npcs.size() >= 6, "npc data has village and guild dialogue characters")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
 	_expect(int(DataRegistry.map_params.get("prop_nodes", 0)) >= 60, "wasteland has enough pseudo-3D props configured")
@@ -117,6 +121,7 @@ func _check_save_roundtrip() -> void:
 	GameState.add_item("scrap", 12)
 	GameState.add_item("spark_cutter", 1)
 	GameState.equip_item("spark_cutter")
+	GameState.talk_to_npc("repair_robot")
 	var before := GameState.get_save_data()
 	var saved := SaveManager.save_game()
 	GameState.reset_new_run(false)
@@ -130,6 +135,7 @@ func _check_save_roundtrip() -> void:
 	_expect(String(after.get("active_quest_id", "")) == "clear_scrap_route", "save roundtrip restores active quest")
 	_expect(int(after.get("quest_progress", {}).get("defeat_enemy", 0)) == 2, "save roundtrip restores quest progress")
 	_expect(String(after.get("quick_slots", [])[0]) == "spark_cutter", "save roundtrip restores quick slot equipment")
+	_expect(after.get("talked_npcs", []).has("repair_robot"), "save roundtrip restores talked NPC state")
 
 func _load_save_without_scene_change() -> bool:
 	if not FileAccess.file_exists("user://save_game.json"):
@@ -174,6 +180,15 @@ func _check_recipe_and_quest_loop() -> void:
 	_expect(GameState.active_quest_id.is_empty(), "completed quest clears active quest")
 	_expect(GameState.completed_quests.has("clear_scrap_route"), "completed quest is recorded")
 	_expect(GameState.cores == cores_before + 1, "quest reward grants mutant core")
+
+func _check_npc_dialogue_loop() -> void:
+	GameState.reset_new_run(false)
+	var ammo_before := GameState.ammo
+	_expect(GameState.talk_to_npc("forge_master"), "npc dialogue can be triggered")
+	_expect(GameState.talked_npcs.has("forge_master"), "npc dialogue marks first talk")
+	_expect(GameState.ammo == ammo_before + 3, "npc first talk grants reward")
+	_expect(GameState.talk_to_npc("forge_master"), "npc repeat dialogue can be triggered")
+	_expect(GameState.ammo == ammo_before + 3, "npc repeat dialogue does not duplicate reward")
 
 func _check_playable_core_loop() -> void:
 	GameState.reset_new_run(false)
