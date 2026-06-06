@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 var stats_label: Label
+var quest_label: Label
 var inventory_panel: PanelContainer
 var inventory_list: VBoxContainer
 var notice_label: Label
@@ -27,15 +28,23 @@ func _build_hud() -> void:
 
 	var top_bar := PanelContainer.new()
 	top_bar.position = Vector2(16, 16)
-	top_bar.custom_minimum_size = Vector2(620, 74)
+	top_bar.custom_minimum_size = Vector2(700, 96)
 	root.add_child(top_bar)
+
+	var top_stack := VBoxContainer.new()
+	top_bar.add_child(top_stack)
 
 	stats_label = Label.new()
 	stats_label.add_theme_font_size_override("font_size", 18)
-	top_bar.add_child(stats_label)
+	top_stack.add_child(stats_label)
+
+	quest_label = Label.new()
+	quest_label.add_theme_font_size_override("font_size", 16)
+	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	top_stack.add_child(quest_label)
 
 	notice_label = Label.new()
-	notice_label.position = Vector2(16, 96)
+	notice_label.position = Vector2(16, 122)
 	notice_label.add_theme_font_size_override("font_size", 18)
 	notice_label.visible = false
 	root.add_child(notice_label)
@@ -46,8 +55,8 @@ func _build_hud() -> void:
 	add_child(notice_timer)
 
 	inventory_panel = PanelContainer.new()
-	inventory_panel.position = Vector2(16, 128)
-	inventory_panel.custom_minimum_size = Vector2(360, 430)
+	inventory_panel.position = Vector2(16, 156)
+	inventory_panel.custom_minimum_size = Vector2(420, 470)
 	inventory_panel.visible = false
 	root.add_child(inventory_panel)
 
@@ -78,7 +87,7 @@ func _add_touch_dpad(root: Control) -> void:
 func _add_action_buttons(root: Control) -> void:
 	var touch_box := HBoxContainer.new()
 	touch_box.name = "TouchActionButtons"
-	touch_box.position = Vector2(840, 610)
+	touch_box.position = Vector2(800, 610)
 	touch_box.add_theme_constant_override("separation", 8)
 	root.add_child(touch_box)
 	_add_touch_button(touch_box, "近戰", "attack_melee")
@@ -135,18 +144,23 @@ func _refresh() -> void:
 		GameState.cores,
 		GameState.current_scene_id
 	]
+	quest_label.text = "委託：%s" % GameState.active_quest_summary()
 
 func _refresh_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
 	var title := Label.new()
-	title.text = "背包 / 裝備  (I 開關)"
+	title.text = "背包 / 裝備  (I 開關，點裝備可裝上)"
 	title.add_theme_font_size_override("font_size", 18)
 	inventory_list.add_child(title)
 	var equipped := Label.new()
-	equipped.text = "裝備: %s" % JSON.stringify(GameState.equipment)
+	equipped.text = "目前裝備: %s" % JSON.stringify(GameState.equipment)
 	equipped.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inventory_list.add_child(equipped)
+	var quest := Label.new()
+	quest.text = "委託進度: %s" % GameState.active_quest_summary()
+	quest.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	inventory_list.add_child(quest)
 	for item_id in GameState.inventory.keys():
 		var amount := int(GameState.inventory[item_id])
 		var row := Button.new()
@@ -169,4 +183,4 @@ func _display_name(item_id: String) -> String:
 func _show_notice(message: String) -> void:
 	notice_label.text = message
 	notice_label.visible = true
-	notice_timer.start(2.2)
+	notice_timer.start(2.4)

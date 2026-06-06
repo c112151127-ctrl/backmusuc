@@ -29,6 +29,7 @@ func _ready() -> void:
 	})
 	_check_save_roundtrip()
 	_check_equipment_loop()
+	_check_recipe_and_quest_loop()
 	await _check_playable_core_loop()
 	await _check_touch_controls()
 	await _check_player_animation_contract()
@@ -40,6 +41,8 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.resources.size() >= 4, "resource data has at least 4 entries")
 	_expect(DataRegistry.enemies.size() >= 6, "enemy data has 6 enemy archetypes")
 	_expect(DataRegistry.events.size() >= 4, "event data has random event pool")
+	_expect(DataRegistry.recipes.size() >= 5, "recipe data has forge craft shop and mod loops")
+	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
 
@@ -70,6 +73,8 @@ func _check_scene(scene_id: String, packed: PackedScene, group_minimums: Diction
 func _check_save_roundtrip() -> void:
 	GameState.reset_new_run(false)
 	GameState.current_scene_id = "wasteland"
+	GameState.start_quest("clear_scrap_route")
+	GameState.advance_quest_counter("defeat_enemy", 2)
 	GameState.player_position = Vector2(321, 654)
 	GameState.add_item("scrap", 12)
 	GameState.add_item("spark_cutter", 1)
@@ -84,6 +89,8 @@ func _check_save_roundtrip() -> void:
 	_expect(String(after.get("scene", "")) == String(before.get("scene", "")), "save roundtrip restores scene")
 	_expect(Vector2(float(after.player.position_x), float(after.player.position_y)) == Vector2(321, 654), "save roundtrip restores player position")
 	_expect(String(after.equipment.weapon) == "spark_cutter", "save roundtrip restores equipped weapon")
+	_expect(String(after.get("active_quest_id", "")) == "clear_scrap_route", "save roundtrip restores active quest")
+	_expect(int(after.get("quest_progress", {}).get("defeat_enemy", 0)) == 2, "save roundtrip restores quest progress")
 
 func _load_save_without_scene_change() -> bool:
 	if not FileAccess.file_exists("user://save_game.json"):
@@ -108,6 +115,26 @@ func _check_equipment_loop() -> void:
 	GameState.add_item("spark_cutter", 1)
 	_expect(GameState.equip_item("spark_cutter"), "crafted melee weapon can be equipped")
 	_expect(GameState.get_stat_bonus("attack") >= 15, "equipment stat bonus updates attack")
+
+func _check_recipe_and_quest_loop() -> void:
+	GameState.reset_new_run(false)
+	_expect(DataRegistry.get_recipe("ammo_pack").size() > 0, "ammo recipe can be read")
+	var ammo_before := GameState.ammo
+	_expect(InventorySystem.forge_ammo_pack(), "forge station recipe crafts ammo pack")
+	_expect(GameState.ammo == ammo_before + 12, "forge recipe increases ammo")
+	GameState.add_item("bio_crystal", 1)
+	_expect(InventorySystem.craft_basic_upgrade(), "craft station recipe creates spark cutter")
+	_expect(GameState.inventory.has("spark_cutter"), "crafted weapon enters inventory")
+	_expect(GameState.start_quest("clear_scrap_route"), "guild can start a quest")
+	for i in range(5):
+		GameState.record_enemy_defeated()
+	GameState.add_item("scrap", 12)
+	_expect(GameState.is_active_quest_ready(), "quest becomes ready after defeat and collect objectives")
+	var cores_before := GameState.cores
+	_expect(GameState.complete_active_quest(), "guild reward completes active quest")
+	_expect(GameState.active_quest_id.is_empty(), "completed quest clears active quest")
+	_expect(GameState.completed_quests.has("clear_scrap_route"), "completed quest is recorded")
+	_expect(GameState.cores == cores_before + 1, "quest reward grants mutant core")
 
 func _check_playable_core_loop() -> void:
 	GameState.reset_new_run(false)

@@ -6,20 +6,21 @@
 | Windows / Android 匯出規劃 | `export_presets.cfg` 已提供 Windows Desktop 與 Android preset；`docs/EXPORT_READINESS.md` 記錄目前本機缺少的 export templates 與 Android 工具鏈。 |
 | PC WASD + 滑鼠操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠、近戰、遠程、互動、背包、存檔與讀檔。 |
 | Android 觸控 UI 基礎 | `scenes/ui/HUD.gd` 提供左下方向 D-pad，以及右下近戰、射擊、互動、背包、存檔按鈕。 |
-| 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment`、`HUD.gd` 背包裝備。 |
+| 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment`、`HUD.gd` 背包裝備與委託進度。 |
 | 隨時存檔 JSON | `scripts/autoload/SaveManager.gd` 寫入 `user://save_game.json`。 |
 | Base64 / hash 驗證 | `SaveManager.gd` 使用 Base64 payload + SHA-256 checksum。 |
-| 程序化野外地圖 | `Wasteland.gd` 使用 seed 生成資源、事件與敵人位置。 |
-| 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、存檔、野外入口與公會入口。 |
-| 冒險公會 | `Guild.gd` 實作任務 seed 與獎勵兌換。 |
+| 程序化野外地圖 | `Wasteland.gd` 使用 seed 生成資源、事件與敵人位置；事件資料在 `data/maps/events.json`。 |
+| 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、拆解、存檔、野外入口與公會入口；配方資料在 `data/items/recipes.json`。 |
+| 冒險公會 | `Guild.gd` 實作接取委託、前往廢土與交付獎勵；委託資料在 `data/maps/quests.json`。 |
+| 任務存檔 | `GameState.gd` 會保存 active quest、completed quests 與 quest progress，`SaveManager.gd` 會一起寫入 Base64/checksum 存檔。 |
 | 混合戰鬥系統 | `Player.gd` 實作近戰與遠程；敵人與投射物腳本可互動。 |
 | 敵人上限 30、子彈上限 200 | `Wasteland.gd` 生成 30 敵人；`ProjectilePool.gd` 依 `data/maps/wasteland_params.json` 執行 200 子彈硬上限。 |
 | 像素偽 3D / Y-Sort | 主要場景與玩家節點開啟 `y_sort_enabled`，素材採 32px 像素風。 |
 | 多角度 / 多動作玩家素材 | `Player.gd` 以 `AnimatedSprite2D` 建立 `idle/move/melee/shoot/swap_tool` x 8 方向 x 3 frame；另有 `assets/sprites/player/recycler_player_sprite_sheet.svg`。 |
-| 可玩性驗證 | `scenes/tests/ValidationRunner.tscn` 自動驗證資料、場景、存檔、裝備循環、觸控控制、近戰擊殺、遠程射擊、戰鬥後存讀檔與回村狀態，可用 `--scene` 命令執行。 |
+| 可玩性驗證 | `scenes/tests/ValidationRunner.tscn` 自動驗證資料、場景、存檔、配方、任務、公會交付、觸控控制、近戰擊殺、遠程射擊、戰鬥後存讀檔與回村狀態，可用 `--scene` 命令執行。 |
 
 ## 尚待下一階段精修
 
 - 正式美術圖匯入後的 frame 切分與動畫樹精修。
 - Android export template / SDK 實機測試。
-- 更完整 NPC 對話、任務文本與平衡調整。
+- 更完整 NPC 對話、更多任務分支與平衡調整。

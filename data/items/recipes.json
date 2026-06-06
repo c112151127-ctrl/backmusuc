@@ -1,0 +1,39 @@
+{
+  "recipes": [
+    {
+      "id": "ammo_pack",
+      "name": "彈藥包",
+      "station": "forge",
+      "cost": { "scrap": 8 },
+      "result": { "ammo": 12 }
+    },
+    {
+      "id": "spark_cutter",
+      "name": "火花切割器",
+      "station": "craft",
+      "cost": { "scrap": 20, "bio_crystal": 1 },
+      "result": { "spark_cutter": 1 }
+    },
+    {
+      "id": "coil_launcher",
+      "name": "線圈發射器",
+      "station": "mod",
+      "cost": { "scrap": 28, "mutant_core": 2 },
+      "result": { "coil_launcher": 1 }
+    },
+    {
+      "id": "shop_ammo",
+      "name": "商店彈藥補給",
+      "station": "shop",
+      "cost": { "scrap": 4 },
+      "result": { "ammo": 8 }
+    },
+    {
+      "id": "recycle_core",
+      "name": "核心拆解",
+      "station": "mod",
+      "cost": { "mutant_core": 1 },
+      "result": { "scrap": 14, "bio_crystal": 1 }
+    }
+  ]
+}

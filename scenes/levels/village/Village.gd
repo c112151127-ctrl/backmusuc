@@ -16,17 +16,19 @@ func _ready() -> void:
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("village", Vector2i(60, 40), 137)
 	add_child(backdrop)
-	_add_station("forge", "鍛造：廢鐵換彈藥", Vector2(430, 260), Vector2(180, 110), Color8(102, 68, 45))
-	_add_station("craft", "合成：火花切割器", Vector2(300, 520), Vector2(170, 100), Color8(72, 92, 96))
-	_add_station("shop", "交易：補給", Vector2(900, 280), Vector2(180, 110), Color8(93, 75, 47))
-	_add_station("mod", "改裝：套用零件", Vector2(540, 600), Vector2(185, 110), Color8(54, 77, 91))
-	_add_station("save", "存檔點", Vector2(840, 560), Vector2(160, 96), Color8(42, 92, 108))
-	_add_station("to_wasteland", "前往野外", Vector2(950, 760), Vector2(180, 72), Color8(54, 104, 58))
-	_add_station("to_guild", "冒險公會", Vector2(1180, 380), Vector2(180, 96), Color8(90, 82, 120))
+	_add_station("forge", "鍛造爐：廢鐵換彈藥", Vector2(430, 260), Vector2(180, 110), Color8(102, 68, 45))
+	_add_station("craft", "合成台：製作近戰武器", Vector2(300, 520), Vector2(170, 100), Color8(72, 92, 96))
+	_add_station("shop", "補給商：購買彈藥", Vector2(900, 280), Vector2(180, 110), Color8(93, 75, 47))
+	_add_station("mod", "改裝站：打造線圈發射器", Vector2(540, 600), Vector2(185, 110), Color8(54, 77, 91))
+	_add_station("recycle", "拆解機：核心換材料", Vector2(760, 690), Vector2(170, 96), Color8(69, 88, 78))
+	_add_station("save", "維修存檔點", Vector2(840, 560), Vector2(160, 96), Color8(42, 92, 108))
+	_add_station("to_wasteland", "前往廢土外圍", Vector2(950, 760), Vector2(180, 72), Color8(54, 104, 58))
+	_add_station("to_guild", "前往冒險公會", Vector2(1180, 380), Vector2(180, 96), Color8(90, 82, 120))
+	_add_sign("公告：近戰擊倒污染體會回收彈藥，遠程攻擊會消耗彈藥。", Vector2(610, 180))
 	_add_projectile_pool(200)
 	_spawn_player(Vector2(640, 460))
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("村莊：鍛造、合成、交易、改裝、存檔與出口已啟用")
+	GameState.notify("村莊據點：整備裝備、接任務，再前往廢土回收資源")
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -59,23 +61,31 @@ func _add_station(id: String, label: String, pos: Vector2, size: Vector2, color:
 	interactable.interacted.connect(_on_station_interacted)
 	node.add_child(interactable)
 
+func _add_sign(text_value: String, pos: Vector2) -> void:
+	var label := Label.new()
+	label.text = text_value
+	label.position = pos
+	label.add_theme_font_size_override("font_size", 18)
+	add_child(label)
+
 func _on_station_interacted(id: String) -> void:
 	match id:
 		"forge":
 			INVENTORY_SCRIPT.forge_ammo_pack()
 		"craft":
-			INVENTORY_SCRIPT.craft_basic_upgrade()
-		"shop":
-			GameState.add_item("ammo", 6)
-			GameState.notify("交易完成：彈藥 x6")
-		"mod":
-			if GameState.inventory.has("spark_cutter"):
+			if INVENTORY_SCRIPT.craft_basic_upgrade():
 				GameState.equip_item("spark_cutter")
-			elif GameState.inventory.has("coil_launcher"):
+		"shop":
+			INVENTORY_SCRIPT.shop_buy_ammo()
+		"mod":
+			if GameState.can_equip("coil_launcher"):
 				GameState.equip_item("coil_launcher")
-			else:
-				GameState.notify("尚未取得可改裝零件")
+			elif INVENTORY_SCRIPT.craft_coil_launcher():
+				GameState.equip_item("coil_launcher")
+		"recycle":
+			INVENTORY_SCRIPT.recycle_core()
 		"save":
+			GameState.heal_full()
 			SaveManager.save_game()
 		"to_wasteland":
 			SceneRouter.change_to("wasteland", "from_village")

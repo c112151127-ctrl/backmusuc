@@ -30,7 +30,7 @@ func _ready() -> void:
 	_spawn_events()
 	_spawn_enemies()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("野外：探索、戰鬥、撿取與事件已啟用")
+	GameState.notify("廢土外圍：回收資源、處理污染體，完成後從南側返回村莊")
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -48,13 +48,13 @@ func _add_projectile_pool(limit: int) -> void:
 func _spawn_exit() -> void:
 	var exit: Area2D = INTERACTABLE_SCRIPT.new()
 	exit.interaction_id = "to_village"
-	exit.prompt = "回村莊"
+	exit.prompt = "返回村莊"
 	exit.position = Vector2(world_size.x * 0.5, world_size.y - 90)
 	exit.interacted.connect(func(_id: String) -> void: SceneRouter.change_to("village", "from_wasteland"))
 	add_child(exit)
 	var label := Label.new()
-	label.text = "回村莊"
-	label.position = exit.position + Vector2(-36, -70)
+	label.text = "返回村莊"
+	label.position = exit.position + Vector2(-44, -70)
 	label.add_theme_font_size_override("font_size", 20)
 	add_child(label)
 
@@ -77,9 +77,10 @@ func _spawn_events() -> void:
 	for i in min(positions.size(), DataRegistry.events.size()):
 		var event_data: Dictionary = DataRegistry.events[i % DataRegistry.events.size()]
 		var event_id := String(event_data.get("id", "event_%d" % i))
+		var event_name := String(event_data.get("name", "廢土事件"))
 		var node: Area2D = INTERACTABLE_SCRIPT.new()
 		node.interaction_id = "event:" + event_id
-		node.prompt = String(event_data.get("name", "事件"))
+		node.prompt = event_name
 		node.position = positions[i]
 		node.interacted.connect(_on_event_interacted)
 		add_child(node)
@@ -88,6 +89,11 @@ func _spawn_events() -> void:
 		marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		marker.position = positions[i]
 		add_child(marker)
+		var label := Label.new()
+		label.text = event_name
+		label.position = positions[i] + Vector2(-42, -54)
+		label.add_theme_font_size_override("font_size", 14)
+		add_child(label)
 
 func _spawn_enemies() -> void:
 	var enemy_ids := DataRegistry.enemy_ids()
@@ -113,5 +119,7 @@ func _on_event_interacted(interaction_id: String) -> void:
 			var reward: Dictionary = event_data.get("reward", {})
 			for item_id in reward.keys():
 				GameState.add_item(String(item_id), int(reward[item_id]))
-			GameState.notify("事件完成：%s" % String(event_data.get("name", event_id)))
+			var event_name := String(event_data.get("name", event_id))
+			var description := String(event_data.get("description", ""))
+			GameState.notify("%s 完成：%s" % [event_name, description])
 			return

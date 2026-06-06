@@ -1,0 +1,24 @@
+{
+  "quests": [
+    {
+      "id": "clear_scrap_route",
+      "name": "清理廢鐵通道",
+      "description": "公會要求回收商清出一條能讓村民進入廢土外圈的路線。",
+      "objectives": [
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
+        { "type": "collect", "item": "scrap", "amount": 12 }
+      ],
+      "reward": { "ammo": 12, "mutant_core": 1 }
+    },
+    {
+      "id": "toxic_sample",
+      "name": "毒池樣本調查",
+      "description": "改裝站需要生化晶核來校準防腐蝕零件。",
+      "objectives": [
+        { "type": "collect", "item": "bio_crystal", "amount": 2 },
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 3 }
+      ],
+      "reward": { "scrap": 24, "coil_launcher": 1 }
+    }
+  ]
+}

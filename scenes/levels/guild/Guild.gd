@@ -13,15 +13,16 @@ func _ready() -> void:
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("village", Vector2i(46, 28), 4096)
 	add_child(backdrop)
-	_add_counter("contract", "接取遠征任務", Vector2(420, 270), Color8(102, 74, 118))
-	_add_counter("reward", "公會獎勵兌換", Vector2(720, 270), Color8(75, 96, 122))
-	_add_counter("to_village", "返回村莊", Vector2(600, 560), Color8(64, 110, 70))
+	_add_counter("contract", "委託板：接取下一份任務", Vector2(360, 270), Color8(102, 74, 118))
+	_add_counter("reward", "交付櫃台：領取委託獎勵", Vector2(680, 270), Color8(75, 96, 122))
+	_add_counter("to_wasteland", "公會出口：前往廢土", Vector2(910, 430), Color8(92, 88, 56))
+	_add_counter("to_village", "返回村莊廣場", Vector2(600, 560), Color8(64, 110, 70))
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
 	player.global_position = Vector2(600, 430)
 	add_child(player)
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("冒險公會：可接任務、兌換獎勵")
+	GameState.notify("冒險公會：接委託、進廢土、回來交付獎勵")
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
@@ -36,7 +37,7 @@ func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void
 	add_child(sprite)
 	var text := Label.new()
 	text.text = label
-	text.position = pos + Vector2(-78, -82)
+	text.position = pos + Vector2(-92, -82)
 	text.add_theme_font_size_override("font_size", 18)
 	add_child(text)
 	var interactable: Area2D = INTERACTABLE_SCRIPT.new()
@@ -50,15 +51,23 @@ func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void
 func _on_interacted(id: String) -> void:
 	match id:
 		"contract":
+			_start_next_contract()
+		"reward":
+			GameState.complete_active_quest()
+		"to_wasteland":
 			GameState.seed = randi_range(1000, 999999)
 			GameState.level += 1
-			GameState.notify("已接取任務，野外 seed: %d" % GameState.seed)
+			GameState.notify("公會派遣完成，廢土 seed: %d" % GameState.seed)
 			SceneRouter.change_to("wasteland", "from_guild")
-		"reward":
-			if GameState.consume_item("mutant_core", 1):
-				GameState.add_item("coil_launcher", 1)
-				GameState.notify("獲得線圈發射器")
-			else:
-				GameState.notify("需要異變核心 x1")
 		"to_village":
 			SceneRouter.change_to("village", "from_guild")
+
+func _start_next_contract() -> void:
+	if not GameState.active_quest_id.is_empty():
+		GameState.notify("目前委託：%s" % GameState.active_quest_summary())
+		return
+	for quest_id in DataRegistry.quest_ids():
+		if not GameState.completed_quests.has(quest_id):
+			GameState.start_quest(quest_id)
+			return
+	GameState.notify("公會目前沒有新的委託")

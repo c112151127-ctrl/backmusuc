@@ -22,6 +22,9 @@ var crystals := 0
 var player_position := Vector2.ZERO
 var defeated_enemies := 0
 var discovered_events: Array[String] = []
+var active_quest_id := ""
+var completed_quests: Array[String] = []
+var quest_progress: Dictionary = {}
 var inventory: Dictionary = {}
 var equipment: Dictionary = {
 	"weapon": "rust_blade",
@@ -47,9 +50,13 @@ func reset_new_run(emit_changes := true) -> void:
 	crystals = 0
 	defeated_enemies = 0
 	discovered_events.clear()
+	active_quest_id = ""
+	completed_quests.clear()
+	quest_progress.clear()
 	inventory = {
 		"scrap": scrap,
 		"ammo": ammo,
+		"mutant_core": cores,
 		"rust_blade": 1,
 		"pipe_rifle": 1,
 		"patched_armor": 1,
@@ -70,9 +77,9 @@ func add_item(item_id: String, amount := 1) -> void:
 	if item_id == "ammo":
 		ammo = int(inventory[item_id])
 	if item_id == "mutant_core":
-		cores += amount
+		cores = int(inventory[item_id])
 	if item_id == "bio_crystal":
-		crystals += amount
+		crystals = int(inventory[item_id])
 	inventory_changed.emit()
 	stats_changed.emit()
 
@@ -86,6 +93,10 @@ func consume_item(item_id: String, amount := 1) -> bool:
 		ammo = int(inventory.get("ammo", 0))
 	if item_id == "scrap":
 		scrap = int(inventory.get("scrap", 0))
+	if item_id == "mutant_core":
+		cores = int(inventory.get("mutant_core", 0))
+	if item_id == "bio_crystal":
+		crystals = int(inventory.get("bio_crystal", 0))
 	inventory_changed.emit()
 	stats_changed.emit()
 	return true
@@ -133,9 +144,93 @@ func spend_ammo(amount := 1) -> bool:
 
 func record_enemy_defeated() -> void:
 	defeated_enemies += 1
+	advance_quest_counter("defeat_enemy", 1)
 	if defeated_enemies % 3 == 0:
 		add_item("ammo", 4)
 		notify("近戰回收成功，獲得彈藥 x4")
+
+func start_quest(quest_id: String) -> bool:
+	if completed_quests.has(quest_id):
+		notify("這份委託已完成")
+		return false
+	var quest := DataRegistry.get_quest(quest_id)
+	if quest.is_empty():
+		notify("找不到委託: %s" % quest_id)
+		return false
+	active_quest_id = quest_id
+	for objective in quest.get("objectives", []):
+		if String(objective.get("type", "")) == "defeat":
+			var counter := String(objective.get("counter", "defeat_enemy"))
+			quest_progress[counter] = int(quest_progress.get(counter, 0))
+	notify("已接取委託：%s" % String(quest.get("name", quest_id)))
+	_emit_all()
+	return true
+
+func advance_quest_counter(counter_id: String, amount := 1) -> void:
+	if active_quest_id.is_empty():
+		return
+	quest_progress[counter_id] = int(quest_progress.get(counter_id, 0)) + amount
+	stats_changed.emit()
+
+func is_active_quest_ready() -> bool:
+	if active_quest_id.is_empty():
+		return false
+	var quest := DataRegistry.get_quest(active_quest_id)
+	if quest.is_empty():
+		return false
+	for objective in quest.get("objectives", []):
+		var kind := String(objective.get("type", ""))
+		var amount := int(objective.get("amount", 0))
+		if kind == "collect":
+			var item_id := String(objective.get("item", ""))
+			if int(inventory.get(item_id, 0)) < amount:
+				return false
+		elif kind == "defeat":
+			var counter := String(objective.get("counter", "defeat_enemy"))
+			if int(quest_progress.get(counter, 0)) < amount:
+				return false
+	return true
+
+func complete_active_quest() -> bool:
+	if active_quest_id.is_empty():
+		notify("尚未接取委託")
+		return false
+	if not is_active_quest_ready():
+		notify("委託目標尚未完成")
+		return false
+	var quest := DataRegistry.get_quest(active_quest_id)
+	for objective in quest.get("objectives", []):
+		if String(objective.get("type", "")) == "collect":
+			consume_item(String(objective.get("item", "")), int(objective.get("amount", 0)))
+	var reward: Dictionary = quest.get("reward", {})
+	for item_id in reward.keys():
+		add_item(String(item_id), int(reward[item_id]))
+	completed_quests.append(active_quest_id)
+	notify("委託完成：%s" % String(quest.get("name", active_quest_id)))
+	active_quest_id = ""
+	_emit_all()
+	return true
+
+func active_quest_summary() -> String:
+	if active_quest_id.is_empty():
+		return "無"
+	var quest := DataRegistry.get_quest(active_quest_id)
+	if quest.is_empty():
+		return active_quest_id
+	var parts: Array[String] = []
+	for objective in quest.get("objectives", []):
+		var kind := String(objective.get("type", ""))
+		var amount := int(objective.get("amount", 0))
+		if kind == "collect":
+			var item_id := String(objective.get("item", ""))
+			var label := String(DataRegistry.get_resource(item_id).get("name", item_id))
+			if label == item_id:
+				label = String(DataRegistry.get_equipment(item_id).get("name", item_id))
+			parts.append("%s %d/%d" % [label, int(inventory.get(item_id, 0)), amount])
+		elif kind == "defeat":
+			var counter := String(objective.get("counter", "defeat_enemy"))
+			parts.append("擊倒污染體 %d/%d" % [int(quest_progress.get(counter, 0)), amount])
+	return "%s：%s" % [String(quest.get("name", active_quest_id)), "，".join(parts)]
 
 func notify(message: String) -> void:
 	notification_requested.emit(message)
@@ -156,7 +251,10 @@ func get_save_data() -> Dictionary:
 		"seed": seed,
 		"level": level,
 		"defeated_enemies": defeated_enemies,
-		"discovered_events": discovered_events
+		"discovered_events": discovered_events,
+		"active_quest_id": active_quest_id,
+		"completed_quests": completed_quests,
+		"quest_progress": quest_progress
 	}
 
 func load_save_data(data: Dictionary) -> bool:
@@ -174,8 +272,13 @@ func load_save_data(data: Dictionary) -> bool:
 	level = int(data.get("level", 1))
 	defeated_enemies = int(data.get("defeated_enemies", 0))
 	discovered_events.assign(data.get("discovered_events", []))
+	active_quest_id = String(data.get("active_quest_id", ""))
+	completed_quests.assign(data.get("completed_quests", []))
+	quest_progress = data.get("quest_progress", {})
 	ammo = int(inventory.get("ammo", 0))
 	scrap = int(inventory.get("scrap", 0))
+	cores = int(inventory.get("mutant_core", 0))
+	crystals = int(inventory.get("bio_crystal", 0))
 	_emit_all()
 	return true
 

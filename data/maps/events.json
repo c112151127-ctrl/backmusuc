@@ -1,8 +1,28 @@
 {
   "events": [
-    { "id": "merchant", "name": "游牧商人", "reward": { "ammo": 5 } },
-    { "id": "robot", "name": "故障機器人", "reward": { "scrap": 8 } },
-    { "id": "survivor", "name": "殘存人類", "reward": { "mutant_core": 1 } },
-    { "id": "toxic_pool", "name": "毒池樣本", "reward": { "bio_crystal": 1 } }
+    {
+      "id": "merchant",
+      "name": "游牧商人",
+      "description": "用舊零件換到一批能立即使用的彈藥。",
+      "reward": { "ammo": 5 }
+    },
+    {
+      "id": "robot",
+      "name": "故障機器人",
+      "description": "修好它的定位模組後，拆下可用廢鐵。",
+      "reward": { "scrap": 8 }
+    },
+    {
+      "id": "survivor",
+      "name": "殘存人類",
+      "description": "護送倖存者離開污染區，取得異變核心作為謝禮。",
+      "reward": { "mutant_core": 1 }
+    },
+    {
+      "id": "toxic_pool",
+      "name": "毒池樣本",
+      "description": "採集毒池結晶，改裝站可以用來強化武器。",
+      "reward": { "bio_crystal": 1 }
+    }
   ]
 }
