@@ -129,6 +129,7 @@ func _check_save_roundtrip() -> void:
 	_expect(String(after.equipment.weapon) == "spark_cutter", "save roundtrip restores equipped weapon")
 	_expect(String(after.get("active_quest_id", "")) == "clear_scrap_route", "save roundtrip restores active quest")
 	_expect(int(after.get("quest_progress", {}).get("defeat_enemy", 0)) == 2, "save roundtrip restores quest progress")
+	_expect(String(after.get("quick_slots", [])[0]) == "spark_cutter", "save roundtrip restores quick slot equipment")
 
 func _load_save_without_scene_change() -> bool:
 	if not FileAccess.file_exists("user://save_game.json"):
@@ -283,20 +284,39 @@ func _check_touch_controls() -> void:
 		"attack_ranged",
 		"interact",
 		"open_inventory",
-		"save_game"
+		"save_game",
+		"swap_weapon",
+		"quick_slot_1",
+		"quick_slot_2",
+		"quick_slot_3",
+		"quick_slot_4"
 	]
 	for action_name in required_actions:
 		_expect(InputMap.has_action(action_name), "input action exists: " + action_name)
 	var move_buttons := get_tree().get_nodes_in_group("touch_move_control")
 	var action_buttons := get_tree().get_nodes_in_group("touch_action_control")
+	var hotbar_slots := get_tree().get_nodes_in_group("hotbar_slot")
 	_expect(move_buttons.size() >= 4, "touch controls include 4 movement buttons")
-	_expect(action_buttons.size() >= 5, "touch controls include 5 action buttons")
+	_expect(action_buttons.size() >= 6, "touch controls include 6 action buttons")
+	_expect(hotbar_slots.size() >= 4, "HUD includes 4 quick slots")
 	var seen_actions: Dictionary = {}
 	for button in move_buttons + action_buttons:
 		if button.has_meta("input_action"):
 			seen_actions[String(button.get_meta("input_action"))] = true
 	for action_name in required_actions:
+		if action_name.begins_with("quick_slot_"):
+			continue
 		_expect(seen_actions.has(action_name), "touch control maps action: " + action_name)
+	var seen_quick_slots: Dictionary = {}
+	for slot in hotbar_slots:
+		if slot.has_meta("quick_slot_index"):
+			seen_quick_slots[int(slot.get_meta("quick_slot_index"))] = true
+	for i in range(4):
+		_expect(seen_quick_slots.has(i), "quick slot exists: %d" % [i + 1])
+	_expect(GameState.use_quick_slot(1), "quick slot can equip ranged item")
+	_expect(GameState.active_quick_slot == 1, "quick slot updates active selection")
+	_expect(GameState.use_next_quick_slot(), "swap weapon cycles quick slot")
+	_expect(GameState.active_quick_slot == 2, "swap weapon selects next quick slot")
 	instance.queue_free()
 	await get_tree().process_frame
 

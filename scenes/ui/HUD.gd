@@ -2,6 +2,7 @@ extends CanvasLayer
 
 var stats_label: Label
 var quest_label: Label
+var quick_bar: HBoxContainer
 var inventory_panel: PanelContainer
 var inventory_list: VBoxContainer
 var notice_label: Label
@@ -12,6 +13,7 @@ func _ready() -> void:
 	GameState.stats_changed.connect(_refresh)
 	GameState.inventory_changed.connect(_refresh_inventory)
 	GameState.equipment_changed.connect(_refresh_inventory)
+	GameState.equipment_changed.connect(_refresh_hotbar)
 	GameState.notification_requested.connect(_show_notice)
 	_refresh()
 	_refresh_inventory()
@@ -64,8 +66,20 @@ func _build_hud() -> void:
 	inventory_list = VBoxContainer.new()
 	inventory_panel.add_child(inventory_list)
 
+	_add_quick_bar(root)
 	_add_touch_dpad(root)
 	_add_action_buttons(root)
+
+func _add_quick_bar(root: Control) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "QuickBarPanel"
+	panel.position = Vector2(430, 646)
+	panel.custom_minimum_size = Vector2(360, 58)
+	root.add_child(panel)
+	quick_bar = HBoxContainer.new()
+	quick_bar.name = "QuickBar"
+	quick_bar.add_theme_constant_override("separation", 6)
+	panel.add_child(quick_bar)
 
 func _add_touch_dpad(root: Control) -> void:
 	var dpad := GridContainer.new()
@@ -93,6 +107,7 @@ func _add_action_buttons(root: Control) -> void:
 	root.add_child(touch_box)
 	_add_touch_button(touch_box, "近戰", "attack_melee")
 	_add_touch_button(touch_box, "射擊", "attack_ranged")
+	_add_touch_button(touch_box, "切換", "swap_weapon")
 	_add_touch_button(touch_box, "互動", "interact")
 	_add_touch_button(touch_box, "背包", "open_inventory")
 	_add_touch_button(touch_box, "存檔", "save_game")
@@ -146,6 +161,25 @@ func _refresh() -> void:
 		GameState.current_scene_id
 	]
 	quest_label.text = "委託：%s" % GameState.active_quest_summary()
+	_refresh_hotbar()
+
+func _refresh_hotbar() -> void:
+	if quick_bar == null:
+		return
+	for child in quick_bar.get_children():
+		child.queue_free()
+	for i in range(GameState.quick_slots.size()):
+		var item_id := String(GameState.quick_slots[i])
+		var button := Button.new()
+		button.name = "QuickSlot%d" % [i + 1]
+		button.custom_minimum_size = Vector2(82, 44)
+		button.add_to_group("hotbar_slot")
+		button.set_meta("quick_slot_index", i)
+		button.text = "%d %s" % [i + 1, _short_name(item_id)]
+		if i == GameState.active_quick_slot:
+			button.text = "> " + button.text
+		button.pressed.connect(GameState.use_quick_slot.bind(i))
+		quick_bar.add_child(button)
 
 func _refresh_inventory() -> void:
 	for child in inventory_list.get_children():
@@ -180,6 +214,12 @@ func _display_name(item_id: String) -> String:
 	if DataRegistry.get_resource(item_id).size() > 0:
 		return String(DataRegistry.get_resource(item_id).get("name", item_id))
 	return item_id
+
+func _short_name(item_id: String) -> String:
+	var name := _display_name(item_id)
+	if name.length() > 5:
+		return name.substr(0, 5)
+	return name
 
 func _show_notice(message: String) -> void:
 	notice_label.text = message

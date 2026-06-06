@@ -4,9 +4,9 @@
 | --- | --- |
 | Godot 4.x 單機 2D Roguelike | `project.godot` 使用 Godot 4.6，主場景進入村莊、野外與公會流程。 |
 | Windows / Android 匯出規劃 | `export_presets.cfg` 已提供 Windows Desktop 與 Android preset；`docs/EXPORT_READINESS.md` 記錄目前本機缺少的 export templates 與 Android 工具鏈。 |
-| PC WASD + 滑鼠操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠、近戰、遠程、互動、背包、存檔與讀檔。 |
-| Android 觸控 UI 基礎 | `scenes/ui/HUD.gd` 提供左下方向 D-pad，以及右下近戰、射擊、互動、背包、存檔按鈕。 |
-| 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment`、`HUD.gd` 背包裝備與委託進度。 |
+| PC WASD + 滑鼠操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠、近戰、遠程、互動、背包、存檔、讀檔、`Q` 與 `1`-`4` 快捷欄。 |
+| Android 觸控 UI 基礎 | `scenes/ui/HUD.gd` 提供左下方向 D-pad，以及右下近戰、射擊、切換、互動、背包、存檔按鈕。 |
+| 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment/quick_slots`、`HUD.gd` 背包、裝備、快捷欄與委託進度。 |
 | 隨時存檔 JSON | `scripts/autoload/SaveManager.gd` 寫入 `user://save_game.json`。 |
 | Base64 / hash 驗證 | `SaveManager.gd` 使用 Base64 payload + SHA-256 checksum。 |
 | 程序化野外地圖 | `Wasteland.gd` 使用 seed 生成資源、事件與敵人位置；事件資料在 `data/maps/events.json`。 |

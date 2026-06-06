@@ -49,7 +49,11 @@ func _physics_process(delta: float) -> void:
 		_ranged_attack()
 	if Input.is_action_just_pressed("swap_weapon"):
 		state = PlayerState.SWAP_TOOL
-		GameState.notify("切換工具：近戰/遠程循環")
+		GameState.use_next_quick_slot()
+	for slot_index in range(4):
+		if Input.is_action_just_pressed("quick_slot_%d" % [slot_index + 1]):
+			state = PlayerState.SWAP_TOOL
+			GameState.use_quick_slot(slot_index)
 	if Input.is_action_just_pressed("save_game"):
 		SaveManager.save_game()
 	if Input.is_action_just_pressed("load_game"):

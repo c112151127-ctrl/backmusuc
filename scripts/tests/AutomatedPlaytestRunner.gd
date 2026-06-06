@@ -44,13 +44,19 @@ func _play_village_input_flow() -> void:
 	await _tap_action("open_inventory")
 	var inventory_panel := _first_node_by_name(village, "InventoryPanel") as PanelContainer
 	_expect(inventory_panel != null and inventory_panel.visible, "village: inventory opens through input")
+	var hotbar_slots := get_tree().get_nodes_in_group("hotbar_slot")
+	_expect(hotbar_slots.size() >= 4, "village: HUD shows 4 quick slots")
+	var active_before := GameState.active_quick_slot
+	await _tap_action("swap_weapon")
+	_expect(GameState.active_quick_slot != active_before, "village: swap input cycles quick slot")
 	GameState.add_item("bio_crystal", 1)
 	var crafted := InventorySystem.craft_basic_upgrade()
 	_expect(crafted and GameState.inventory.has("spark_cutter"), "village: craft station loop can create weapon")
 	_record_snapshot("village", {
 		"position": _vector_to_data(player.global_position if player != null else Vector2.ZERO),
 		"inventory_open": inventory_panel.visible if inventory_panel != null else false,
-		"has_spark_cutter": GameState.inventory.has("spark_cutter")
+		"has_spark_cutter": GameState.inventory.has("spark_cutter"),
+		"active_quick_slot": GameState.active_quick_slot
 	})
 	village.queue_free()
 	await _settle_frames(2)

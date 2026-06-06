@@ -26,6 +26,8 @@ var active_quest_id := ""
 var completed_quests: Array[String] = []
 var quest_progress: Dictionary = {}
 var inventory: Dictionary = {}
+var quick_slots: Array[String] = ["rust_blade", "pipe_rifle", "recycler_glove", "ammo"]
+var active_quick_slot := 0
 var equipment: Dictionary = {
 	"weapon": "rust_blade",
 	"ranged": "pipe_rifle",
@@ -53,6 +55,7 @@ func reset_new_run(emit_changes := true) -> void:
 	active_quest_id = ""
 	completed_quests.clear()
 	quest_progress.clear()
+	active_quick_slot = 0
 	inventory = {
 		"scrap": scrap,
 		"ammo": ammo,
@@ -62,6 +65,7 @@ func reset_new_run(emit_changes := true) -> void:
 		"patched_armor": 1,
 		"recycler_glove": 1
 	}
+	quick_slots = ["rust_blade", "pipe_rifle", "recycler_glove", "ammo"]
 	if emit_changes:
 		_emit_all()
 
@@ -111,9 +115,47 @@ func equip_item(item_id: String) -> bool:
 	var item := DataRegistry.get_equipment(item_id)
 	var slot := String(item.get("slot", "tool"))
 	equipment[slot] = item_id
+	_sync_quick_slot_for_equipment(slot, item_id)
 	equipment_changed.emit()
 	stats_changed.emit()
 	notify("已裝備 %s" % String(item.get("name", item_id)))
+	return true
+
+func use_quick_slot(index: int) -> bool:
+	if index < 0 or index >= quick_slots.size():
+		return false
+	active_quick_slot = index
+	var item_id := String(quick_slots[index])
+	if item_id.is_empty():
+		notify("快捷欄 %d 尚未設定" % [index + 1])
+		equipment_changed.emit()
+		return false
+	if DataRegistry.get_equipment(item_id).size() > 0:
+		return equip_item(item_id)
+	var resource := DataRegistry.get_resource(item_id)
+	if not resource.is_empty():
+		notify("快捷欄 %d：%s x%d" % [index + 1, String(resource.get("name", item_id)), int(inventory.get(item_id, 0))])
+		equipment_changed.emit()
+		return true
+	notify("快捷欄 %d 找不到項目: %s" % [index + 1, item_id])
+	equipment_changed.emit()
+	return false
+
+func use_next_quick_slot() -> bool:
+	if quick_slots.is_empty():
+		return false
+	var next_index := (active_quick_slot + 1) % quick_slots.size()
+	return use_quick_slot(next_index)
+
+func set_quick_slot(index: int, item_id: String) -> bool:
+	if index < 0 or index >= quick_slots.size():
+		return false
+	if not inventory.has(item_id):
+		notify("背包沒有 %s，無法放入快捷欄" % item_id)
+		return false
+	quick_slots[index] = item_id
+	equipment_changed.emit()
+	notify("快捷欄 %d 設為 %s" % [index + 1, _item_display_name(item_id)])
 	return true
 
 func get_stat_bonus(stat_name: String) -> int:
@@ -254,7 +296,9 @@ func get_save_data() -> Dictionary:
 		"discovered_events": discovered_events,
 		"active_quest_id": active_quest_id,
 		"completed_quests": completed_quests,
-		"quest_progress": quest_progress
+		"quest_progress": quest_progress,
+		"quick_slots": quick_slots,
+		"active_quick_slot": active_quick_slot
 	}
 
 func load_save_data(data: Dictionary) -> bool:
@@ -275,6 +319,8 @@ func load_save_data(data: Dictionary) -> bool:
 	active_quest_id = String(data.get("active_quest_id", ""))
 	completed_quests.assign(data.get("completed_quests", []))
 	quest_progress = data.get("quest_progress", {})
+	quick_slots.assign(data.get("quick_slots", ["rust_blade", "pipe_rifle", "recycler_glove", "ammo"]))
+	active_quick_slot = int(data.get("active_quick_slot", 0))
 	ammo = int(inventory.get("ammo", 0))
 	scrap = int(inventory.get("scrap", 0))
 	cores = int(inventory.get("mutant_core", 0))
@@ -287,6 +333,27 @@ func _emit_all() -> void:
 	inventory_changed.emit()
 	equipment_changed.emit()
 
+func _sync_quick_slot_for_equipment(slot: String, item_id: String) -> void:
+	var index := -1
+	match slot:
+		"weapon":
+			index = 0
+		"ranged":
+			index = 1
+		"tool":
+			index = 2
+	if index >= 0 and index < quick_slots.size():
+		quick_slots[index] = item_id
+
+func _item_display_name(item_id: String) -> String:
+	var equipment_data := DataRegistry.get_equipment(item_id)
+	if not equipment_data.is_empty():
+		return String(equipment_data.get("name", item_id))
+	var resource := DataRegistry.get_resource(item_id)
+	if not resource.is_empty():
+		return String(resource.get("name", item_id))
+	return item_id
+
 func _ensure_input_actions() -> void:
 	_register_key("move_up", KEY_W)
 	_register_key("move_down", KEY_S)
@@ -297,6 +364,10 @@ func _ensure_input_actions() -> void:
 	_register_key("save_game", KEY_F5)
 	_register_key("load_game", KEY_F9)
 	_register_key("swap_weapon", KEY_Q)
+	_register_key("quick_slot_1", KEY_1)
+	_register_key("quick_slot_2", KEY_2)
+	_register_key("quick_slot_3", KEY_3)
+	_register_key("quick_slot_4", KEY_4)
 	_register_key("attack_melee", KEY_SPACE)
 	_register_mouse("attack_melee", MOUSE_BUTTON_LEFT)
 	_register_mouse("attack_ranged", MOUSE_BUTTON_RIGHT)

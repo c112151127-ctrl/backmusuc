@@ -21,6 +21,14 @@
 			"passed": true
 		},
 		{
+			"label": "village: HUD shows 4 quick slots",
+			"passed": true
+		},
+		{
+			"label": "village: swap input cycles quick slot",
+			"passed": true
+		},
+		{
 			"label": "village: craft station loop can create weapon",
 			"passed": true
 		},
@@ -89,6 +97,7 @@
 			"cores": 3
 		},
 		"village": {
+			"active_quick_slot": 1,
 			"has_spark_cutter": true,
 			"inventory_open": true,
 			"position": {
@@ -97,7 +106,7 @@
 			}
 		},
 		"wasteland": {
-			"ammo_after_ranged": 18,
+			"ammo_after_ranged": 17,
 			"enemy_count": 30,
 			"position": {
 				"x": 720.0,
