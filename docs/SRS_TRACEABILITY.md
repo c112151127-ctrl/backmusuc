@@ -12,14 +12,13 @@
 | 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、存檔、野外、公會入口 |
 | 冒險公會 | `Guild.gd` 實作任務 seed 與獎勵兌換 |
 | 混合戰鬥系統 | `Player.gd` 實作近戰與遠程；敵人與投射物腳本可互動 |
-| 敵人上限 30、子彈上限 200 | `data/maps/wasteland_params.json` 定義；目前野外生成 30 敵人，子彈上限參數保留給 Object Pool 擴充 |
+| 敵人上限 30、子彈上限 200 | `Wasteland.gd` 生成 30 敵人；`ProjectilePool.gd` 依 `data/maps/wasteland_params.json` 執行 200 子彈硬上限 |
 | 像素偽 3D / Y-Sort | 主要場景與玩家節點開啟 `y_sort_enabled`，素材採 32px 像素風 |
-| 多角度/多動作玩家素材 | `assets/sprites/player/recycler_player_sprite_sheet.svg` 與 `PixelArtFactory.player_texture(direction, action)` |
+| 多角度/多動作玩家素材 | `Player.gd` 以 `AnimatedSprite2D` 建立 `idle/move/melee/shoot/swap_tool` × 8 方向 × 3 frame；另有 `assets/sprites/player/recycler_player_sprite_sheet.svg` |
 | 可玩性驗證 | `scenes/tests/ValidationRunner.tscn` 自動驗證資料、場景、存檔、裝備循環，可用 `--scene` 命令執行 |
 
 ## 尚待下一階段精修
 
-- 正式 AnimatedSprite2D frame 切分與動畫樹。
-- 子彈 Object Pool 的硬上限執行層。
+- 正式美術圖匯入後的 frame 切分與動畫樹精修。
 - Android export template / SDK 實機測試。
 - 更完整 NPC 對話、任務文本與平衡調整。

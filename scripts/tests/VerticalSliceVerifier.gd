@@ -19,6 +19,7 @@ func _ready() -> void:
 		"interactable": 5,
 		"enemy": 30,
 		"pickup": 42,
+		"projectile_pool": 1,
 		"player": 1
 	})
 	await _check_scene("guild", GUILD_SCENE, {
@@ -27,6 +28,8 @@ func _ready() -> void:
 	})
 	_check_save_roundtrip()
 	_check_equipment_loop()
+	await _check_player_animation_contract()
+	await _check_projectile_pool_limit()
 	_finish()
 
 func _check_data_registry() -> void:
@@ -91,6 +94,48 @@ func _check_equipment_loop() -> void:
 	GameState.add_item("spark_cutter", 1)
 	_expect(GameState.equip_item("spark_cutter"), "crafted melee weapon can be equipped")
 	_expect(GameState.get_stat_bonus("attack") >= 15, "equipment stat bonus updates attack")
+
+func _check_player_animation_contract() -> void:
+	GameState.reset_new_run(false)
+	var instance := VILLAGE_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	var players := get_tree().get_nodes_in_group("player")
+	_expect(not players.is_empty(), "player exists for animation contract")
+	if not players.is_empty():
+		var player := players[0]
+		var animated_sprite := player.get_node_or_null("AnimatedSprite2D")
+		_expect(animated_sprite is AnimatedSprite2D, "player uses AnimatedSprite2D")
+		if animated_sprite is AnimatedSprite2D:
+			var frame_set: SpriteFrames = animated_sprite.sprite_frames
+			var actions: Array[String] = ["idle", "move", "melee", "shoot", "swap_tool"]
+			for action_name in actions:
+				for direction_index in range(8):
+					var animation_name := "%s_%d" % [action_name, direction_index]
+					_expect(frame_set.has_animation(animation_name), "player animation exists: " + animation_name)
+					if frame_set.has_animation(animation_name):
+						_expect(frame_set.get_frame_count(animation_name) >= 3, "player animation has frames: " + animation_name)
+	instance.queue_free()
+	await get_tree().process_frame
+
+func _check_projectile_pool_limit() -> void:
+	GameState.reset_new_run(false)
+	var instance := WASTELAND_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	var pools := get_tree().get_nodes_in_group("projectile_pool")
+	_expect(not pools.is_empty(), "projectile pool exists in wasteland")
+	if not pools.is_empty():
+		var pool := pools[0]
+		_expect(int(pool.max_projectiles) == int(DataRegistry.map_params.get("projectile_limit", 200)), "projectile pool uses map projectile limit")
+		var fired := 0
+		for i in range(int(pool.max_projectiles) + 5):
+			if pool.fire_projectile(Vector2(100, 100), Vector2.RIGHT, 1):
+				fired += 1
+		_expect(fired == int(pool.max_projectiles), "projectile pool blocks projectiles above limit")
+		_expect(int(pool.active_count) == int(pool.max_projectiles), "projectile pool active count stays at limit")
+	instance.queue_free()
+	await get_tree().process_frame
 
 func _expect(condition: bool, label: String) -> void:
 	if condition:

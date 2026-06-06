@@ -8,6 +8,7 @@ const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
 const PICKUP_SCRIPT := preload("res://scripts/components/Pickup.gd")
 const ENEMY_SCRIPT := preload("res://scripts/components/Enemy.gd")
 const LEVEL_GENERATOR_SCRIPT := preload("res://scripts/systems/LevelGenerator.gd")
+const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
 var player: Node2D
 var world_size := Vector2(3200, 2560)
@@ -22,6 +23,7 @@ func _ready() -> void:
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("wasteland", size_tiles, GameState.seed)
 	add_child(backdrop)
+	_add_projectile_pool(int(params.get("projectile_limit", 200)))
 	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 180))
 	_spawn_exit()
 	_spawn_resources()
@@ -37,6 +39,11 @@ func _spawn_player(default_position: Vector2) -> void:
 	else:
 		player.global_position = default_position
 	add_child(player)
+
+func _add_projectile_pool(limit: int) -> void:
+	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
+	pool.max_projectiles = limit
+	add_child(pool)
 
 func _spawn_exit() -> void:
 	var exit: Area2D = INTERACTABLE_SCRIPT.new()

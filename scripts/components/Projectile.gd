@@ -7,11 +7,23 @@ var direction := Vector2.RIGHT
 var speed := 520.0
 var damage := 8
 var life := 1.2
+var max_life := 1.2
+var is_active := true
+var pool_owner: Node
 
 func setup(start: Vector2, dir: Vector2, projectile_damage: int) -> void:
 	global_position = start
 	direction = dir.normalized()
 	damage = projectile_damage
+	life = max_life
+	is_active = true
+	visible = true
+	monitoring = true
+	set_physics_process(true)
+
+func setup_pooled(start: Vector2, dir: Vector2, projectile_damage: int, owner: Node) -> void:
+	pool_owner = owner
+	setup(start, dir, projectile_damage)
 
 func _ready() -> void:
 	add_to_group("projectile")
@@ -28,13 +40,30 @@ func _ready() -> void:
 	add_child(sprite)
 
 func _physics_process(delta: float) -> void:
+	if not is_active:
+		return
 	global_position += direction * speed * delta
 	rotation = direction.angle()
 	life -= delta
 	if life <= 0.0:
-		queue_free()
+		_release()
 
 func _on_body_entered(body: Node) -> void:
+	if not is_active:
+		return
 	if body.is_in_group("enemy") and body.has_method("take_damage"):
 		body.take_damage(damage, false)
+		_release()
+
+func deactivate() -> void:
+	is_active = false
+	visible = false
+	monitoring = false
+	set_physics_process(false)
+	global_position = Vector2(-100000, -100000)
+
+func _release() -> void:
+	if pool_owner != null and pool_owner.has_method("release"):
+		pool_owner.release(self)
+	else:
 		queue_free()

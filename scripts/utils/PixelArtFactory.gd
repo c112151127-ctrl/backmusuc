@@ -15,7 +15,7 @@ func make_texture(size: Vector2i, palette: Array[Color], pattern := 0) -> ImageT
 			image.set_pixel(x, y, c)
 	return ImageTexture.create_from_image(image)
 
-func player_texture(direction_index := 0, action_index := 0) -> ImageTexture:
+func player_texture(direction_index := 0, action_index := 0, frame_index := 0) -> ImageTexture:
 	var palette: Array[Color] = [
 		Color8(42, 48, 55),
 		Color8(96, 112, 118),
@@ -26,18 +26,29 @@ func player_texture(direction_index := 0, action_index := 0) -> ImageTexture:
 	image.fill(Color(0, 0, 0, 0))
 	for y in range(6, 38):
 		for x in range(8, 24):
-			var edge := x < 10 or x > 21 or y < 8 or y > 35
-			var c := palette[1] if not edge else palette[0]
+			var edge: bool = x < 10 or x > 21 or y < 8 or y > 35
+			var c: Color = palette[1] if not edge else palette[0]
 			if y < 16:
 				c = palette[0]
-			if (x + y + direction_index + action_index) % 9 == 0:
+			if (x + y + direction_index + action_index + frame_index) % 9 == 0:
 				c = palette[2]
 			image.set_pixel(x, y, c)
 	for y in range(14, 28):
-		var arm_x := 5 if action_index == 1 else 25
+		var arm_x: int = 5 if action_index == 1 else 25
+		if action_index == 2:
+			arm_x = 24 + frame_index
+		elif action_index == 3:
+			arm_x = 7 + frame_index
 		if arm_x >= 0 and arm_x < 32:
 			image.set_pixel(arm_x, y, palette[3])
 			image.set_pixel(clamp(arm_x + (direction_index % 3) - 1, 0, 31), y, palette[3])
+	if action_index == 1:
+		var blade_x: int = clamp(4 + frame_index * 3, 0, 31)
+		for y in range(10, 30):
+			image.set_pixel(blade_x, y, Color8(210, 212, 190))
+	if action_index == 2:
+		for x in range(22, 31):
+			image.set_pixel(x, 18 + frame_index, Color8(58, 210, 226))
 	return ImageTexture.create_from_image(image)
 
 func enemy_texture(enemy_type: String) -> ImageTexture:

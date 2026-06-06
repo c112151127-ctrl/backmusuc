@@ -6,6 +6,7 @@ const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
 const INVENTORY_SCRIPT := preload("res://scripts/systems/InventorySystem.gd")
+const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
 var player: Node2D
 
@@ -22,6 +23,7 @@ func _ready() -> void:
 	_add_station("save", "存檔點", Vector2(840, 560), Vector2(160, 96), Color8(42, 92, 108))
 	_add_station("to_wasteland", "前往野外", Vector2(950, 760), Vector2(180, 72), Color8(54, 104, 58))
 	_add_station("to_guild", "冒險公會", Vector2(1180, 380), Vector2(180, 96), Color8(90, 82, 120))
+	_add_projectile_pool(200)
 	_spawn_player(Vector2(640, 460))
 	add_child(HUD_SCENE.instantiate())
 	GameState.notify("村莊：鍛造、合成、交易、改裝、存檔與出口已啟用")
@@ -30,6 +32,11 @@ func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
 	player.global_position = default_position if GameState.active_spawn_point != "saved" else GameState.player_position
 	add_child(player)
+
+func _add_projectile_pool(limit: int) -> void:
+	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
+	pool.max_projectiles = limit
+	add_child(pool)
 
 func _add_station(id: String, label: String, pos: Vector2, size: Vector2, color: Color) -> void:
 	var node := Node2D.new()

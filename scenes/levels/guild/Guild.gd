@@ -5,6 +5,7 @@ const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
+const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
 func _ready() -> void:
 	y_sort_enabled = true
@@ -15,11 +16,17 @@ func _ready() -> void:
 	_add_counter("contract", "接取遠征任務", Vector2(420, 270), Color8(102, 74, 118))
 	_add_counter("reward", "公會獎勵兌換", Vector2(720, 270), Color8(75, 96, 122))
 	_add_counter("to_village", "返回村莊", Vector2(600, 560), Color8(64, 110, 70))
+	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
 	player.global_position = Vector2(600, 430)
 	add_child(player)
 	add_child(HUD_SCENE.instantiate())
 	GameState.notify("冒險公會：可接任務、兌換獎勵")
+
+func _add_projectile_pool(limit: int) -> void:
+	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
+	pool.max_projectiles = limit
+	add_child(pool)
 
 func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void:
 	var sprite := Sprite2D.new()

@@ -13,7 +13,7 @@ script = ExtResource("1_dovo2")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1456498863]
 shape = SubResource("CapsuleShape2D_lvxji")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=767709038]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=767709038]
 position = Vector2(0, -14)
 
 [node name="Camera2D" type="Camera2D" parent="."]

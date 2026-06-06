@@ -11,14 +11,15 @@ var state := PlayerState.IDLE
 var last_direction := Vector2.DOWN
 var attack_timer := 0.0
 var ranged_timer := 0.0
-var sprite_cache: Dictionary = {}
+var current_animation := ""
 
-@onready var sprite: Sprite2D = $Sprite2D
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 func _ready() -> void:
 	add_to_group("player")
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_update_sprite(0)
+	_build_sprite_frames()
+	_update_animation()
 
 func _physics_process(delta: float) -> void:
 	attack_timer = max(0.0, attack_timer - delta)
@@ -53,7 +54,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("load_game"):
 		SaveManager.load_game()
 
-	_update_sprite(_direction_index())
+	_update_animation()
 
 func _melee_attack() -> void:
 	if attack_timer > 0.0:
@@ -81,23 +82,52 @@ func _ranged_attack() -> void:
 	if aim.length() < 8:
 		aim = last_direction
 	last_direction = aim.normalized()
-	var projectile: Area2D = PROJECTILE_SCRIPT.new()
-	projectile.setup(global_position + last_direction * 28.0, last_direction, 10 + GameState.get_stat_bonus("attack"))
-	get_tree().current_scene.add_child(projectile)
+	var projectile_damage := 10 + GameState.get_stat_bonus("attack")
+	var projectile_start := global_position + last_direction * 28.0
+	var pools := get_tree().get_nodes_in_group("projectile_pool")
+	if not pools.is_empty() and pools[0].has_method("fire_projectile"):
+		if not pools[0].fire_projectile(projectile_start, last_direction, projectile_damage):
+			GameState.add_item("ammo", 1)
+	else:
+		var projectile: Area2D = PROJECTILE_SCRIPT.new()
+		projectile.setup(projectile_start, last_direction, projectile_damage)
+		get_tree().current_scene.add_child(projectile)
 
 func _direction_index() -> int:
 	var angle := last_direction.angle()
 	return int(round(angle / (PI / 4.0))) & 7
 
-func _update_sprite(direction_index: int) -> void:
-	var action_index := 0
+func _build_sprite_frames() -> void:
+	var frames := SpriteFrames.new()
+	var actions: Dictionary = {
+		"idle": 0,
+		"move": 0,
+		"melee": 1,
+		"shoot": 2,
+		"swap_tool": 3
+	}
+	for action_name in actions.keys():
+		for direction_index in range(8):
+			var animation_name := "%s_%d" % [action_name, direction_index]
+			frames.add_animation(animation_name)
+			frames.set_animation_speed(animation_name, 6.0 if action_name in ["idle", "move"] else 10.0)
+			frames.set_animation_loop(animation_name, action_name in ["idle", "move"])
+			for frame_index in range(3):
+				frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, int(actions[action_name]), frame_index))
+	sprite.sprite_frames = frames
+
+func _update_animation() -> void:
+	var direction_index := _direction_index()
+	var action_name := "idle"
 	if state == PlayerState.MELEE:
-		action_index = 1
+		action_name = "melee"
 	elif state == PlayerState.SHOOT:
-		action_index = 2
+		action_name = "shoot"
 	elif state == PlayerState.SWAP_TOOL:
-		action_index = 3
-	var key := "%d_%d" % [direction_index, action_index]
-	if not sprite_cache.has(key):
-		sprite_cache[key] = PIXEL.new().player_texture(direction_index, action_index)
-	sprite.texture = sprite_cache[key]
+		action_name = "swap_tool"
+	elif state == PlayerState.MOVE:
+		action_name = "move"
+	var next_animation := "%s_%d" % [action_name, direction_index]
+	if current_animation != next_animation:
+		current_animation = next_animation
+		sprite.play(current_animation)
