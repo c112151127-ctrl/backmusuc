@@ -97,13 +97,13 @@
 			}
 		},
 		"wasteland": {
-			"ammo_after_ranged": 17,
+			"ammo_after_ranged": 18,
 			"enemy_count": 30,
 			"position": {
 				"x": 720.0,
 				"y": 720.0
 			},
-			"projectiles": 1
+			"projectiles": 2
 		}
 	},
 	"version": 1

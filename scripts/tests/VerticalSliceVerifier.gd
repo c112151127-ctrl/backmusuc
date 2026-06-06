@@ -3,6 +3,7 @@ extends Node
 const VILLAGE_SCENE := preload("res://scenes/levels/village/Village.tscn")
 const WASTELAND_SCENE := preload("res://scenes/levels/wasteland/Wasteland.tscn")
 const GUILD_SCENE := preload("res://scenes/levels/guild/Guild.tscn")
+const ENEMY_SCRIPT := preload("res://scripts/components/Enemy.gd")
 
 var failures: Array[String] = []
 
@@ -11,6 +12,7 @@ func _ready() -> void:
 	print("[VERIFY] Waste Recycler vertical slice verification started")
 	DataRegistry.load_all()
 	_check_data_registry()
+	_check_enemy_behavior_contract()
 	_check_baked_assets()
 	_check_export_presets()
 	await _check_scene("village", VILLAGE_SCENE, {
@@ -32,6 +34,7 @@ func _ready() -> void:
 	_check_equipment_loop()
 	_check_recipe_and_quest_loop()
 	await _check_playable_core_loop()
+	await _check_enemy_projectile_damage()
 	await _check_touch_controls()
 	await _check_player_animation_contract()
 	await _check_projectile_pool_limit()
@@ -46,6 +49,30 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
+
+func _check_enemy_behavior_contract() -> void:
+	var required_patterns := {
+		"scrap_biter": "chase_and_bite",
+		"toxic_runner": "dash_strike",
+		"spore_gunner": "keep_distance_projectile",
+		"rust_brute": "slow_wide_melee",
+		"rot_wing": "orbiting_melee",
+		"mech_husk": "mixed_melee_projectile"
+	}
+	for enemy_id in required_patterns.keys():
+		var data := DataRegistry.get_enemy(String(enemy_id))
+		_expect(String(data.get("attack_pattern", "")) == String(required_patterns[enemy_id]), "enemy has attack pattern: " + String(enemy_id))
+		var enemy: WastelandEnemy = ENEMY_SCRIPT.new()
+		enemy.setup(String(enemy_id), data, null)
+		var summary := enemy.behavior_summary()
+		if String(summary.get("type", "")) in ["ranged", "hybrid"]:
+			_expect(bool(summary.get("can_fire_projectiles", false)), "enemy can fire projectiles: " + String(enemy_id))
+			_expect(float(summary.get("ranged_range", 0.0)) > 250.0, "enemy has ranged attack distance: " + String(enemy_id))
+		if String(summary.get("type", "")) == "fast":
+			_expect(float(summary.get("contact_range", 0.0)) <= 38.0, "fast enemy uses close dash contact range")
+		if String(summary.get("type", "")) == "heavy":
+			_expect(float(summary.get("contact_range", 0.0)) >= 56.0, "heavy enemy has wider melee range")
+		enemy.free()
 
 func _check_baked_assets() -> void:
 	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(480, 320), "baked player atlas exists at 5 actions x 8 directions x 3 frames")
@@ -186,6 +213,35 @@ func _check_playable_core_loop() -> void:
 	_expect(GameState.current_scene_id == "wasteland", "playable loop restores wasteland scene after reload")
 	GameState.set_scene("village", "from_wasteland")
 	_expect(GameState.current_scene_id == "village", "playable loop can return to village state")
+	instance.queue_free()
+	await get_tree().process_frame
+
+func _check_enemy_projectile_damage() -> void:
+	GameState.reset_new_run(false)
+	GameState.current_scene_id = "wasteland"
+	var instance := WASTELAND_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var players := get_tree().get_nodes_in_group("player")
+	var pools := get_tree().get_nodes_in_group("projectile_pool")
+	_expect(not players.is_empty(), "enemy projectile test has player")
+	_expect(not pools.is_empty(), "enemy projectile test has pool")
+	if players.is_empty() or pools.is_empty():
+		instance.queue_free()
+		await get_tree().process_frame
+		return
+	var player := players[0]
+	var hp_before := GameState.hp
+	var expected_damage: int = max(1, 9 - GameState.get_stat_bonus("defense"))
+	var pool := pools[0]
+	_expect(pool.fire_projectile(player.global_position - Vector2(28, 0), Vector2.RIGHT, 9, "player"), "enemy projectile can be fired at player group")
+	await get_tree().process_frame
+	var projectile = pool.pooled_projectiles[0] if pool.pooled_projectiles.size() > 0 else null
+	_expect(projectile != null and String(projectile.target_group) == "player", "enemy projectile targets player group")
+	if projectile != null:
+		projectile._on_body_entered(player)
+	_expect(GameState.hp == hp_before - expected_damage, "enemy projectile damages player after armor reduction")
 	instance.queue_free()
 	await get_tree().process_frame
 

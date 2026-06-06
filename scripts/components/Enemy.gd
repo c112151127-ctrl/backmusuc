@@ -13,6 +13,14 @@ var damage := 8
 var drop_table: Dictionary = {}
 var target: Node2D
 var attack_cooldown := 0.0
+var ranged_cooldown := 0.0
+var dash_cooldown := 0.0
+var dash_time := 0.0
+var contact_range := 42.0
+var preferred_distance := 0.0
+var ranged_range := 0.0
+var ranged_attack_cooldown := 1.4
+var can_fire_projectiles := false
 
 func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 	enemy_id = id
@@ -22,6 +30,7 @@ func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 	damage = int(data.get("damage", 8))
 	drop_table = data.get("drop_table", {})
 	target = player_ref
+	_configure_behavior()
 
 func _ready() -> void:
 	add_to_group("enemy")
@@ -64,14 +73,17 @@ func _physics_process(delta: float) -> void:
 		return
 	var offset := target.global_position - global_position
 	var distance := offset.length()
-	var desired := offset.normalized() if distance > 1.0 else Vector2.ZERO
-	if enemy_type == "ranged" and distance < 220:
-		desired = -desired * 0.5
-	velocity = desired * speed
+	var desired := _desired_direction(offset, distance)
+	velocity = desired * _current_speed()
 	move_and_slide()
 	attack_cooldown = max(0.0, attack_cooldown - delta)
-	if distance < 42 and attack_cooldown <= 0.0:
-		attack_cooldown = 0.75
+	ranged_cooldown = max(0.0, ranged_cooldown - delta)
+	dash_cooldown = max(0.0, dash_cooldown - delta)
+	dash_time = max(0.0, dash_time - delta)
+	if can_fire_projectiles and distance <= ranged_range and ranged_cooldown <= 0.0:
+		_fire_pollution_shot(offset.normalized())
+	if distance < contact_range and attack_cooldown <= 0.0:
+		attack_cooldown = _contact_cooldown()
 		GameState.take_damage(damage)
 
 func take_damage(amount: int, melee := false) -> void:
@@ -92,3 +104,90 @@ func _die(melee: bool) -> void:
 			pickup.global_position = global_position + Vector2(randf_range(-18, 18), randf_range(-18, 18))
 			get_tree().current_scene.add_child(pickup)
 	queue_free()
+
+func _configure_behavior() -> void:
+	contact_range = 42.0
+	preferred_distance = 0.0
+	ranged_range = 0.0
+	ranged_attack_cooldown = 1.4
+	can_fire_projectiles = false
+	match enemy_type:
+		"fast":
+			contact_range = 36.0
+			dash_cooldown = 0.35
+		"ranged":
+			contact_range = 34.0
+			preferred_distance = 230.0
+			ranged_range = 360.0
+			ranged_attack_cooldown = 1.35
+			can_fire_projectiles = true
+		"heavy":
+			contact_range = 58.0
+		"flying":
+			contact_range = 38.0
+		"hybrid":
+			contact_range = 46.0
+			preferred_distance = 155.0
+			ranged_range = 285.0
+			ranged_attack_cooldown = 1.05
+			can_fire_projectiles = true
+
+func _desired_direction(offset: Vector2, distance: float) -> Vector2:
+	var desired := offset.normalized() if distance > 1.0 else Vector2.ZERO
+	if enemy_type == "ranged":
+		if distance < preferred_distance:
+			desired = -desired * 0.7
+		elif distance < ranged_range:
+			desired = desired * 0.25
+	elif enemy_type == "hybrid":
+		if distance < preferred_distance:
+			desired = -desired * 0.35
+	elif enemy_type == "fast":
+		if distance < 190.0 and dash_cooldown <= 0.0:
+			dash_time = 0.18
+			dash_cooldown = 1.2
+	elif enemy_type == "flying":
+		var orbit := desired.rotated(PI * 0.5) * 0.45
+		desired = (desired + orbit).normalized()
+	elif enemy_type == "heavy" and distance > contact_range:
+		desired *= 0.8
+	return desired
+
+func _current_speed() -> float:
+	if enemy_type == "fast" and dash_time > 0.0:
+		return speed * 1.85
+	if enemy_type == "flying":
+		return speed * 1.08
+	return speed
+
+func _contact_cooldown() -> float:
+	match enemy_type:
+		"fast":
+			return 0.48
+		"heavy":
+			return 1.15
+		"hybrid":
+			return 0.85
+		_:
+			return 0.75
+
+func _fire_pollution_shot(direction: Vector2) -> void:
+	if direction.length() < 0.1:
+		return
+	var pools := get_tree().get_nodes_in_group("projectile_pool")
+	if pools.is_empty() or not pools[0].has_method("fire_projectile"):
+		return
+	var projectile_start := global_position + direction * 24.0
+	if pools[0].fire_projectile(projectile_start, direction, max(1, int(damage * 0.75)), "player"):
+		ranged_cooldown = ranged_attack_cooldown
+
+func behavior_summary() -> Dictionary:
+	return {
+		"type": enemy_type,
+		"contact_range": contact_range,
+		"preferred_distance": preferred_distance,
+		"ranged_range": ranged_range,
+		"can_fire_projectiles": can_fire_projectiles,
+		"ranged_cooldown": ranged_attack_cooldown,
+		"dash_speed": _current_speed() if enemy_type == "fast" and dash_time > 0.0 else speed
+	}

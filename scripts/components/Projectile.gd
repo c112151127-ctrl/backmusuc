@@ -10,20 +10,22 @@ var life := 1.2
 var max_life := 1.2
 var is_active := true
 var pool_owner: Node
+var target_group := "enemy"
 
-func setup(start: Vector2, dir: Vector2, projectile_damage: int) -> void:
+func setup(start: Vector2, dir: Vector2, projectile_damage: int, new_target_group := "enemy") -> void:
 	global_position = start
 	direction = dir.normalized()
 	damage = projectile_damage
+	target_group = new_target_group
 	life = max_life
 	is_active = true
 	visible = true
 	monitoring = true
 	set_physics_process(true)
 
-func setup_pooled(start: Vector2, dir: Vector2, projectile_damage: int, owner: Node) -> void:
+func setup_pooled(start: Vector2, dir: Vector2, projectile_damage: int, owner: Node, new_target_group := "enemy") -> void:
 	pool_owner = owner
-	setup(start, dir, projectile_damage)
+	setup(start, dir, projectile_damage, new_target_group)
 
 func _ready() -> void:
 	add_to_group("projectile")
@@ -51,14 +53,17 @@ func _physics_process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	if not is_active:
 		return
-	if body.is_in_group("enemy") and body.has_method("take_damage"):
-		body.take_damage(damage, false)
+	if body.is_in_group(target_group):
+		if body.has_method("take_damage"):
+			body.take_damage(damage, false)
+		elif target_group == "player":
+			GameState.take_damage(damage)
 		_release()
 
 func deactivate() -> void:
 	is_active = false
 	visible = false
-	monitoring = false
+	set_deferred("monitoring", false)
 	set_physics_process(false)
 	global_position = Vector2(-100000, -100000)
 

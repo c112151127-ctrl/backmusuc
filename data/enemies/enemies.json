@@ -3,6 +3,7 @@
     "scrap_biter": {
       "name": "腐爛掠食者",
       "type": "melee",
+      "attack_pattern": "chase_and_bite",
       "hp": 28,
       "speed": 82,
       "damage": 9,
@@ -11,6 +12,7 @@
     "toxic_runner": {
       "name": "毒脊爬行獸",
       "type": "fast",
+      "attack_pattern": "dash_strike",
       "hp": 18,
       "speed": 128,
       "damage": 7,
@@ -19,6 +21,7 @@
     "spore_gunner": {
       "name": "孢囊爆裂者",
       "type": "ranged",
+      "attack_pattern": "keep_distance_projectile",
       "hp": 22,
       "speed": 62,
       "damage": 6,
@@ -27,6 +30,7 @@
     "rust_brute": {
       "name": "巨噬腐肉獸",
       "type": "heavy",
+      "attack_pattern": "slow_wide_melee",
       "hp": 72,
       "speed": 46,
       "damage": 16,
@@ -35,6 +39,7 @@
     "rot_wing": {
       "name": "腐化飛行體",
       "type": "flying",
+      "attack_pattern": "orbiting_melee",
       "hp": 20,
       "speed": 112,
       "damage": 8,
@@ -43,6 +48,7 @@
     "mech_husk": {
       "name": "汙染機械體",
       "type": "hybrid",
+      "attack_pattern": "mixed_melee_projectile",
       "hp": 46,
       "speed": 72,
       "damage": 12,

@@ -11,7 +11,7 @@ var pooled_projectiles: Array[Area2D] = []
 func _ready() -> void:
 	add_to_group("projectile_pool")
 
-func fire_projectile(start: Vector2, dir: Vector2, damage: int) -> bool:
+func fire_projectile(start: Vector2, dir: Vector2, damage: int, target_group := "enemy") -> bool:
 	if active_count >= max_projectiles:
 		GameState.notify("投射物已達上限")
 		return false
@@ -19,7 +19,7 @@ func fire_projectile(start: Vector2, dir: Vector2, damage: int) -> bool:
 	if projectile == null:
 		return false
 	active_count += 1
-	projectile.setup_pooled(start, dir, damage, self)
+	projectile.setup_pooled(start, dir, damage, self, target_group)
 	return true
 
 func release(projectile: Area2D) -> void:
