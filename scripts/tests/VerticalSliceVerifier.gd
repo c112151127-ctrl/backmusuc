@@ -23,6 +23,8 @@ func _ready() -> void:
 		"interactable": 5,
 		"enemy": 30,
 		"pickup": 42,
+		"world_prop": 60,
+		"obstacle": 40,
 		"projectile_pool": 1,
 		"player": 1
 	})
@@ -34,6 +36,7 @@ func _ready() -> void:
 	_check_equipment_loop()
 	_check_recipe_and_quest_loop()
 	await _check_playable_core_loop()
+	await _check_wasteland_prop_contract()
 	await _check_enemy_projectile_damage()
 	await _check_touch_controls()
 	await _check_player_animation_contract()
@@ -49,6 +52,7 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
+	_expect(int(DataRegistry.map_params.get("prop_nodes", 0)) >= 60, "wasteland has enough pseudo-3D props configured")
 
 func _check_enemy_behavior_contract() -> void:
 	var required_patterns := {
@@ -216,6 +220,26 @@ func _check_playable_core_loop() -> void:
 	instance.queue_free()
 	await get_tree().process_frame
 
+func _check_wasteland_prop_contract() -> void:
+	GameState.reset_new_run(false)
+	GameState.current_scene_id = "wasteland"
+	var instance := WASTELAND_SCENE.instantiate()
+	add_child(instance)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var props := get_tree().get_nodes_in_group("world_prop")
+	var obstacles := get_tree().get_nodes_in_group("obstacle")
+	_expect(props.size() >= int(DataRegistry.map_params.get("prop_nodes", 72)), "wasteland props spawn from seed")
+	_expect(obstacles.size() >= 40, "wasteland blocking obstacles exist")
+	if not props.is_empty():
+		var prop := props[0]
+		_expect(prop is Node2D and prop.y_sort_enabled, "wasteland props participate in Y-Sort")
+	if not obstacles.is_empty():
+		var obstacle := obstacles[0]
+		_expect(_has_collision_shape(obstacle), "blocking obstacle has collision")
+	instance.queue_free()
+	await get_tree().process_frame
+
 func _check_enemy_projectile_damage() -> void:
 	GameState.reset_new_run(false)
 	GameState.current_scene_id = "wasteland"
@@ -326,6 +350,12 @@ func _expect(condition: bool, label: String) -> void:
 	else:
 		failures.append(label)
 		push_error("[FAIL] " + label)
+
+func _has_collision_shape(node: Node) -> bool:
+	for child in node.get_children():
+		if child is CollisionShape2D:
+			return true
+	return false
 
 func _expect_png_size(path: String, expected_size: Vector2i, label: String) -> void:
 	_expect(FileAccess.file_exists(path), label + " file exists")

@@ -10,6 +10,7 @@
 | 隨時存檔 JSON | `scripts/autoload/SaveManager.gd` 寫入 `user://save_game.json`。 |
 | Base64 / hash 驗證 | `SaveManager.gd` 使用 Base64 payload + SHA-256 checksum。 |
 | 程序化野外地圖 | `Wasteland.gd` 使用 seed 生成資源、事件與敵人位置；事件資料在 `data/maps/events.json`。 |
+| 偽 3D 地圖層次 | `WorldProp.gd` 與 `Wasteland.gd` 依 seed 生成岩石、枯樹、殘骸、毒池、訊號塔等 Y-Sort prop；阻擋型 prop 有 `CollisionShape2D`。 |
 | 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、拆解、存檔、野外入口與公會入口；配方資料在 `data/items/recipes.json`。 |
 | 冒險公會 | `Guild.gd` 實作接取委託、前往廢土與交付獎勵；委託資料在 `data/maps/quests.json`。 |
 | 任務存檔 | `GameState.gd` 會保存 active quest、completed quests 與 quest progress，`SaveManager.gd` 會一起寫入 Base64/checksum 存檔。 |

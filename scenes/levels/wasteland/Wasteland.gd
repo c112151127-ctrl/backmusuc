@@ -7,6 +7,7 @@ const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
 const PICKUP_SCRIPT := preload("res://scripts/components/Pickup.gd")
 const ENEMY_SCRIPT := preload("res://scripts/components/Enemy.gd")
+const WORLD_PROP_SCRIPT := preload("res://scripts/components/WorldProp.gd")
 const LEVEL_GENERATOR_SCRIPT := preload("res://scripts/systems/LevelGenerator.gd")
 const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
@@ -26,6 +27,7 @@ func _ready() -> void:
 	_add_projectile_pool(int(params.get("projectile_limit", 200)))
 	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 180))
 	_spawn_exit()
+	_spawn_props()
 	_spawn_resources()
 	_spawn_events()
 	_spawn_enemies()
@@ -71,6 +73,36 @@ func _spawn_resources() -> void:
 		pickup.setup(id, amount)
 		pickup.global_position = positions[i]
 		add_child(pickup)
+
+func _spawn_props() -> void:
+	var count := int(DataRegistry.map_params.get("prop_nodes", 72))
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 860), GameState.seed + 301, 78)
+	var prop_ids: Array[String] = ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"]
+	for i in positions.size():
+		var id := prop_ids[i % prop_ids.size()]
+		var blocking := id != "toxic_pool" and id != "road_marker"
+		var size := _prop_size(id, i)
+		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()
+		prop.setup(id, blocking, size)
+		prop.global_position = positions[i]
+		add_child(prop)
+
+func _prop_size(id: String, index: int) -> Vector2i:
+	match id:
+		"dead_tree":
+			return Vector2i(46 + (index % 3) * 8, 88 + (index % 4) * 10)
+		"scrap_wall":
+			return Vector2i(82, 58)
+		"toxic_pool":
+			return Vector2i(72, 42)
+		"wreck":
+			return Vector2i(92, 66)
+		"signal_pylon":
+			return Vector2i(54, 112)
+		"road_marker":
+			return Vector2i(34, 48)
+		_:
+			return Vector2i(56 + (index % 2) * 14, 48 + (index % 3) * 8)
 
 func _spawn_events() -> void:
 	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(10, Rect2(240, 260, world_size.x - 480, world_size.y - 700), GameState.seed + 25, 220)
