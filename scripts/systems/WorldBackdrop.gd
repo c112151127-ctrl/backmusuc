@@ -26,6 +26,8 @@ func _draw() -> void:
 		for x in map_size.x:
 			var rect := Rect2(x * tile_size, y * tile_size, tile_size, tile_size)
 			var c := base.lerp(alt, rng.randf_range(0.0, 0.35))
+			if mode == "wasteland":
+				c = c.lerp(_wasteland_zone_color(x, y), _wasteland_zone_strength(x, y))
 			var road_strength := _road_strength(x, y)
 			if road_strength > 0.0:
 				c = c.lerp(Color8(94, 82, 62), road_strength)
@@ -57,6 +59,28 @@ func _road_strength(x: int, y: int) -> float:
 		var trail: bool = abs(y - int(map_size.y * 0.72) - int(sin(float(x) * 0.14) * 5.0)) <= 2
 		var branch: bool = abs(x - int(map_size.x * 0.5) - int(sin(float(y) * 0.11) * 4.0)) <= 1 and y > map_size.y * 0.35
 		return 0.42 if trail or branch else 0.0
+	return 0.0
+
+func _wasteland_zone_color(x: int, y: int) -> Color:
+	var px: float = float(x) / max(1.0, float(map_size.x))
+	var py: float = float(y) / max(1.0, float(map_size.y))
+	if py < 0.27 and px > 0.36 and px < 0.68:
+		return Color8(72, 39, 90)
+	if px < 0.38 and py > 0.22 and py < 0.56:
+		return Color8(75, 74, 70)
+	if px > 0.60 and py > 0.24 and py < 0.62:
+		return Color8(34, 82, 52)
+	return Color8(39, 45, 38)
+
+func _wasteland_zone_strength(x: int, y: int) -> float:
+	var px: float = float(x) / max(1.0, float(map_size.x))
+	var py: float = float(y) / max(1.0, float(map_size.y))
+	if py < 0.27 and px > 0.36 and px < 0.68:
+		return 0.36
+	if px < 0.38 and py > 0.22 and py < 0.56:
+		return 0.30
+	if px > 0.60 and py > 0.24 and py < 0.62:
+		return 0.42
 	return 0.0
 
 func _load_tile_texture() -> Texture2D:

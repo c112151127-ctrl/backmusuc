@@ -27,6 +27,7 @@ func _ready() -> void:
 		"world_prop": 60,
 		"obstacle": 40,
 		"projectile_pool": 1,
+		"boss": 1,
 		"player": 1
 	})
 	await _check_scene("guild", GUILD_SCENE, {
@@ -49,7 +50,7 @@ func _ready() -> void:
 func _check_data_registry() -> void:
 	_expect(DataRegistry.equipment.size() >= 6, "equipment data has at least 6 entries")
 	_expect(DataRegistry.resources.size() >= 4, "resource data has at least 4 entries")
-	_expect(DataRegistry.enemies.size() >= 6, "enemy data has 6 enemy archetypes")
+	_expect(DataRegistry.enemies.size() >= 7, "enemy data has 6 enemy archetypes plus boss")
 	_expect(DataRegistry.events.size() >= 4, "event data has random event pool")
 	_expect(DataRegistry.recipes.size() >= 5, "recipe data has forge craft shop and mod loops")
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
@@ -65,7 +66,8 @@ func _check_enemy_behavior_contract() -> void:
 		"spore_gunner": "keep_distance_projectile",
 		"rust_brute": "slow_wide_melee",
 		"rot_wing": "orbiting_melee",
-		"mech_husk": "mixed_melee_projectile"
+		"mech_husk": "mixed_melee_projectile",
+		"waste_titan": "boss_stomp_and_core_barrage"
 	}
 	for enemy_id in required_patterns.keys():
 		var data := DataRegistry.get_enemy(String(enemy_id))
@@ -80,11 +82,14 @@ func _check_enemy_behavior_contract() -> void:
 			_expect(float(summary.get("contact_range", 0.0)) <= 38.0, "fast enemy uses close dash contact range")
 		if String(summary.get("type", "")) == "heavy":
 			_expect(float(summary.get("contact_range", 0.0)) >= 56.0, "heavy enemy has wider melee range")
+		if String(summary.get("type", "")) == "boss":
+			_expect(bool(summary.get("can_fire_projectiles", false)), "boss can fire projectile pressure")
+			_expect(float(summary.get("contact_range", 0.0)) >= 70.0, "boss has wide stomp range")
 		enemy.free()
 
 func _check_baked_assets() -> void:
 	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(1008, 448), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
-	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(216, 34), "baked enemy atlas has 6 enemy types")
+	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(252, 34), "baked enemy atlas has 6 enemy types plus boss")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(96, 24), "baked item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
 

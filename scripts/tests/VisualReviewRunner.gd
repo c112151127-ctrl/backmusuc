@@ -33,7 +33,26 @@ func _capture_scene(scene_id: String, packed_scene: PackedScene) -> void:
 	for _i in range(8):
 		await get_tree().process_frame
 	var image := get_viewport().get_texture().get_image()
-	var path := ProjectSettings.globalize_path("res://docs/visual_review_%s.png" % scene_id)
+	_save_image(image, "visual_review_%s" % scene_id)
+	if scene_id == "wasteland":
+		await _capture_wasteland_boss_area()
+
+func _capture_wasteland_boss_area() -> void:
+	var bosses := get_tree().get_nodes_in_group("boss")
+	var players := get_tree().get_nodes_in_group("player")
+	if bosses.is_empty() or players.is_empty():
+		return
+	var boss := bosses[0] as Node2D
+	var player := players[0] as Node2D
+	player.global_position = boss.global_position + Vector2(180, 180)
+	GameState.player_position = player.global_position
+	for _i in range(12):
+		await get_tree().process_frame
+	var image := get_viewport().get_texture().get_image()
+	_save_image(image, "visual_review_wasteland_boss")
+
+func _save_image(image: Image, name: String) -> void:
+	var path := ProjectSettings.globalize_path("res://docs/%s.png" % name)
 	var error := image.save_png(path)
 	if error == OK:
 		print("[VISUAL] Saved " + path)

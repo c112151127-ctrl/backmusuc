@@ -7,5 +7,11 @@
   "prop_nodes": 160,
   "resource_nodes": 80,
   "event_nodes": 18,
-  "spawn_radius": 1400
+  "spawn_radius": 1400,
+  "boss_enabled": true,
+  "adventure_zones": [
+    "廢鐵公路",
+    "毒沼邊界",
+    "晶化裂隙"
+  ]
 }

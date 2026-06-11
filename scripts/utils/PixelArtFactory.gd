@@ -5,7 +5,7 @@ const PLAYER_FRAME_SIZE := Vector2i(48, 56)
 const ENEMY_FRAME_SIZE := Vector2i(36, 34)
 const ITEM_FRAME_SIZE := Vector2i(24, 24)
 const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
-const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid"]
+const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid", "boss"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
 
 func make_texture(size: Vector2i, palette: Array[Color], pattern := 0) -> ImageTexture:
@@ -65,6 +65,21 @@ func enemy_image(enemy_type: String) -> Image:
 	image.fill(Color(0, 0, 0, 0))
 	_enemy_ellipse(image, Vector2i(18, 29), 13, 4, Color(0, 0, 0, 0.32))
 	match enemy_type:
+		"boss":
+			_enemy_ellipse(image, Vector2i(18, 27), 17, 5, Color(0, 0, 0, 0.38))
+			_enemy_ellipse(image, Vector2i(18, 17), 16, 12, Color8(64, 50, 43))
+			_enemy_ellipse(image, Vector2i(18, 16), 12, 9, Color8(129, 86, 59))
+			_enemy_rect(image, 4, 13, 9, 27, Color8(44, 38, 36))
+			_enemy_rect(image, 27, 13, 32, 27, Color8(44, 38, 36))
+			_enemy_line(image, Vector2(7, 10), Vector2(2, 4), Color8(176, 82, 58), 2)
+			_enemy_line(image, Vector2(29, 10), Vector2(34, 4), Color8(176, 82, 58), 2)
+			_enemy_rect(image, 10, 11, 26, 14, Color8(55, 38, 34))
+			_enemy_rect(image, 12, 20, 24, 25, Color8(39, 22, 18))
+			_enemy_rect(image, 14, 12, 16, 14, Color8(236, 66, 61))
+			_enemy_rect(image, 20, 12, 22, 14, Color8(236, 66, 61))
+			_enemy_line(image, Vector2(6, 23), Vector2(0, 31), Color8(93, 187, 77), 2)
+			_enemy_line(image, Vector2(30, 23), Vector2(35, 31), Color8(93, 187, 77), 2)
+			_enemy_rect(image, 15, 6, 21, 8, Color8(230, 157, 80))
 		"fast":
 			_enemy_ellipse(image, Vector2i(18, 18), 11, 8, Color8(42, 76, 38))
 			_enemy_ellipse(image, Vector2i(20, 15), 8, 5, Color8(110, 176, 57))
@@ -137,14 +152,64 @@ func item_texture(item_id: String) -> ImageTexture:
 	return ImageTexture.create_from_image(item_image(item_id))
 
 func item_image(item_id: String) -> Image:
-	var palette: Array[Color] = [Color8(82, 69, 55), Color8(168, 107, 52), Color8(66, 186, 204)]
-	if item_id == "ammo":
-		palette = [Color8(58, 64, 71), Color8(208, 187, 87), Color8(120, 80, 52)]
-	elif item_id == "mutant_core":
-		palette = [Color8(82, 24, 28), Color8(214, 50, 61), Color8(245, 112, 95)]
-	elif item_id == "bio_crystal":
-		palette = [Color8(54, 27, 77), Color8(179, 85, 225), Color8(76, 221, 148)]
-	return make_image(ITEM_FRAME_SIZE, palette, item_id.length())
+	var image := Image.create(ITEM_FRAME_SIZE.x, ITEM_FRAME_SIZE.y, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	_item_ellipse(image, Vector2i(12, 20), 8, 2, Color(0, 0, 0, 0.30))
+	match item_id:
+		"ammo":
+			_item_rect(image, 5, 8, 18, 16, Color8(43, 48, 52))
+			_item_rect(image, 7, 6, 16, 9, Color8(215, 178, 72))
+			_item_rect(image, 7, 11, 16, 14, Color8(121, 81, 48))
+			_item_rect(image, 18, 10, 20, 15, Color8(218, 191, 93))
+			_item_rect(image, 5, 16, 18, 18, Color8(24, 28, 31))
+		"mutant_core":
+			_item_ellipse(image, Vector2i(12, 12), 8, 8, Color8(70, 19, 25))
+			_item_ellipse(image, Vector2i(12, 12), 5, 5, Color8(215, 52, 63))
+			_item_ellipse(image, Vector2i(9, 9), 2, 2, Color8(255, 145, 108))
+			_item_line(image, Vector2(12, 4), Vector2(15, 1), Color8(95, 207, 88), 1)
+			_item_line(image, Vector2(17, 13), Vector2(22, 15), Color8(95, 207, 88), 1)
+		"bio_crystal":
+			_item_line(image, Vector2(12, 3), Vector2(5, 14), Color8(77, 224, 155), 2)
+			_item_line(image, Vector2(12, 3), Vector2(19, 14), Color8(185, 92, 233), 2)
+			_item_line(image, Vector2(5, 14), Vector2(12, 21), Color8(62, 38, 91), 2)
+			_item_line(image, Vector2(19, 14), Vector2(12, 21), Color8(62, 38, 91), 2)
+			_item_rect(image, 10, 8, 14, 17, Color8(151, 246, 201))
+			_item_set(image, 13, 6, Color.WHITE)
+		_:
+			_item_rect(image, 5, 11, 18, 17, Color8(73, 59, 45))
+			_item_rect(image, 7, 8, 13, 14, Color8(139, 92, 57))
+			_item_rect(image, 13, 7, 19, 13, Color8(95, 104, 96))
+			_item_rect(image, 4, 15, 9, 19, Color8(165, 109, 55))
+			_item_line(image, Vector2(7, 9), Vector2(18, 17), Color8(219, 159, 78), 1)
+			_item_set(image, 15, 9, Color8(78, 190, 205))
+	return image
+
+func _item_set(image: Image, x: int, y: int, color: Color) -> void:
+	if x >= 0 and y >= 0 and x < image.get_width() and y < image.get_height():
+		image.set_pixel(x, y, color)
+
+func _item_rect(image: Image, x0: int, y0: int, x1: int, y1: int, color: Color) -> void:
+	for y in range(min(y0, y1), max(y0, y1) + 1):
+		for x in range(min(x0, x1), max(x0, x1) + 1):
+			_item_set(image, x, y, color)
+
+func _item_ellipse(image: Image, center: Vector2i, radius_x: int, radius_y: int, color: Color) -> void:
+	for y in range(center.y - radius_y, center.y + radius_y + 1):
+		for x in range(center.x - radius_x, center.x + radius_x + 1):
+			var dx: float = float(x - center.x) / max(1.0, float(radius_x))
+			var dy: float = float(y - center.y) / max(1.0, float(radius_y))
+			if dx * dx + dy * dy <= 1.0:
+				_item_set(image, x, y, color)
+
+func _item_line(image: Image, from_point: Vector2, to_point: Vector2, color: Color, width := 1) -> void:
+	var steps := int(max(abs(to_point.x - from_point.x), abs(to_point.y - from_point.y)))
+	if steps <= 0:
+		_item_ellipse(image, Vector2i(int(from_point.x), int(from_point.y)), width, width, color)
+		return
+	for i in range(steps + 1):
+		var t := float(i) / float(steps)
+		var p := from_point.lerp(to_point, t)
+		_item_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)
 
 func _draw_player_legs(image: Image, origin: Vector2i, direction_index: int, action_index: int, frame_index: int, palette: Array[Color]) -> void:
 	var stride := 0

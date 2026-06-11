@@ -21,6 +21,7 @@ var preferred_distance := 0.0
 var ranged_range := 0.0
 var ranged_attack_cooldown := 1.4
 var can_fire_projectiles := false
+var is_dead := false
 
 func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 	enemy_id = id
@@ -34,14 +35,19 @@ func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 
 func _ready() -> void:
 	add_to_group("enemy")
+	if enemy_type == "boss":
+		add_to_group("boss")
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
-	shape.radius = 18
+	shape.radius = 32 if enemy_type == "boss" else 18
 	collision.shape = shape
 	add_child(collision)
 	var sprite := Sprite2D.new()
 	sprite.texture = _enemy_texture(enemy_type)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if enemy_type == "boss":
+		sprite.scale = Vector2(1.9, 1.9)
+		sprite.position.y = -14
 	add_child(sprite)
 
 func _enemy_texture(type_id: String) -> Texture2D:
@@ -87,6 +93,8 @@ func _physics_process(delta: float) -> void:
 		GameState.take_damage(damage)
 
 func take_damage(amount: int, melee := false) -> void:
+	if is_dead:
+		return
 	hp -= amount
 	AudioManager.play_sfx("hit")
 	modulate = Color(1.0, 0.55, 0.45)
@@ -96,16 +104,25 @@ func take_damage(amount: int, melee := false) -> void:
 		_die(melee)
 
 func _die(melee: bool) -> void:
+	if is_dead:
+		return
+	is_dead = true
 	AudioManager.play_sfx("death")
-	if melee:
+	if melee or enemy_type == "boss":
 		GameState.record_enemy_defeated()
+	if enemy_type == "boss":
+		GameState.notify("Boss 已擊倒：廢土巨像的核心暴露了")
+	call_deferred("_spawn_drops", global_position)
+	call_deferred("queue_free")
+
+func _spawn_drops(drop_position: Vector2) -> void:
 	for item_id in drop_table.keys():
-		if randi() % 100 < 55:
+		var chance := 100 if enemy_type == "boss" else 55
+		if randi() % 100 < chance:
 			var pickup: Area2D = PICKUP_SCRIPT.new()
 			pickup.setup(String(item_id), int(drop_table[item_id]))
-			pickup.global_position = global_position + Vector2(randf_range(-18, 18), randf_range(-18, 18))
+			pickup.global_position = drop_position + Vector2(randf_range(-28, 28), randf_range(-22, 22))
 			get_tree().current_scene.add_child(pickup)
-	queue_free()
 
 func _configure_behavior() -> void:
 	contact_range = 42.0
@@ -133,6 +150,12 @@ func _configure_behavior() -> void:
 			ranged_range = 285.0
 			ranged_attack_cooldown = 1.05
 			can_fire_projectiles = true
+		"boss":
+			contact_range = 74.0
+			preferred_distance = 150.0
+			ranged_range = 360.0
+			ranged_attack_cooldown = 1.15
+			can_fire_projectiles = true
 
 func _desired_direction(offset: Vector2, distance: float) -> Vector2:
 	var desired := offset.normalized() if distance > 1.0 else Vector2.ZERO
@@ -153,6 +176,11 @@ func _desired_direction(offset: Vector2, distance: float) -> Vector2:
 		desired = (desired + orbit).normalized()
 	elif enemy_type == "heavy" and distance > contact_range:
 		desired *= 0.8
+	elif enemy_type == "boss":
+		if distance < preferred_distance:
+			desired = -desired * 0.22
+		else:
+			desired *= 0.58
 	return desired
 
 func _current_speed() -> float:
@@ -160,6 +188,8 @@ func _current_speed() -> float:
 		return speed * 1.85
 	if enemy_type == "flying":
 		return speed * 1.08
+	if enemy_type == "boss":
+		return speed * 0.72
 	return speed
 
 func _contact_cooldown() -> float:
@@ -170,6 +200,8 @@ func _contact_cooldown() -> float:
 			return 1.15
 		"hybrid":
 			return 0.85
+		"boss":
+			return 1.25
 		_:
 			return 0.75
 

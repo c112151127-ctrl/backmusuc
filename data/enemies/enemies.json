@@ -53,6 +53,15 @@
       "speed": 72,
       "damage": 12,
       "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 }
+    },
+    "waste_titan": {
+      "name": "廢土巨像",
+      "type": "boss",
+      "attack_pattern": "boss_stomp_and_core_barrage",
+      "hp": 220,
+      "speed": 44,
+      "damage": 22,
+      "drop_table": { "scrap": 18, "ammo": 8, "bio_crystal": 3, "mutant_core": 2 }
     }
   }
 }

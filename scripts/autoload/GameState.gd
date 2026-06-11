@@ -201,7 +201,6 @@ func take_damage(amount: int) -> void:
 	if hp <= 0:
 		notify("機體損毀，返回村莊維修")
 		hp = MAX_HP
-		set_scene("village", "clinic")
 		SceneRouter.change_to("village", "clinic")
 
 func heal_full() -> void:

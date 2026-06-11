@@ -7,6 +7,11 @@ const ITEM_ATLAS_PATH := "res://assets/sprites/items/recycler_item_icons.png"
 @export var item_id := "scrap"
 @export var amount := 1
 
+var sprite: Sprite2D
+var base_y := 0.0
+var float_phase := 0.0
+var collected := false
+
 func setup(id: String, count: int) -> void:
 	item_id = id
 	amount = count
@@ -15,15 +20,24 @@ func _ready() -> void:
 	add_to_group("pickup")
 	monitoring = true
 	body_entered.connect(_on_body_entered)
+	base_y = position.y
+	float_phase = randf_range(0.0, TAU)
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
 	shape.radius = 18
 	collision.shape = shape
 	add_child(collision)
-	var sprite := Sprite2D.new()
+	sprite = Sprite2D.new()
 	sprite.texture = _item_texture(item_id)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.scale = Vector2(1.25, 1.25)
 	add_child(sprite)
+	set_process(true)
+
+func _process(delta: float) -> void:
+	float_phase += delta * 4.2
+	if sprite != null:
+		sprite.position.y = sin(float_phase) * 2.0
 
 func _item_texture(id: String) -> Texture2D:
 	var atlas: Texture2D = _load_atlas_texture(ITEM_ATLAS_PATH)
@@ -50,10 +64,13 @@ func _load_atlas_texture(path: String) -> Texture2D:
 	return null
 
 func _on_body_entered(body: Node) -> void:
-	if not body.is_in_group("player"):
+	if collected or not body.is_in_group("player"):
 		return
+	collected = true
+	set_deferred("monitoring", false)
 	GameState.add_item(item_id, amount)
 	AudioManager.play_sfx("pickup")
 	var label: String = String(DataRegistry.get_resource(item_id).get("name", item_id))
-	GameState.notify("拾取 %s x%d" % [label, amount])
-	queue_free()
+	GameState.notify("撿起 %s x%d" % [label, amount])
+	visible = false
+	call_deferred("queue_free")
