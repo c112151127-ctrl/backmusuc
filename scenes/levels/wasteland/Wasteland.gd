@@ -13,7 +13,7 @@ const LEVEL_GENERATOR_SCRIPT := preload("res://scripts/systems/LevelGenerator.gd
 const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
 
 var player: Node2D
-var world_size := Vector2(3200, 2560)
+var world_size := Vector2(5760, 4480)
 
 func _ready() -> void:
 	y_sort_enabled = true
@@ -21,20 +21,21 @@ func _ready() -> void:
 	AudioManager.play_music("wasteland")
 	var params := DataRegistry.map_params
 	var tile_size := int(params.get("tile_size", 32))
-	var size_tiles := Vector2i(int(params.get("width_tiles", 100)), int(params.get("height_tiles", 80)))
+	var size_tiles := Vector2i(int(params.get("width_tiles", 180)), int(params.get("height_tiles", 140)))
 	world_size = Vector2(size_tiles.x * tile_size, size_tiles.y * tile_size)
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("wasteland", size_tiles, GameState.seed)
 	add_child(backdrop)
+	_add_boundaries(world_size)
 	_add_projectile_pool(int(params.get("projectile_limit", 200)))
-	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 260))
+	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 300))
 	_spawn_exit()
 	_spawn_props()
 	_spawn_resources()
 	_spawn_events()
 	_spawn_enemies()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("廢土外圍：擊倒污染體、回收資源，資源足夠後回村強化。")
+	GameState.notify("廢土外圍：探索路標、事件、補給箱與污染源；資源足夠後回村強化。")
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -43,6 +44,8 @@ func _spawn_player(default_position: Vector2) -> void:
 	else:
 		player.global_position = default_position
 	add_child(player)
+	if player.has_method("set_world_bounds"):
+		player.set_world_bounds(Rect2(Vector2(48, 48), world_size - Vector2(96, 96)))
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
@@ -56,11 +59,6 @@ func _spawn_exit() -> void:
 	exit.position = Vector2(world_size.x * 0.5, world_size.y - 90)
 	exit.interacted.connect(func(_id: String) -> void: SceneRouter.change_to("village", "from_wasteland"))
 	add_child(exit)
-	var label := Label.new()
-	label.text = "返回村莊"
-	label.position = exit.position + Vector2(-44, -170)
-	label.add_theme_font_size_override("font_size", 20)
-	add_child(label)
 	var gate := Sprite2D.new()
 	var gate_texture := ASSET_LOADER.load_png("res://assets/sprites/structures/village_return_gate.png")
 	if gate_texture != null:
@@ -72,8 +70,8 @@ func _spawn_exit() -> void:
 		add_child(gate)
 
 func _spawn_resources() -> void:
-	var count := int(DataRegistry.map_params.get("resource_nodes", 42))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(180, 180, world_size.x - 360, world_size.y - 520), GameState.seed + 11, 90)
+	var count := int(DataRegistry.map_params.get("resource_nodes", 80))
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(180, 180, world_size.x - 360, world_size.y - 620), GameState.seed + 11, 110)
 	var ids: Array[String] = ["scrap", "ammo", "bio_crystal", "mutant_core"]
 	for i in positions.size():
 		var id: String = ids[i % ids.size()]
@@ -86,8 +84,8 @@ func _spawn_resources() -> void:
 		add_child(pickup)
 
 func _spawn_props() -> void:
-	var count := int(DataRegistry.map_params.get("prop_nodes", 72))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 860), GameState.seed + 301, 78)
+	var count := int(DataRegistry.map_params.get("prop_nodes", 160))
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 900), GameState.seed + 301, 86)
 	var prop_ids: Array[String] = ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"]
 	for i in positions.size():
 		var id := prop_ids[i % prop_ids.size()]
@@ -116,8 +114,8 @@ func _prop_size(id: String, index: int) -> Vector2i:
 			return Vector2i(56 + (index % 2) * 14, 48 + (index % 3) * 8)
 
 func _spawn_events() -> void:
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(10, Rect2(240, 260, world_size.x - 480, world_size.y - 700), GameState.seed + 25, 220)
-	for i in min(positions.size(), DataRegistry.events.size()):
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(int(DataRegistry.map_params.get("event_nodes", 18)), Rect2(240, 260, world_size.x - 480, world_size.y - 800), GameState.seed + 25, 260)
+	for i in positions.size():
 		var event_data: Dictionary = DataRegistry.events[i % DataRegistry.events.size()]
 		var event_id := String(event_data.get("id", "event_%d" % i))
 		var event_name := String(event_data.get("name", "廢土事件"))
@@ -132,24 +130,36 @@ func _spawn_events() -> void:
 		marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		marker.position = positions[i]
 		add_child(marker)
-		var label := Label.new()
-		label.text = event_name
-		label.position = positions[i] + Vector2(-42, -54)
-		label.add_theme_font_size_override("font_size", 14)
-		add_child(label)
 
 func _spawn_enemies() -> void:
 	var enemy_ids := DataRegistry.enemy_ids()
 	if enemy_ids.is_empty():
 		return
 	var limit := int(DataRegistry.map_params.get("enemy_limit", 30))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(limit, Rect2(200, 140, world_size.x - 400, world_size.y - 620), GameState.seed + 91, 120)
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(limit, Rect2(220, 180, world_size.x - 440, world_size.y - 820), GameState.seed + 91, 170)
 	for i in min(limit, positions.size()):
 		var id := String(enemy_ids[i % enemy_ids.size()])
 		var enemy: CharacterBody2D = ENEMY_SCRIPT.new()
 		enemy.setup(id, DataRegistry.get_enemy(id), player)
 		enemy.global_position = positions[i]
 		add_child(enemy)
+
+func _add_boundaries(size: Vector2) -> void:
+	_add_boundary(Vector2(size.x * 0.5, 12), Vector2(size.x, 24))
+	_add_boundary(Vector2(size.x * 0.5, size.y - 12), Vector2(size.x, 24))
+	_add_boundary(Vector2(12, size.y * 0.5), Vector2(24, size.y))
+	_add_boundary(Vector2(size.x - 12, size.y * 0.5), Vector2(24, size.y))
+
+func _add_boundary(pos: Vector2, size: Vector2) -> void:
+	var body := StaticBody2D.new()
+	body.add_to_group("obstacle")
+	body.position = pos
+	var collision := CollisionShape2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	add_child(body)
 
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")

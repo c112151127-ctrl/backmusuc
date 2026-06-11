@@ -8,6 +8,11 @@ const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
 const DIALOGUE_NPC_SCRIPT := preload("res://scripts/components/DialogueNpc.gd")
 const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd")
+const WORLD_PROP_SCRIPT := preload("res://scripts/components/WorldProp.gd")
+
+const MAP_TILES := Vector2i(52, 34)
+const TILE_SIZE := 32
+const WORLD_RECT := Rect2(Vector2(48, 48), Vector2(MAP_TILES.x * TILE_SIZE - 96, MAP_TILES.y * TILE_SIZE - 96))
 
 const COUNTER_TEXTURES := {
 	"contract": "res://assets/sprites/structures/guild_contract_board.png",
@@ -21,19 +26,23 @@ func _ready() -> void:
 	GameState.current_scene_id = "guild"
 	AudioManager.play_music("guild")
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
-	backdrop.setup("guild", Vector2i(46, 28), 4096)
+	backdrop.setup("guild", MAP_TILES, 4096)
 	add_child(backdrop)
+	_add_boundaries(Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
+	_add_decor()
 	_add_counter("contract", "委託看板：選擇清理任務", Vector2(330, 275), Color8(102, 74, 118))
-	_add_counter("reward", "獎勵櫃台：回報委託", Vector2(670, 275), Color8(75, 96, 122))
-	_add_counter("to_wasteland", "公會出口：前往廢土", Vector2(980, 500), Color8(92, 88, 56))
-	_add_counter("to_village", "返回村莊據點", Vector2(565, 610), Color8(64, 110, 70))
+	_add_counter("reward", "獎勵櫃台：回報委託", Vector2(680, 275), Color8(75, 96, 122))
+	_add_counter("to_wasteland", "公會出口：前往廢土", Vector2(1080, 540), Color8(92, 88, 56))
+	_add_counter("to_village", "返回村莊據點", Vector2(560, 720), Color8(64, 110, 70))
 	_spawn_npcs()
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
-	player.global_position = Vector2(625, 440)
+	player.global_position = Vector2(660, 470)
 	add_child(player)
+	if player.has_method("set_world_bounds"):
+		player.set_world_bounds(WORLD_RECT)
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("冒險公會：接委託、回報獎勵，準備好再前往廢土。")
+	GameState.notify("冒險公會：靠近看板接委託，完成後回櫃台領獎。")
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
@@ -49,11 +58,7 @@ func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void
 	sprite.centered = false
 	sprite.position = pos + Vector2(-texture_size.x * 0.5, -texture_size.y)
 	add_child(sprite)
-	var text := Label.new()
-	text.text = label
-	text.position = pos + Vector2(-texture_size.x * 0.42, -texture_size.y - 22)
-	text.add_theme_font_size_override("font_size", 15)
-	add_child(text)
+
 	var interactable: Area2D = INTERACTABLE_SCRIPT.new()
 	interactable.interaction_id = id
 	interactable.prompt = label
@@ -67,6 +72,36 @@ func _counter_texture(id: String) -> Texture2D:
 	if not path.is_empty():
 		return ASSET_LOADER.load_png(path)
 	return null
+
+func _add_decor() -> void:
+	var props := [
+		["scrap_wall", Vector2(170, 500), true, Vector2i(96, 66)],
+		["signal_pylon", Vector2(910, 390), true, Vector2i(72, 128)],
+		["rust_rock", Vector2(1250, 330), true, Vector2i(72, 62)],
+		["road_marker", Vector2(820, 650), false, Vector2i(42, 58)]
+	]
+	for prop_data in props:
+		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()
+		prop.setup(String(prop_data[0]), bool(prop_data[2]), prop_data[3])
+		prop.global_position = prop_data[1]
+		add_child(prop)
+
+func _add_boundaries(world_size: Vector2) -> void:
+	_add_boundary(Vector2(world_size.x * 0.5, 12), Vector2(world_size.x, 24))
+	_add_boundary(Vector2(world_size.x * 0.5, world_size.y - 12), Vector2(world_size.x, 24))
+	_add_boundary(Vector2(12, world_size.y * 0.5), Vector2(24, world_size.y))
+	_add_boundary(Vector2(world_size.x - 12, world_size.y * 0.5), Vector2(24, world_size.y))
+
+func _add_boundary(pos: Vector2, size: Vector2) -> void:
+	var body := StaticBody2D.new()
+	body.add_to_group("obstacle")
+	body.position = pos
+	var collision := CollisionShape2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	add_child(body)
 
 func _spawn_npcs() -> void:
 	for npc_data in DataRegistry.npcs_for_scene("guild"):

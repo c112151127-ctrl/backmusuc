@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/components/Projectile.gd")
+const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
 
 @export var move_speed: float = 180.0
@@ -15,8 +16,11 @@ var ranged_timer := 0.0
 var action_state_timer := 0.0
 var pending_slash := false
 var current_animation := ""
+var has_world_bounds := false
+var world_bounds := Rect2()
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var camera: Camera2D = $Camera2D
 
 func _ready() -> void:
 	add_to_group("player")
@@ -31,13 +35,8 @@ func _physics_process(delta: float) -> void:
 	if pending_slash and action_state_timer <= 0.0:
 		pending_slash = false
 		_set_timed_state(PlayerState.SLASH, 0.16)
-	var input_direction := Input.get_vector(
-		"move_left",
-		"move_right",
-		"move_up",
-		"move_down"
-	)
 
+	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if not _is_action_state_locked():
 		_update_locomotion_state(input_direction)
 	elif input_direction.length() > 0.05:
@@ -46,11 +45,17 @@ func _physics_process(delta: float) -> void:
 	var speed_bonus := GameState.get_stat_bonus("speed")
 	velocity = input_direction * max(80.0, move_speed + speed_bonus)
 	move_and_slide()
+	if has_world_bounds:
+		global_position = global_position.clamp(world_bounds.position, world_bounds.position + world_bounds.size)
 	GameState.player_position = global_position
 
+	if Input.is_action_just_pressed("primary_attack"):
+		_primary_attack_pressed()
+	if Input.is_action_pressed("primary_attack") and GameState.active_attack_mode() == "ranged":
+		_ranged_attack()
 	if Input.is_action_just_pressed("attack_melee"):
 		_melee_attack()
-	if Input.is_action_pressed("attack_ranged"):
+	if Input.is_action_just_pressed("attack_ranged") or Input.is_action_pressed("attack_ranged"):
 		_ranged_attack()
 	if Input.is_action_just_pressed("swap_weapon"):
 		_set_timed_state(PlayerState.SWAP_TOOL, 0.18)
@@ -68,13 +73,31 @@ func _physics_process(delta: float) -> void:
 
 	_update_animation()
 
+func set_world_bounds(bounds: Rect2) -> void:
+	world_bounds = bounds
+	has_world_bounds = true
+	if camera != null:
+		camera.limit_left = int(bounds.position.x)
+		camera.limit_top = int(bounds.position.y)
+		camera.limit_right = int(bounds.position.x + bounds.size.x)
+		camera.limit_bottom = int(bounds.position.y + bounds.size.y)
+
+func _primary_attack_pressed() -> void:
+	if GameState.active_attack_mode() == "ranged":
+		_ranged_attack()
+	else:
+		_melee_attack()
+
 func _melee_attack() -> void:
 	if attack_timer > 0.0:
 		return
 	_set_timed_state(PlayerState.DRAW_SWORD, 0.08)
 	pending_slash = true
 	AudioManager.play_sfx("melee")
-	var weapon := DataRegistry.get_equipment(String(GameState.equipment.get("weapon", "rust_blade")))
+	var weapon_id := GameState.active_attack_item_id()
+	var weapon := DataRegistry.get_equipment(weapon_id)
+	if String(weapon.get("attack_mode", "melee")) != "melee":
+		weapon = DataRegistry.get_equipment(String(GameState.equipment.get("weapon", "rust_blade")))
 	attack_timer = float(weapon.get("cooldown", 0.32))
 	var damage := 12 + GameState.get_stat_bonus("attack")
 	for enemy in get_tree().get_nodes_in_group("enemy"):
@@ -87,11 +110,14 @@ func _ranged_attack() -> void:
 	if ranged_timer > 0.0:
 		return
 	if not GameState.spend_ammo(1):
-		GameState.notify("彈藥不足，改用近戰回收")
+		GameState.notify("彈藥不足，切回近戰武器回收資源")
 		return
 	_set_timed_state(PlayerState.SHOOT, 0.18)
 	AudioManager.play_sfx("shoot")
-	var ranged := DataRegistry.get_equipment(String(GameState.equipment.get("ranged", "pipe_rifle")))
+	var ranged_id := GameState.active_attack_item_id()
+	var ranged := DataRegistry.get_equipment(ranged_id)
+	if String(ranged.get("attack_mode", "ranged")) != "ranged":
+		ranged = DataRegistry.get_equipment(String(GameState.equipment.get("ranged", "pipe_rifle")))
 	ranged_timer = float(ranged.get("cooldown", 0.25))
 	var aim := get_global_mouse_position() - global_position
 	if aim.length() < 8:
@@ -117,7 +143,7 @@ func _build_sprite_frames() -> void:
 	var actions: Dictionary = {}
 	for i in range(PixelArtFactory.PLAYER_ACTIONS.size()):
 		actions[String(PixelArtFactory.PLAYER_ACTIONS[i])] = i
-	var atlas: Texture2D = _load_atlas_texture(PLAYER_ATLAS_PATH)
+	var atlas: Texture2D = ASSET_LOADER.load_png(PLAYER_ATLAS_PATH)
 	for action_name in actions.keys():
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
@@ -142,17 +168,6 @@ func _atlas_frame(atlas: Texture2D, action_index: int, direction_index: int, fra
 		frame_size.y
 	)
 	return texture
-
-func _load_atlas_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var loaded: Texture2D = load(path) as Texture2D
-		if loaded != null:
-			return loaded
-	if FileAccess.file_exists(path):
-		var image: Image = Image.load_from_file(path)
-		if image != null:
-			return ImageTexture.create_from_image(image)
-	return null
 
 func _update_animation() -> void:
 	var direction_index := _direction_index()

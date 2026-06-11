@@ -1,7 +1,7 @@
 {
   "enemies": {
     "scrap_biter": {
-      "name": "腐爛掠食者",
+      "name": "腐柵掠食者",
       "type": "melee",
       "attack_pattern": "chase_and_bite",
       "hp": 28,

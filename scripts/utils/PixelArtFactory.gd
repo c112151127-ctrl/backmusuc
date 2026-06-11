@@ -61,32 +61,77 @@ func enemy_texture(enemy_type: String) -> ImageTexture:
 	return ImageTexture.create_from_image(enemy_image(enemy_type))
 
 func enemy_image(enemy_type: String) -> Image:
-	var palettes := {
-		"melee": [Color8(78, 50, 42), Color8(140, 77, 48), Color8(92, 168, 64)],
-		"fast": [Color8(38, 48, 36), Color8(94, 151, 54), Color8(196, 220, 73)],
-		"ranged": [Color8(68, 44, 58), Color8(163, 68, 64), Color8(210, 200, 73)],
-		"heavy": [Color8(48, 43, 39), Color8(126, 102, 82), Color8(198, 137, 74)],
-		"flying": [Color8(44, 45, 54), Color8(90, 143, 146), Color8(191, 228, 219)],
-		"hybrid": [Color8(35, 33, 39), Color8(122, 69, 145), Color8(65, 198, 108)]
-	}
-	var palette: Array[Color] = []
-	for c in palettes.get(enemy_type, palettes["melee"]):
-		palette.append(c)
-	var image := make_image(ENEMY_FRAME_SIZE, palette, enemy_type.length())
-	if enemy_type == "ranged":
-		for x in range(24, 34):
-			image.set_pixel(x, 15, Color8(230, 198, 82))
-			image.set_pixel(x, 16, Color8(230, 198, 82))
-	elif enemy_type == "flying":
-		for x in range(2, 12):
-			image.set_pixel(x, 8 + x % 4, Color8(191, 228, 219, 190))
-		for x in range(24, 34):
-			image.set_pixel(x, 8 + x % 4, Color8(191, 228, 219, 190))
-	elif enemy_type == "heavy":
-		for y in range(8, 28):
-			image.set_pixel(5, y, Color8(42, 36, 33))
-			image.set_pixel(30, y, Color8(42, 36, 33))
+	var image := Image.create(ENEMY_FRAME_SIZE.x, ENEMY_FRAME_SIZE.y, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	_enemy_ellipse(image, Vector2i(18, 29), 13, 4, Color(0, 0, 0, 0.32))
+	match enemy_type:
+		"fast":
+			_enemy_ellipse(image, Vector2i(18, 18), 11, 8, Color8(42, 76, 38))
+			_enemy_ellipse(image, Vector2i(20, 15), 8, 5, Color8(110, 176, 57))
+			_enemy_line(image, Vector2(8, 20), Vector2(1, 29), Color8(196, 220, 73), 2)
+			_enemy_line(image, Vector2(28, 20), Vector2(35, 29), Color8(196, 220, 73), 2)
+			_enemy_rect(image, 16, 9, 20, 12, Color8(218, 255, 91))
+		"ranged":
+			_enemy_ellipse(image, Vector2i(15, 18), 11, 10, Color8(88, 50, 64))
+			_enemy_rect(image, 20, 13, 34, 18, Color8(84, 58, 54))
+			_enemy_rect(image, 27, 14, 35, 16, Color8(232, 206, 82))
+			_enemy_ellipse(image, Vector2i(12, 15), 4, 3, Color8(224, 90, 72))
+			_enemy_line(image, Vector2(6, 24), Vector2(2, 30), Color8(92, 168, 64), 2)
+		"heavy":
+			_enemy_ellipse(image, Vector2i(18, 18), 15, 12, Color8(82, 66, 52))
+			_enemy_ellipse(image, Vector2i(18, 19), 11, 8, Color8(138, 108, 78))
+			_enemy_rect(image, 5, 10, 10, 27, Color8(49, 42, 36))
+			_enemy_rect(image, 26, 10, 31, 27, Color8(49, 42, 36))
+			_enemy_rect(image, 13, 12, 23, 15, Color8(219, 153, 84))
+			_enemy_rect(image, 14, 21, 22, 24, Color8(44, 24, 21))
+		"flying":
+			_enemy_ellipse(image, Vector2i(18, 17), 8, 7, Color8(60, 88, 93))
+			_enemy_line(image, Vector2(13, 14), Vector2(1, 8), Color8(143, 210, 210, 180), 3)
+			_enemy_line(image, Vector2(23, 14), Vector2(35, 8), Color8(143, 210, 210, 180), 3)
+			_enemy_line(image, Vector2(13, 18), Vector2(2, 24), Color8(90, 143, 146, 190), 3)
+			_enemy_line(image, Vector2(23, 18), Vector2(34, 24), Color8(90, 143, 146, 190), 3)
+			_enemy_rect(image, 16, 13, 20, 16, Color8(212, 245, 226))
+		"hybrid":
+			_enemy_ellipse(image, Vector2i(17, 18), 12, 10, Color8(65, 54, 76))
+			_enemy_rect(image, 21, 11, 28, 24, Color8(70, 84, 88))
+			_enemy_line(image, Vector2(8, 22), Vector2(2, 30), Color8(122, 69, 145), 2)
+			_enemy_line(image, Vector2(25, 18), Vector2(35, 15), Color8(65, 198, 108), 2)
+			_enemy_rect(image, 13, 13, 17, 16, Color8(222, 60, 77))
+		_:
+			_enemy_ellipse(image, Vector2i(18, 19), 13, 9, Color8(90, 52, 43))
+			_enemy_ellipse(image, Vector2i(17, 17), 9, 6, Color8(151, 78, 52))
+			_enemy_line(image, Vector2(9, 23), Vector2(3, 30), Color8(92, 168, 64), 2)
+			_enemy_line(image, Vector2(27, 23), Vector2(33, 30), Color8(92, 168, 64), 2)
+			_enemy_rect(image, 13, 15, 23, 18, Color8(42, 22, 18))
+			_enemy_rect(image, 14, 13, 17, 15, Color8(224, 79, 61))
 	return image
+
+func _enemy_set(image: Image, x: int, y: int, color: Color) -> void:
+	if x >= 0 and y >= 0 and x < image.get_width() and y < image.get_height():
+		image.set_pixel(x, y, color)
+
+func _enemy_rect(image: Image, x0: int, y0: int, x1: int, y1: int, color: Color) -> void:
+	for y in range(min(y0, y1), max(y0, y1) + 1):
+		for x in range(min(x0, x1), max(x0, x1) + 1):
+			_enemy_set(image, x, y, color)
+
+func _enemy_ellipse(image: Image, center: Vector2i, radius_x: int, radius_y: int, color: Color) -> void:
+	for y in range(center.y - radius_y, center.y + radius_y + 1):
+		for x in range(center.x - radius_x, center.x + radius_x + 1):
+			var dx: float = float(x - center.x) / max(1.0, float(radius_x))
+			var dy: float = float(y - center.y) / max(1.0, float(radius_y))
+			if dx * dx + dy * dy <= 1.0:
+				_enemy_set(image, x, y, color)
+
+func _enemy_line(image: Image, from_point: Vector2, to_point: Vector2, color: Color, width := 1) -> void:
+	var steps := int(max(abs(to_point.x - from_point.x), abs(to_point.y - from_point.y)))
+	if steps <= 0:
+		_enemy_ellipse(image, Vector2i(int(from_point.x), int(from_point.y)), width, width, color)
+		return
+	for i in range(steps + 1):
+		var t := float(i) / float(steps)
+		var p := from_point.lerp(to_point, t)
+		_enemy_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)
 
 func item_texture(item_id: String) -> ImageTexture:
 	return ImageTexture.create_from_image(item_image(item_id))

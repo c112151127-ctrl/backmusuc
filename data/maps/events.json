@@ -1,27 +1,27 @@
 {
   "events": [
     {
-      "id": "merchant",
-      "name": "游牧商人",
-      "description": "用舊零件換到一批能立即使用的彈藥。",
+      "id": "supply_cache",
+      "name": "廢棄補給箱",
+      "description": "找到還能使用的舊式彈匣。",
       "reward": { "ammo": 5 }
     },
     {
-      "id": "robot",
-      "name": "故障機器人",
-      "description": "修好它的定位模組後，拆下可用廢鐵。",
+      "id": "broken_robot",
+      "name": "損壞維修機",
+      "description": "拆下可用齒輪與銅線。",
       "reward": { "scrap": 8 }
     },
     {
-      "id": "survivor",
-      "name": "殘存人類",
-      "description": "護送倖存者離開污染區，取得異變核心作為謝禮。",
+      "id": "survivor_note",
+      "name": "倖存者記號",
+      "description": "標記指出附近有高價核心。",
       "reward": { "mutant_core": 1 }
     },
     {
       "id": "toxic_pool",
-      "name": "毒池樣本",
-      "description": "採集毒池結晶，改裝站可以用來強化武器。",
+      "name": "汙染沉積池",
+      "description": "採集到少量穩定晶核。",
       "reward": { "bio_crystal": 1 }
     }
   ]

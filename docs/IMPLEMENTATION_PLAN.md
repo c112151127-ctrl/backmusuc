@@ -2,81 +2,109 @@
 
 ## 目前狀態
 
-專案是 Godot 4.6.3 PC 優先 vertical slice。現在已可從村莊出發，前往公會接委託，進入廢土戰鬥與回收資源，再回村使用設施強化與存讀檔。
+本專案已是可操作的 Godot 4.6.3 PC vertical slice，不再只以 MVP 為目標。現在包含村莊、公會、野外三個主要場景，玩家可以移動、互動、接委託、戰鬥、撿取資源、使用快捷裝備、開啟裝備介面、小地圖、教學提示與存讀檔。
 
-## 本階段目標
+本輪更新的重點是降低畫面混亂、補強 PC 操作邏輯、建立對話框、加入裝備檢視、改善敵人樣式、擴大野外地圖、增加邊界與障礙物，讓畫面更接近參考圖的 2.5D 廢土據點與野外探索感。
 
-本階段優先處理玩家回饋指出的問題：
+## Vertical Slice 目標
 
-- 畫面不能再像臨時色塊。
-- 村莊、公會、廢土區塊不得大面積重疊。
-- 先完成 PC 操作，不做手機按鈕。
-- 玩家可用滑鼠左鍵按住射擊，空白鍵近戰。
-- 每位 NPC、每個主要設施、公會與廢土出口都要有 PNG 美術。
-- 剛進入遊戲要有基本操作提示，完整教學用 H 開關。
-- 加入音樂、攻擊、射擊、受擊、撿取、互動、死亡音效。
+1. 玩家進入村莊後能看到基本 HUD、快捷列與操作提示。
+2. 靠近 NPC 或功能建築時才出現互動提示，避免全地圖文字重疊。
+3. 按 `E` 會開啟底部對話框，顯示 NPC 名稱、身分與對話內容。
+4. 按 `I` 開啟人物裝備介面，確認近戰、遠程、護甲、工具、目前左鍵動作與背包內容。
+5. 滑鼠左鍵依目前快捷裝備決定動作：刀類觸發揮砍，槍類觸發射擊。
+6. 玩家能從村莊前往公會接委託，再進入野外擊倒敵人、觸發事件、撿資源並回村。
+7. 野外地圖要比村莊大很多，具備邊界、障礙物、資源點、事件點、敵人與背景差異。
 
-## 主要修改檔案
+## 已修改 / 需維護檔案
 
-- `scenes/levels/village/Village.gd`
-- `scenes/levels/guild/Guild.gd`
-- `scenes/levels/wasteland/Wasteland.gd`
-- `scenes/ui/HUD.gd`
-- `scenes/player/Player.gd`
-- `scripts/autoload/GameState.gd`
-- `scripts/autoload/AudioManager.gd`
-- `scripts/utils/RuntimeAssetLoader.gd`
-- `scripts/utils/PixelArtFactory.gd`
-- `scripts/tools/generate_pc_assets.py`
-- `scripts/tests/VisualReviewRunner.gd`
-- `assets/sprites/player/recycler_player_multiaction_8dir.png`
-- `assets/sprites/npcs/*.png`
-- `assets/sprites/structures/*.png`
-- `assets/sprites/props/*.png`
-- `assets/audio/*.wav`
+- `scripts/autoload/GameState.gd`：輸入設定、快捷裝備、左鍵攻擊模式、NPC 對話訊號。
+- `scenes/player/Player.gd`：PC 操作、左鍵依裝備攻擊、相機與世界邊界限制。
+- `scenes/ui/HUD.gd`：HUD、對話框、裝備介面、小地圖、教學提示。
+- `scripts/ui/MiniMapView.gd`：小地圖繪製。
+- `scripts/components/DialogueNpc.gd`：NPC 顯示邏輯與對話觸發。
+- `scripts/components/Interactable.gd`：互動提示只在靠近時顯示。
+- `scenes/levels/village/Village.gd`：村莊配置、障礙、邊界、功能站提示。
+- `scenes/levels/guild/Guild.gd`：公會配置、櫃台互動、邊界。
+- `scenes/levels/wasteland/Wasteland.gd`：大型野外、敵人、事件、資源、邊界。
+- `scripts/systems/WorldBackdrop.gd`：2.5D 地表、路徑、裂痕、汙染斑塊。
+- `scripts/utils/PixelArtFactory.gd`：敵人像素圖、地表與 runtime 美術生成。
+- `data/maps/npcs.json`：NPC 對話與一次性獎勵。
+- `data/maps/events.json`：野外事件文字與獎勵。
+- `data/maps/quests.json`：委託名稱、目標與獎勵。
+- `data/items/equipment.json`：裝備名稱、攻擊模式與顯示資料。
+- `data/enemies/enemies.json`：六種敵人定位與數值。
+- `data/maps/wasteland_params.json`：野外尺寸、生成數量與 seed 參數。
 
 ## 玩家流程
 
-1. 進入村莊，閱讀底部 PC 操作提示。
-2. 使用 WASD 移動，E 與 NPC / 設施互動。
-3. 到公會接委託。
-4. 前往廢土，滑鼠左鍵按住射擊，空白鍵近戰。
-5. 擊倒污染體並回收資源。
-6. 返回村莊，用資源補給、鍛造、合成、改裝或存檔。
+1. 開始在村莊中央，先閱讀底部操作提示。
+2. 用 `WASD` 移動；靠近 NPC 或建築才會出現 `E` 互動提示。
+3. 和鍛造師、補給商、維修機等角色互動，取得彈藥、資源或提示。
+4. 按 `I` 開啟裝備介面，確認目前裝備與左鍵攻擊動作。
+5. 按 `1-4` 切換快捷裝備；刀類讓左鍵近戰，槍類讓左鍵射擊。
+6. 前往公會接委託，再進入野外。
+7. 在野外避開障礙、擊倒敵人、觸發事件、撿資源。
+8. 回村合成、強化、補給與存檔。
 
 ## NPC 指引流程
 
-NPC 使用 `data/maps/npcs.json` 的首次對話、重複對話與 reward。首次交談會寫入 `GameState.talked_npcs`，避免重複領獎。
+NPC 只在玩家靠近時顯示名稱、身分與 `E：交談`，按下互動後由底部對話框呈現完整對話。此設計避免畫面上方與地圖區域塞滿文字，並讓玩家透過實際靠近探索來理解據點功能。
 
-## 美術規格
+目前 NPC 包含：
 
-玩家 atlas：
+- 鍛造老陳：提醒先補彈、接委託、再出村。
+- 補給商阿洛：說明彈藥與遠程武器用途。
+- 維修機 R-17：說明存檔與核心維修。
+- 倖存者小隊長：引導玩家前往冒險公會。
+- 公會接待員：說明委託循環。
+- 路線偵察員：提醒野外障礙與資源點。
 
-- 7 動作：待機、走路、射擊、拔刀、砍擊、切換工具、互動。
-- 8 方向：下、右下、右、右上、上、左上、左、左下。
-- 每動作每方向 3 frame。
-- 單格 48x56，atlas 1008x448。
+## 互動與一次性獎勵驗證
 
-場景 PNG：
+`GameState.talked_npcs` 會記錄已交談 NPC。第一次交談可發放獎勵，之後再次交談只顯示對話，不重複給獎。自動測試已驗證鍛造師第一次交談會給彈藥，且此行為可用於後續 NPC 教學獎勵。
 
-- 村莊：鍛造、合成、商店、改裝、拆解、存檔、出口。
-- 公會：委託看板、獎勵櫃台、廢土出口、村莊出口。
-- 廢土：回村門、資源點、props、事件點。
-- NPC：每位 NPC 一張獨立 PNG。
+## 像素角色多角度規格
+
+玩家角色 atlas：
+
+- 檔案：`assets/sprites/player/recycler_player_multiaction_8dir.png`
+- 格式：7 個動作列 × 8 個方向 × 每方向 3 frame。
+- 單格：48×56。
+- 動作列：待機、走路、射擊、拔刀、砍擊、切換工具、互動。
+- 方向：下、右下、右、右上、上、左上、左、左下。
+- 美術方向：廢土回收商、機械護甲、亮色面罩、背包與工具掛點。
+
+敵人圖像：
+
+- 檔案：`assets/sprites/enemies/polluted_enemy_six_types.png`
+- 六種敵人：腐爛掠食者、毒脊爬行獸、砲囊爆裂者、巨噬腐肉獸、腐化飛行體、汙染機械體。
+- 每種敵人需有不同輪廓、顏色重點與攻擊辨識點，不再使用單純色塊。
+
+## 玩家動作狀態規格
+
+- `idle`：沒有輸入時站立，方向保留最後面向。
+- `walking`：WASD 移動，角色依方向切換動畫。
+- `shooting`：遠程武器射擊，消耗彈藥並生成投射物。
+- `drawing sword`：近戰攻擊前搖，用於提升揮砍重量感。
+- `slashing`：近戰命中判定，依面向打擊前方敵人。
+- `switching tools / weapons`：按 `Q` 或 `1-4` 切換快捷欄。
+- `interacting`：靠近 NPC 或功能站按 `E`，顯示對話或執行功能。
 
 ## 驗證清單
 
-- JSON parse 通過。
-- Godot `--quit` 通過。
-- `PixelAssetBaker.tscn` 通過。
-- `ValidationRunner.tscn` 通過。
-- `AutomatedPlaytestRunner.tscn` 通過。
-- `VisualReviewRunner.tscn` 成功輸出三張截圖。
-- 人工檢查截圖確認主要區塊不再大面積重疊。
+1. JSON 檔案必須能解析。
+2. Godot headless 專案載入必須成功。
+3. `PixelAssetBaker.tscn` 必須能產生玩家、NPC、建築、敵人與地表素材。
+4. `ValidationRunner.tscn` 必須通過資料、輸入、HUD、NPC、裝備與存檔檢查。
+5. `AutomatedPlaytestRunner.tscn` 必須通過村莊、公會、野外戰鬥與存讀檔流程。
+6. `VisualReviewRunner.tscn` 必須產出村莊、公會、野外截圖，確認文字不大量重疊、NPC 提示只在靠近時顯示。
+7. 手動測試需確認左鍵依裝備切換：刀類近戰、槍類射擊。
 
 ## 剩餘 TODO
 
-- 將本地生成音樂與音效替換為正式授權素材。
-- 精修像素美術細節，讓建築陰影、地面與角色比例更接近正式遊戲。
-- 補 Android 匯出與觸控 UI。
-- 加入更多打擊震動、受擊閃爍與死亡 UI。
+- 目前美術仍是 runtime / script 生成像素圖，已比色塊版本清楚，但還不是最終商業級手繪品質。
+- 建議後續用專職美術流程重畫高解析概念圖，再切成 Godot 可用的 tile、prop、NPC、enemy atlas。
+- 野外已擴大並有障礙與事件，但還可以加入更多非戰鬥玩法，例如修復裝置、護送、回收路線解謎、天氣與夜晚威脅。
+- 裝備介面已能顯示裝備與背包，但尚未加入拖曳換裝、詳細比較、套裝外觀預覽。
+- 對話框已完成基本顯示，後續可加入逐字顯示、選項分支、任務接受確認。

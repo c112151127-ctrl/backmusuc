@@ -15,7 +15,7 @@
       "stats": { "attack": 6, "defense": 0, "speed": 0 }
     },
     "patched_armor": {
-      "name": "拼補裝甲",
+      "name": "補丁護甲",
       "slot": "armor",
       "attack_mode": "passive",
       "cooldown": 0.0,
@@ -29,7 +29,7 @@
       "stats": { "attack": 1, "defense": 0, "speed": 8 }
     },
     "spark_cutter": {
-      "name": "火花切割器",
+      "name": "火花切割刀",
       "slot": "weapon",
       "attack_mode": "melee",
       "cooldown": 0.42,
@@ -47,6 +47,6 @@
     "scrap": { "name": "廢鐵", "stack": 999 },
     "ammo": { "name": "彈藥", "stack": 200 },
     "mutant_core": { "name": "異變核心", "stack": 99 },
-    "bio_crystal": { "name": "生化晶核", "stack": 99 }
+    "bio_crystal": { "name": "汙染晶核", "stack": 99 }
   }
 }

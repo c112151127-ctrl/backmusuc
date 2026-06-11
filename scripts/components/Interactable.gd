@@ -15,13 +15,15 @@ func _ready() -> void:
 	monitoring = true
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
 	circle.radius = radius
 	shape.shape = circle
 	add_child(shape)
+
 	_label = Label.new()
-	_label.text = "E: " + prompt
+	_label.text = "E：" + prompt
 	_label.position = Vector2(-44, -54)
 	_label.visible = false
 	_label.add_theme_font_size_override("font_size", 14)

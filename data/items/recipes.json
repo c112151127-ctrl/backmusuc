@@ -9,7 +9,7 @@
     },
     {
       "id": "spark_cutter",
-      "name": "火花切割器",
+      "name": "火花切割刀",
       "station": "craft",
       "cost": { "scrap": 20, "bio_crystal": 1 },
       "result": { "spark_cutter": 1 }
@@ -23,15 +23,15 @@
     },
     {
       "id": "shop_ammo",
-      "name": "商店彈藥補給",
+      "name": "補給彈藥",
       "station": "shop",
       "cost": { "scrap": 4 },
       "result": { "ammo": 8 }
     },
     {
       "id": "recycle_core",
-      "name": "核心拆解",
-      "station": "mod",
+      "name": "拆解異變核心",
+      "station": "recycle",
       "cost": { "mutant_core": 1 },
       "result": { "scrap": 14, "bio_crystal": 1 }
     }

@@ -3,7 +3,7 @@
     {
       "id": "clear_scrap_route",
       "name": "清理廢鐵通道",
-      "description": "公會要求回收商清出一條能讓村民進入廢土外圈的路線。",
+      "description": "公會需要回收商清出通往廢鐵堆的路線。",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
         { "type": "collect", "item": "scrap", "amount": 12 }
@@ -12,8 +12,8 @@
     },
     {
       "id": "toxic_sample",
-      "name": "毒池樣本調查",
-      "description": "改裝站需要生化晶核來校準防腐蝕零件。",
+      "name": "回收汙染樣本",
+      "description": "改裝站需要汙染晶核測試新的過濾核心。",
       "objectives": [
         { "type": "collect", "item": "bio_crystal", "amount": 2 },
         { "type": "defeat", "counter": "defeat_enemy", "amount": 3 }

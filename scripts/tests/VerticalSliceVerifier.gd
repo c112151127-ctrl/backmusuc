@@ -295,6 +295,7 @@ func _check_pc_controls() -> void:
 		"move_down",
 		"move_left",
 		"move_right",
+		"primary_attack",
 		"attack_melee",
 		"attack_ranged",
 		"interact",
@@ -310,6 +311,10 @@ func _check_pc_controls() -> void:
 	]
 	for action_name in required_actions:
 		_expect(InputMap.has_action(action_name), "input action exists: " + action_name)
+	var primary_has_left_click := false
+	for event in InputMap.action_get_events("primary_attack"):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			primary_has_left_click = true
 	var ranged_has_left_click := false
 	for event in InputMap.action_get_events("attack_ranged"):
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -318,15 +323,23 @@ func _check_pc_controls() -> void:
 	for event in InputMap.action_get_events("attack_melee"):
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 			melee_has_left_click = true
-	_expect(ranged_has_left_click, "PC ranged attack is bound to left mouse")
+	_expect(primary_has_left_click, "PC primary attack is bound to left mouse")
+	_expect(not ranged_has_left_click, "PC ranged attack does not own left mouse")
 	_expect(not melee_has_left_click, "PC melee attack does not share left mouse")
+	_expect(GameState.active_attack_mode() == "melee", "left mouse uses melee when blade quick slot is active")
+	GameState.use_quick_slot(1)
+	_expect(GameState.active_attack_mode() == "ranged", "left mouse uses ranged when gun quick slot is active")
 	var hotbar_slots := get_tree().get_nodes_in_group("hotbar_slot")
 	var minimap_panels := get_tree().get_nodes_in_group("minimap_panel")
 	var tutorial_panels := get_tree().get_nodes_in_group("tutorial_panel")
+	var equipment_panels := get_tree().get_nodes_in_group("equipment_panel")
+	var dialogue_panels := get_tree().get_nodes_in_group("dialogue_panel")
 	var touch_buttons := get_tree().get_nodes_in_group("touch_control")
 	_expect(hotbar_slots.size() >= 4, "PC HUD includes 4 quick slots")
 	_expect(minimap_panels.size() >= 1, "PC HUD includes minimap panel")
 	_expect(tutorial_panels.size() >= 1, "PC HUD includes tutorial panel")
+	_expect(equipment_panels.size() >= 1, "PC HUD includes character equipment panel")
+	_expect(dialogue_panels.size() >= 1, "PC HUD includes dialogue box")
 	_expect(touch_buttons.is_empty(), "PC HUD does not show mobile touch buttons")
 	var seen_quick_slots: Dictionary = {}
 	for slot in hotbar_slots:

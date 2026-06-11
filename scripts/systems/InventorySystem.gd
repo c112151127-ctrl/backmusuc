@@ -10,7 +10,7 @@ static func forge_ammo_pack() -> bool:
 static func craft_recipe(recipe_id: String) -> bool:
 	var recipe := DataRegistry.get_recipe(recipe_id)
 	if recipe.is_empty():
-		GameState.notify("找不到配方: %s" % recipe_id)
+		GameState.notify("找不到配方：%s" % recipe_id)
 		return false
 	var cost: Dictionary = recipe.get("cost", {})
 	for item_id in cost.keys():
