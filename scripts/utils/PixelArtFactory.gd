@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PixelArtFactory
 
-const PLAYER_FRAME_SIZE := Vector2i(32, 40)
+const PLAYER_FRAME_SIZE := Vector2i(48, 56)
 const ENEMY_FRAME_SIZE := Vector2i(36, 34)
 const ITEM_FRAME_SIZE := Vector2i(24, 24)
 const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
@@ -30,33 +30,31 @@ func player_texture(direction_index := 0, action_index := 0, frame_index := 0) -
 
 func player_image(direction_index := 0, action_index := 0, frame_index := 0) -> Image:
 	var palette: Array[Color] = [
-		Color8(42, 48, 55),
-		Color8(96, 112, 118),
-		Color8(23, 185, 200),
-		Color8(169, 103, 54),
-		Color8(210, 212, 190)
+		Color8(16, 20, 24),
+		Color8(48, 57, 62),
+		Color8(95, 111, 116),
+		Color8(32, 219, 236),
+		Color8(192, 112, 57),
+		Color8(228, 229, 198),
+		Color8(72, 221, 147)
 	]
 	var image := Image.create(PLAYER_FRAME_SIZE.x, PLAYER_FRAME_SIZE.y, false, Image.FORMAT_RGBA8)
 	image.fill(Color(0, 0, 0, 0))
 	var sway: int = 0
+	var bob: int = 0
 	if action_index == 0:
 		sway = 1 if frame_index == 1 else 0
 	elif action_index == 1:
 		var walk_offsets: Array[int] = [-1, 0, 1]
 		sway = walk_offsets[frame_index]
-	var dir_offset := Vector2i(int(round(cos(direction_index * PI / 4.0))), int(round(sin(direction_index * PI / 4.0))))
-	for y in range(6, 38):
-		for x in range(8 + sway, 24 + sway):
-			var edge: bool = x < 10 + sway or x > 21 + sway or y < 8 or y > 35
-			var c: Color = palette[1] if not edge else palette[0]
-			if y < 16:
-				c = palette[0]
-			if (x + y + direction_index + action_index + frame_index) % 9 == 0:
-				c = palette[2]
-			if x >= 0 and x < PLAYER_FRAME_SIZE.x:
-				image.set_pixel(x, y, c)
-	_draw_player_head(image, direction_index, dir_offset)
-	_draw_player_arms(image, direction_index, action_index, frame_index, sway, palette)
+		bob = abs(sway)
+	var direction := _direction_vector(direction_index)
+	var origin := Vector2i(24 + sway, 29 + bob)
+	_fill_ellipse(image, Vector2i(24, 50), 15, 4, Color(0, 0, 0, 0.26))
+	_draw_player_legs(image, origin, direction_index, action_index, frame_index, palette)
+	_draw_player_body(image, origin, direction_index, palette)
+	_draw_player_head(image, direction_index, direction, origin, palette)
+	_draw_player_arms(image, direction_index, action_index, frame_index, origin, direction, palette)
 	return image
 
 func enemy_texture(enemy_type: String) -> ImageTexture:
@@ -103,58 +101,120 @@ func item_image(item_id: String) -> Image:
 		palette = [Color8(54, 27, 77), Color8(179, 85, 225), Color8(76, 221, 148)]
 	return make_image(ITEM_FRAME_SIZE, palette, item_id.length())
 
-func _draw_player_head(image: Image, direction_index: int, dir_offset: Vector2i) -> void:
-	var visor_color := Color8(36, 216, 230)
-	var shadow_color := Color8(18, 25, 31)
-	for y in range(8, 15):
-		for x in range(11, 21):
-			if (x - 16) * (x - 16) + (y - 11) * (y - 11) < 38:
-				image.set_pixel(x, y, shadow_color)
-	var visor_y: int = clamp(11 + dir_offset.y, 8, 15)
-	var visor_x: int = clamp(16 + dir_offset.x * 2, 11, 21)
-	for x in range(visor_x - 3, visor_x + 4):
-		if x >= 0 and x < PLAYER_FRAME_SIZE.x:
-			image.set_pixel(x, visor_y, visor_color)
-	if direction_index in [6, 7, 0]:
-		var glint_x: int = clamp(visor_x + 3, 0, PLAYER_FRAME_SIZE.x - 1)
-		image.set_pixel(glint_x, visor_y + 1, visor_color.lightened(0.2))
+func _draw_player_legs(image: Image, origin: Vector2i, direction_index: int, action_index: int, frame_index: int, palette: Array[Color]) -> void:
+	var stride := 0
+	if action_index == 1:
+		stride = [-2, 0, 2][frame_index]
+	var left_x := origin.x - 7
+	var right_x := origin.x + 5
+	var front_y := 37 if direction_index in [1, 2, 3] else 36
+	_fill_rect(image, left_x - 2, front_y, left_x + 3, 48 + max(0, stride), palette[0])
+	_fill_rect(image, right_x - 2, front_y, right_x + 3, 48 - min(0, stride), palette[0])
+	_fill_rect(image, left_x - 1, front_y + 2, left_x + 2, 46 + max(0, stride), palette[2].darkened(0.18))
+	_fill_rect(image, right_x - 1, front_y + 2, right_x + 2, 46 - min(0, stride), palette[2].darkened(0.05))
+	_fill_rect(image, left_x - 4, 48 + max(0, stride), left_x + 5, 51 + max(0, stride), palette[0])
+	_fill_rect(image, right_x - 4, 48 - min(0, stride), right_x + 5, 51 - min(0, stride), palette[0])
 
-func _draw_player_arms(image: Image, direction_index: int, action_index: int, frame_index: int, sway: int, palette: Array[Color]) -> void:
-	var dir_side: int = 1 if direction_index in [7, 0, 1] else -1
-	var left_arm_x: int = clamp(7 + sway - dir_side, 0, PLAYER_FRAME_SIZE.x - 1)
-	var right_arm_x: int = clamp(24 + sway + dir_side, 0, PLAYER_FRAME_SIZE.x - 1)
-	for y in range(15, 28):
-		image.set_pixel(left_arm_x, y, palette[3])
-		image.set_pixel(right_arm_x, y, palette[3])
+func _draw_player_body(image: Image, origin: Vector2i, direction_index: int, palette: Array[Color]) -> void:
+	var shoulder_y := origin.y - 9
+	var waist_y := origin.y + 11
+	_fill_ellipse(image, Vector2i(origin.x, origin.y + 1), 12, 15, palette[0])
+	_fill_rect(image, origin.x - 10, shoulder_y, origin.x + 10, waist_y, palette[1])
+	_fill_rect(image, origin.x - 7, shoulder_y + 3, origin.x + 7, waist_y - 2, palette[2])
+	_fill_rect(image, origin.x - 2, shoulder_y + 1, origin.x + 2, waist_y + 1, palette[3].darkened(0.18))
+	if direction_index in [5, 6, 7]:
+		_fill_rect(image, origin.x - 8, shoulder_y + 3, origin.x + 8, waist_y, palette[0].lightened(0.1))
+		_fill_rect(image, origin.x - 4, shoulder_y + 6, origin.x + 4, waist_y - 3, palette[3].darkened(0.35))
+	else:
+		_fill_rect(image, origin.x - 5, shoulder_y + 6, origin.x + 5, shoulder_y + 9, palette[3])
+		_set_pixel_safe(image, origin.x + 7, shoulder_y + 7, palette[5])
+
+func _draw_player_head(image: Image, direction_index: int, direction: Vector2, origin: Vector2i, palette: Array[Color]) -> void:
+	var head_center := Vector2i(origin.x, origin.y - 17)
+	_fill_ellipse(image, head_center, 10, 9, palette[0])
+	_fill_ellipse(image, Vector2i(head_center.x, head_center.y + 1), 8, 7, palette[1])
+	var visor_center := Vector2i(
+		head_center.x + int(round(direction.x * 4.0)),
+		head_center.y + int(round(direction.y * 3.0))
+	)
+	if direction_index in [5, 6, 7]:
+		_fill_rect(image, head_center.x - 5, head_center.y - 1, head_center.x + 5, head_center.y + 4, palette[0].lightened(0.16))
+		_fill_rect(image, head_center.x - 2, head_center.y + 2, head_center.x + 2, head_center.y + 5, palette[3].darkened(0.45))
+	else:
+		_fill_rect(image, visor_center.x - 5, visor_center.y - 2, visor_center.x + 5, visor_center.y + 2, palette[3])
+		_fill_rect(image, visor_center.x + 2, visor_center.y - 1, visor_center.x + 5, visor_center.y + 1, palette[5])
+
+func _draw_player_arms(image: Image, direction_index: int, action_index: int, frame_index: int, origin: Vector2i, direction: Vector2, palette: Array[Color]) -> void:
+	var side := 1 if direction.x >= 0.0 else -1
+	var shoulder_left := Vector2(origin.x - 11, origin.y - 7)
+	var shoulder_right := Vector2(origin.x + 11, origin.y - 7)
+	var idle_left := Vector2(origin.x - 14, origin.y + 9)
+	var idle_right := Vector2(origin.x + 14, origin.y + 9)
+	_draw_line(image, shoulder_left, idle_left, palette[4], 2)
+	_draw_line(image, shoulder_right, idle_right, palette[4], 2)
 	if action_index == 2:
-		var muzzle_y: int = clamp(18 + frame_index, 0, PLAYER_FRAME_SIZE.y - 1)
-		var start_x: int = 22 if dir_side > 0 else 2
-		for x in range(start_x, start_x + 9):
-			var raw_px: int = x if dir_side > 0 else PLAYER_FRAME_SIZE.x - x
-			var px: int = clamp(raw_px, 0, PLAYER_FRAME_SIZE.x - 1)
-			image.set_pixel(px, muzzle_y, Color8(58, 210, 226))
+		var hand := Vector2(origin.x, origin.y - 1) + direction * 8.0
+		var muzzle := Vector2(origin.x, origin.y - 1) + direction * (18.0 + frame_index * 2.0)
+		_draw_line(image, Vector2(origin.x, origin.y - 3), hand, palette[4].lightened(0.12), 2)
+		_draw_line(image, hand, muzzle, palette[0], 3)
+		_draw_line(image, hand, muzzle, palette[2].lightened(0.22), 1)
+		_fill_ellipse(image, Vector2i(int(muzzle.x), int(muzzle.y)), 2 + frame_index, 2 + frame_index, palette[3].lightened(0.2))
 	elif action_index == 3:
-		var sheath_x: int = clamp(10 if dir_side > 0 else 21, 0, PLAYER_FRAME_SIZE.x - 1)
-		for y in range(20 - frame_index, 34):
-			image.set_pixel(sheath_x, y, palette[4].darkened(0.25))
-		var hand_x: int = clamp(15 + dir_side * (2 + frame_index), 0, PLAYER_FRAME_SIZE.x - 1)
-		for y in range(16, 24):
-			image.set_pixel(hand_x, y, palette[3].lightened(0.15))
+		var hip: Vector2 = Vector2(origin.x - side * 8, origin.y + 10)
+		var draw_hand: Vector2 = Vector2(origin.x + side * (2 + frame_index * 3), origin.y - 2 - frame_index)
+		_draw_line(image, hip, draw_hand, palette[4], 2)
+		_draw_line(image, hip + Vector2(0, 5), draw_hand + Vector2(side * 4, -4), palette[5].darkened(0.12), 1)
 	elif action_index == 4:
-		var slash_y: int = clamp(12 + frame_index * 5, 0, PLAYER_FRAME_SIZE.y - 1)
-		for i in range(16):
-			var px: int = clamp((6 + i) if dir_side > 0 else (25 - i), 0, PLAYER_FRAME_SIZE.x - 1)
-			var py: int = clamp(slash_y + int(sin(float(i) * 0.55) * 4.0), 0, PLAYER_FRAME_SIZE.y - 1)
-			image.set_pixel(px, py, Color8(238, 241, 215))
-			if py + 1 < PLAYER_FRAME_SIZE.y:
-				image.set_pixel(px, py + 1, palette[4])
+		var slash_center: Vector2 = Vector2(origin.x, origin.y - 4) + direction * 12.0
+		for i in range(-7, 8):
+			var tangent: Vector2 = direction.rotated(PI * 0.5) * float(i)
+			var forward: Vector2 = direction * (abs(i) * -0.45 + frame_index * 2.0)
+			var slash_point: Vector2 = slash_center + tangent + forward
+			_fill_ellipse(image, Vector2i(int(slash_point.x), int(slash_point.y)), 2, 2, palette[5])
+			_set_pixel_safe(image, int(slash_point.x - direction.x * 2.0), int(slash_point.y - direction.y * 2.0), palette[3].lightened(0.12))
+		_draw_line(image, Vector2(origin.x, origin.y - 1), slash_center + direction * 6.0, palette[4], 2)
 	elif action_index == 5:
-		for y in range(18, 30):
-			var tool_x: int = clamp(15 + frame_index - 1, 0, PLAYER_FRAME_SIZE.x - 1)
-			image.set_pixel(tool_x, y, Color8(237, 145, 68))
+		var tool_center := Vector2i(origin.x + side * (9 + frame_index), origin.y + 1)
+		_fill_rect(image, tool_center.x - 4, tool_center.y - 4, tool_center.x + 5, tool_center.y + 5, palette[4].lightened(0.2))
+		_fill_rect(image, tool_center.x - 2, tool_center.y - 2, tool_center.x + 3, tool_center.y + 3, palette[3].darkened(0.2))
+		_draw_line(image, Vector2(origin.x + side * 10, origin.y - 5), Vector2(tool_center), palette[4], 2)
 	elif action_index == 6:
-		var reach_x: int = clamp(16 + dir_side * (3 + frame_index), 0, PLAYER_FRAME_SIZE.x - 1)
-		for y in range(14, 26):
-			image.set_pixel(reach_x, y, Color8(76, 221, 148))
-			if reach_x - dir_side >= 0 and reach_x - dir_side < PLAYER_FRAME_SIZE.x:
-				image.set_pixel(reach_x - dir_side, y, palette[3])
+		var interact_hand: Vector2 = Vector2(origin.x, origin.y - 1) + direction * (10.0 + frame_index)
+		_draw_line(image, Vector2(origin.x, origin.y - 4), interact_hand, palette[4], 2)
+		for i in range(1, 4):
+			var scan_point: Vector2 = interact_hand + direction * float(i * 4)
+			_fill_ellipse(image, Vector2i(int(scan_point.x), int(scan_point.y)), 2, 2, palette[6].lightened(0.1))
+
+func _direction_vector(direction_index: int) -> Vector2:
+	return Vector2(cos(float(direction_index) * PI / 4.0), sin(float(direction_index) * PI / 4.0)).normalized()
+
+func _set_pixel_safe(image: Image, x: int, y: int, color: Color) -> void:
+	if x >= 0 and y >= 0 and x < PLAYER_FRAME_SIZE.x and y < PLAYER_FRAME_SIZE.y:
+		image.set_pixel(x, y, color)
+
+func _fill_rect(image: Image, x0: int, y0: int, x1: int, y1: int, color: Color) -> void:
+	var min_x: int = clamp(min(x0, x1), 0, PLAYER_FRAME_SIZE.x - 1)
+	var max_x: int = clamp(max(x0, x1), 0, PLAYER_FRAME_SIZE.x - 1)
+	var min_y: int = clamp(min(y0, y1), 0, PLAYER_FRAME_SIZE.y - 1)
+	var max_y: int = clamp(max(y0, y1), 0, PLAYER_FRAME_SIZE.y - 1)
+	for y in range(min_y, max_y + 1):
+		for x in range(min_x, max_x + 1):
+			image.set_pixel(x, y, color)
+
+func _fill_ellipse(image: Image, center: Vector2i, radius_x: int, radius_y: int, color: Color) -> void:
+	for y in range(center.y - radius_y, center.y + radius_y + 1):
+		for x in range(center.x - radius_x, center.x + radius_x + 1):
+			var dx: float = float(x - center.x) / max(1.0, float(radius_x))
+			var dy: float = float(y - center.y) / max(1.0, float(radius_y))
+			if dx * dx + dy * dy <= 1.0:
+				_set_pixel_safe(image, x, y, color)
+
+func _draw_line(image: Image, from_point: Vector2, to_point: Vector2, color: Color, width := 1) -> void:
+	var steps := int(max(abs(to_point.x - from_point.x), abs(to_point.y - from_point.y)))
+	if steps <= 0:
+		_fill_ellipse(image, Vector2i(int(from_point.x), int(from_point.y)), width, width, color)
+		return
+	for i in range(steps + 1):
+		var t := float(i) / float(steps)
+		var p := from_point.lerp(to_point, t)
+		_fill_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)

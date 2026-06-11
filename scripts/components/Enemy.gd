@@ -88,6 +88,7 @@ func _physics_process(delta: float) -> void:
 
 func take_damage(amount: int, melee := false) -> void:
 	hp -= amount
+	AudioManager.play_sfx("hit")
 	modulate = Color(1.0, 0.55, 0.45)
 	await get_tree().create_timer(0.06).timeout
 	modulate = Color.WHITE
@@ -95,6 +96,7 @@ func take_damage(amount: int, melee := false) -> void:
 		_die(melee)
 
 func _die(melee: bool) -> void:
+	AudioManager.play_sfx("death")
 	if melee:
 		GameState.record_enemy_defeated()
 	for item_id in drop_table.keys():

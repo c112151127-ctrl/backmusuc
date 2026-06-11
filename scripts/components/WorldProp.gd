@@ -2,6 +2,7 @@ extends StaticBody2D
 class_name WorldProp
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
+const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 
 var prop_id := "rust_rock"
 var blocks_movement := true
@@ -32,11 +33,19 @@ func _add_collision() -> void:
 
 func _add_sprite() -> void:
 	var sprite := Sprite2D.new()
-	sprite.texture = _make_prop_texture()
+	sprite.texture = _prop_texture()
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.centered = false
-	sprite.position = Vector2(-visual_size.x * 0.5, -visual_size.y)
+	var texture_size := sprite.texture.get_size() if sprite.texture != null else Vector2(visual_size)
+	sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
 	add_child(sprite)
+
+func _prop_texture() -> Texture2D:
+	var path := "res://assets/sprites/props/%s.png" % prop_id
+	var texture := ASSET_LOADER.load_png(path)
+	if texture != null:
+		return texture
+	return _make_prop_texture()
 
 func _make_prop_texture() -> Texture2D:
 	var palette: Array[Color] = [Color8(62, 55, 48), Color8(101, 83, 63), Color8(158, 103, 57)]

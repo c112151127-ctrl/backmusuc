@@ -14,9 +14,9 @@ script = ExtResource("1_dovo2")
 shape = SubResource("CapsuleShape2D_lvxji")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=767709038]
-position = Vector2(0, -14)
+position = Vector2(0, -24)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(0, -16)
-zoom = Vector2(2, 2)
+zoom = Vector2(1.35, 1.35)
 enabled = true

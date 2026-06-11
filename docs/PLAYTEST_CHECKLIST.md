@@ -1,79 +1,54 @@
-# 廢土回收商可玩性檢查清單
+# 廢土回收商 PC 端測試清單
 
 ## 自動驗證
 
-使用 Godot 4.6.3 console 版執行：
+請先執行：
 
 ```powershell
+node -e "JSON.parse(require('fs').readFileSync('data/maps/npcs.json','utf8')); console.log('JSON OK')"
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
-```
-
-更接近實際試玩的自動化流程：
-
-```powershell
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/VisualReviewRunner.tscn'
 ```
 
-通過後會輸出 `docs/automated_playtest_report.json`，記錄村莊移動/背包、合成、公會委託、野外近戰/射擊、30 敵人壓力生成、投射物與戰鬥後存讀檔結果。
-
-若需要重新產生目前的像素 PNG 素材，先執行：
+若玩家 sprite atlas 有調整，再執行：
 
 ```powershell
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 ```
 
-通過條件：
+## PC 操作
 
-- 裝備、資源、敵人、事件、野外地圖參數能載入。
-- 配方與公會委託 JSON 能載入，並能完成鍛造、合成、交易、改裝、拆解流程。
-- 村莊與公會 NPC JSON 能載入，NPC 可交談並提供一次性導引獎勵。
-- 已烘焙 PNG 素材存在：玩家 7 動作 x 8 方向 x 3 frame、6 種敵人、資源 icon、村莊/廢土 tileset。
-- 村莊至少有 7 個互動點與玩家。
-- 野外至少有 30 個敵人、42 個資源/掉落、5 個互動點與玩家。
-- 野外至少有 60 個 Y-Sort 地標 prop，其中至少 40 個是有碰撞的障礙，形成岩石、枯樹、殘骸、毒池、訊號塔等偽 3D 探索層次。
-- 6 種污染敵人具有不同攻擊模式：追擊近戰、短衝、遠程污染彈、重型大範圍近戰、飛行繞行、混合近戰/遠程。
-- 公會至少有 3 個互動點與玩家。
-- 存檔可寫入並讀回場景、座標、裝備、目前委託與委託進度。
-- 存檔可保留已交談 NPC 狀態，避免重複領取一次性對話獎勵。
-- 快捷欄有 4 格，可用 `1`-`4` 直接選擇，也可用 `Q` 或觸控「切換」循環切換，並會隨存檔保存。
-- 裝備、鍛造、彈藥消耗循環可運作。
-- 公會可接取委託，野外擊殺與收集會推進任務，回公會可交付領獎。
-- 核心循環可自動驗證：野外生成玩家/敵人，近戰擊殺敵人，遠程攻擊生成投射物並消耗彈藥，戰鬥後可存讀檔並回村。
-- 自動化實戰試玩可用 Input action 驅動玩家移動、開背包、近戰與射擊，並產生 JSON 報告。
-- Android 觸控 UI 有左下方向 D-pad 與右下動作按鈕，並對應正式 InputMap action。
-- `export_presets.cfg` 能被 Godot 載入，且包含 Windows Desktop 與 Android preset。
-- 玩家有 `idle/walk/shoot/draw_sword/slash/swap_tool/interact` 七種動作，每種 8 方向，每個方向至少 3 frame。
-- 玩家動畫優先使用 `assets/sprites/player/recycler_player_multiaction_8dir.png` 的 baked atlas，PNG 缺失時才 fallback 到執行期生成。
-- 近戰輸入會先進入「拔刀」再進入「斬擊」動畫狀態；遠程輸入會進入射擊狀態；切換快捷欄會進入切換工具狀態；互動輸入會進入互動狀態。
-- 野外子彈池會在 200 顆投射物達上限後拒絕繼續生成。
-- 投射物可指定目標 group，玩家射擊命中敵人，敵方污染彈可命中玩家並套用裝甲減傷。
+- WASD：移動。
+- 滑鼠左鍵按住：連續射擊。
+- 空白鍵：近戰拔刀與砍擊。
+- E：互動 / 交談 / 使用設施。
+- I：背包與裝備。
+- Q：切換快捷欄。
+- 1-4：直接選擇快捷欄裝備。
+- M：開關小地圖。
+- H：開關完整教學。
+- F5：存檔。
+- F9：讀檔。
 
-Godot 4.6 的 `--script` 模式不會提供專案 autoload 的全域名稱，因此本專案驗證以 `--scene` 載入驗證場景與手動試玩為主。
+## 人工試玩流程
 
-## 手動試玩
+1. 啟動遊戲後確認預設進入全螢幕，畫面不再顯示手機方向鍵或手機攻擊按鈕。
+2. 確認底部有小型 PC 操作提示，按 H 可開啟完整教學，按 M 可開啟小地圖。
+3. 在村莊檢查鍛造爐、合成台、商店、改裝站、拆解機、維修存檔點、廢土出口、公會出口是否分區清楚，沒有互相壓住主要操作區。
+4. 靠近村莊 NPC，按 E 交談，確認 NPC 有 PNG 角色圖、姓名職稱、首次獎勵與重複對話。
+5. 前往冒險公會，確認委託看板、獎勵櫃台、前往廢土出口、返回村莊出口位置清楚。
+6. 在公會接委託，再前往廢土。
+7. 在廢土使用滑鼠左鍵按住射擊，確認會消耗彈藥並有射擊音效。
+8. 使用空白鍵近戰，確認會切換拔刀與砍擊動畫，命中時有打擊音效。
+9. 擊倒污染體後撿取廢鐵、彈藥、核心或其他資源，確認 HUD 數值更新。
+10. 回村使用設施強化或合成，確認資源循環成立。
+11. 按 F5 存檔、F9 讀檔，確認場景、玩家位置、背包、裝備、委託與已交談 NPC 狀態恢復。
+12. 檢查 `docs/visual_review_village.png`、`docs/visual_review_guild.png`、`docs/visual_review_wasteland.png`，確認自動截圖中沒有大型 UI 或建築區塊遮住主要路線。
 
-1. 從 Godot 專案管理員執行 `FirstGame`。
-2. 確認第一個畫面是村莊，HUD 顯示 HP、EP、彈藥、廢鐵、核心與場景。
-3. 按 `I` 開關背包，確認可看到初始裝備與資源。
-4. 點 HUD 右下角「存檔」，確認畫面出現「已存檔」。
-5. 移動到村莊功能點附近按 `E`，測試鍛造、合成、改裝、拆解、交易、存檔、前往野外、公會。
-6. 到公會委託板按 `E` 接任務，確認 HUD 顯示委託名稱與進度。
-7. 從公會或村莊前往野外，用左鍵或 `Space` 近戰，用右鍵或 `K` 射擊。
-8. 擊敗敵人後撿取資源，確認 HUD/背包/委託進度更新。
-9. 回公會交付櫃台按 `E` 領獎，確認委託清空並獲得獎勵。
-10. 與村莊或公會 NPC 交談，確認第一次有導引獎勵，重複交談不會重複領獎。
-11. 攻擊與互動時觀察玩家動畫：待機、行走、射擊、拔刀、斬擊、切換工具、互動都應能依方向播放。
-12. 按 `F5` 存檔，按 `F9` 讀檔，確認位置、背包、裝備、委託進度與已交談 NPC 能還原。
-13. 在觸控模式下，用左下 D-pad 移動，用右下按鈕近戰、射擊、互動、開背包與存檔。
+## 目前已知限制
 
-## 目前快捷鍵
-
-- WASD：移動
-- E：互動
-- I：背包
-- Space / 左鍵：近戰
-- K / 右鍵：遠程射擊
-- Q：循環切換快捷欄
-- 1-4：選擇快捷欄
-- F5：存檔
-- F9：讀檔
+- 美術已換成可用 PNG 像素素材，但仍屬 vertical slice 素材，後續可再交由專業像素美術精修。
+- Android 觸控 UI 暫停，優先完成 PC 端。
+- 音樂與音效為本地程式生成 WAV，可作為佔位音效，後續可替換成正式授權音源。

@@ -29,6 +29,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if _player_near and Input.is_action_just_pressed("interact"):
+		AudioManager.play_sfx("interact")
 		interacted.emit(interaction_id)
 
 func _on_body_entered(body: Node) -> void:

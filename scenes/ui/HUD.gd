@@ -7,6 +7,8 @@ var inventory_panel: PanelContainer
 var inventory_list: VBoxContainer
 var notice_label: Label
 var notice_timer: Timer
+var minimap_panel: PanelContainer
+var tutorial_panel: PanelContainer
 
 func _ready() -> void:
 	_build_hud()
@@ -21,6 +23,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("open_inventory"):
 		inventory_panel.visible = not inventory_panel.visible
+	if Input.is_action_just_pressed("toggle_minimap"):
+		minimap_panel.visible = not minimap_panel.visible
+	if Input.is_action_just_pressed("toggle_help"):
+		tutorial_panel.visible = not tutorial_panel.visible
 
 func _build_hud() -> void:
 	var root := Control.new()
@@ -67,13 +73,14 @@ func _build_hud() -> void:
 	inventory_panel.add_child(inventory_list)
 
 	_add_quick_bar(root)
-	_add_touch_dpad(root)
-	_add_action_buttons(root)
+	_add_minimap(root)
+	_add_tutorial(root)
+	_add_controls_hint(root)
 
 func _add_quick_bar(root: Control) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "QuickBarPanel"
-	panel.position = Vector2(430, 646)
+	panel.position = Vector2(456, 646)
 	panel.custom_minimum_size = Vector2(360, 58)
 	root.add_child(panel)
 	quick_bar = HBoxContainer.new()
@@ -81,73 +88,55 @@ func _add_quick_bar(root: Control) -> void:
 	quick_bar.add_theme_constant_override("separation", 6)
 	panel.add_child(quick_bar)
 
-func _add_touch_dpad(root: Control) -> void:
-	var dpad := GridContainer.new()
-	dpad.name = "TouchMoveDPad"
-	dpad.columns = 3
-	dpad.position = Vector2(28, 516)
-	dpad.add_theme_constant_override("h_separation", 4)
-	dpad.add_theme_constant_override("v_separation", 4)
-	root.add_child(dpad)
-	_add_dpad_spacer(dpad)
-	_add_hold_button(dpad, "上", "move_up")
-	_add_dpad_spacer(dpad)
-	_add_hold_button(dpad, "左", "move_left")
-	_add_dpad_spacer(dpad)
-	_add_hold_button(dpad, "右", "move_right")
-	_add_dpad_spacer(dpad)
-	_add_hold_button(dpad, "下", "move_down")
-	_add_dpad_spacer(dpad)
+func _add_minimap(root: Control) -> void:
+	minimap_panel = PanelContainer.new()
+	minimap_panel.name = "MiniMapPanel"
+	minimap_panel.add_to_group("minimap_panel")
+	minimap_panel.position = Vector2(1040, 18)
+	minimap_panel.custom_minimum_size = Vector2(214, 154)
+	minimap_panel.visible = false
+	root.add_child(minimap_panel)
+	var map_stack := VBoxContainer.new()
+	minimap_panel.add_child(map_stack)
+	var title := Label.new()
+	title.text = "地圖  M"
+	title.add_theme_font_size_override("font_size", 15)
+	map_stack.add_child(title)
+	var map := ColorRect.new()
+	map.custom_minimum_size = Vector2(188, 96)
+	map.color = Color(0.08, 0.09, 0.08, 0.88)
+	map_stack.add_child(map)
+	var hint := Label.new()
+	hint.text = "村莊 ⇄ 公會 ⇄ 廢土"
+	hint.add_theme_font_size_override("font_size", 13)
+	map_stack.add_child(hint)
 
-func _add_action_buttons(root: Control) -> void:
-	var touch_box := HBoxContainer.new()
-	touch_box.name = "TouchActionButtons"
-	touch_box.position = Vector2(800, 610)
-	touch_box.add_theme_constant_override("separation", 8)
-	root.add_child(touch_box)
-	_add_touch_button(touch_box, "近戰", "attack_melee")
-	_add_touch_button(touch_box, "射擊", "attack_ranged")
-	_add_touch_button(touch_box, "切換", "swap_weapon")
-	_add_touch_button(touch_box, "互動", "interact")
-	_add_touch_button(touch_box, "背包", "open_inventory")
-	_add_touch_button(touch_box, "存檔", "save_game")
+func _add_tutorial(root: Control) -> void:
+	tutorial_panel = PanelContainer.new()
+	tutorial_panel.name = "TutorialPanel"
+	tutorial_panel.add_to_group("tutorial_panel")
+	tutorial_panel.position = Vector2(820, 430)
+	tutorial_panel.custom_minimum_size = Vector2(400, 188)
+	tutorial_panel.visible = false
+	root.add_child(tutorial_panel)
+	var stack := VBoxContainer.new()
+	tutorial_panel.add_child(stack)
+	var title := Label.new()
+	title.text = "廢土回收商：PC 操作"
+	title.add_theme_font_size_override("font_size", 18)
+	stack.add_child(title)
+	var body := Label.new()
+	body.text = "WASD 移動｜滑鼠左鍵按住射擊｜空白近戰\nE 互動｜I 背包｜Q 切換快捷欄｜1-4 選裝備\nM 地圖｜H 關閉教學\n流程：整備 → 接任務 → 進廢土 → 回村強化"
+	body.add_theme_font_size_override("font_size", 14)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stack.add_child(body)
 
-func _add_dpad_spacer(parent: Control) -> void:
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(58, 52)
-	parent.add_child(spacer)
-
-func _add_hold_button(parent: Control, label: String, action: String) -> void:
-	var button := Button.new()
-	button.text = label
-	button.custom_minimum_size = Vector2(58, 52)
-	button.add_to_group("touch_control")
-	button.add_to_group("touch_move_control")
-	button.set_meta("input_action", action)
-	button.button_down.connect(_hold_action.bind(action))
-	button.button_up.connect(_release_action.bind(action))
-	parent.add_child(button)
-
-func _add_touch_button(parent: Control, label: String, action: String) -> void:
-	var button := Button.new()
-	button.text = label
-	button.custom_minimum_size = Vector2(72, 48)
-	button.add_to_group("touch_control")
-	button.add_to_group("touch_action_control")
-	button.set_meta("input_action", action)
-	button.pressed.connect(_pulse_action.bind(action))
-	parent.add_child(button)
-
-func _pulse_action(action: String) -> void:
-	Input.action_press(action)
-	await get_tree().create_timer(0.08).timeout
-	Input.action_release(action)
-
-func _hold_action(action: String) -> void:
-	Input.action_press(action)
-
-func _release_action(action: String) -> void:
-	Input.action_release(action)
+func _add_controls_hint(root: Control) -> void:
+	var hint := Label.new()
+	hint.text = "左鍵按住射擊｜空白近戰｜E 互動｜H 教學｜M 地圖"
+	hint.position = Vector2(456, 614)
+	hint.add_theme_font_size_override("font_size", 14)
+	root.add_child(hint)
 
 func _refresh() -> void:
 	stats_label.text = "HP %d/%d   EP %d/%d   彈藥 %d   廢鐵 %d   核心 %d   場景 %s" % [

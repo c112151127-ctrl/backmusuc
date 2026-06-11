@@ -1,11 +1,43 @@
-# 廢土回收商像素素材
+# 像素素材說明
 
-這些檔案是 Godot vertical slice 使用的第一版像素風素材與可替換規格。
+本專案目前使用可替換的 PNG 像素素材，目標是先讓 PC vertical slice 看起來像完整遊戲，而不是臨時色塊。
 
-- `player/recycler_player_sprite_sheet.svg`：早期 8 方向玩家概念圖。
-- `player/recycler_player_multiaction_8dir.png`：目前可玩版玩家 atlas，單格 32x40，7 種動作、8 方向、每方向 3 frame。動作順序是 `idle`、`walk`、`shoot`、`draw_sword`、`slash`、`swap_tool`、`interact`。
-- `enemies/polluted_enemy_sheet.svg`：六種污染敵人概念。
-- `tiles/wasteland_tileset.svg`：村莊、廢土地面、地標、資源與危險地形概念。
-- `ui/hud_icons.svg`：HP、EP、廢鐵、晶體與核心 icon。
+## 玩家
 
-目前遊戲會用 GDScript 生成可用像素素材，確保沒有正式美術時仍可玩。後續可用正式像素圖替換玩家 atlas，但必須保留相同的 7 動作、8 方向、每方向 3 frame 版面，否則需要同步更新 `Player.gd` 與 `VerticalSliceVerifier.gd`。
+- `player/recycler_player_multiaction_8dir.png`
+- 格式：7 動作 x 8 方向 x 3 frame。
+- 單格：48x56。
+- atlas：1008x448。
+- 動作順序：`idle`、`walk`、`shoot`、`draw_sword`、`slash`、`swap_tool`、`interact`。
+- 方向順序：下、右下、右、右上、上、左上、左、左下。
+
+## NPC
+
+`assets/sprites/npcs/` 內每位 NPC 都有獨立 PNG：
+
+- `forge_master.png`：鐵匠。
+- `scrap_merchant.png`：補給商。
+- `repair_robot.png`：維修機器人。
+- `wasteland_survivor.png`：廢土倖存者。
+- `guild_clerk.png`：公會櫃台。
+- `route_scout.png`：路線偵查員。
+
+## 建築與互動設施
+
+`assets/sprites/structures/` 提供村莊、公會與出口 PNG：
+
+- 鍛造爐、合成台、商店、改裝站、拆解機、維修存檔點。
+- 公會委託看板、獎勵櫃台、公會出口、村莊回程門、廢土出口。
+
+## 地圖與物件
+
+- `tiles/village_ground_2p5d.png`
+- `tiles/guild_ground_2p5d.png`
+- `tiles/wasteland_ground_2p5d.png`
+- `props/`：岩石、枯樹、廢鐵牆、毒池、廢棄車體、訊號塔、路標。
+
+## 生成方式
+
+目前 PC 端 PNG 與 WAV 由 `scripts/tools/generate_pc_assets.py` 產生。Godot 場景使用 `scripts/utils/RuntimeAssetLoader.gd` 直接載入 PNG/WAV，因此不需要等待 Godot editor 產生 `.import` 檔也能顯示。
+
+若後續使用正式美術，只要保持檔名與大致尺寸，不需要改場景邏輯。

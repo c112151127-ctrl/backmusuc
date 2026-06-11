@@ -1,31 +1,30 @@
 # SRS 對照表
 
-| SRS / 設計要求 | 目前證據 |
+| SRS / 設計需求 | 目前實作或驗證方式 |
 | --- | --- |
-| Godot 4.x 單機 2D Roguelike | `project.godot` 使用 Godot 4.6，主場景進入村莊、野外與公會流程。 |
-| Windows / Android 匯出規劃 | `export_presets.cfg` 已提供 Windows Desktop 與 Android preset；`docs/EXPORT_READINESS.md` 記錄目前本機缺少的 export templates 與 Android 工具鏈。 |
-| PC WASD + 滑鼠操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠、近戰、遠程、互動、背包、存檔、讀檔、`Q` 與 `1`-`4` 快捷欄。 |
-| Android 觸控 UI 基礎 | `scenes/ui/HUD.gd` 提供左下方向 D-pad，以及右下近戰、射擊、切換、互動、背包、存檔按鈕。 |
-| 撿取與裝備管理 | `scripts/components/Pickup.gd`、`GameState.inventory/equipment/quick_slots`、`HUD.gd` 背包、裝備、快捷欄與委託進度。 |
-| 隨時存檔 JSON | `scripts/autoload/SaveManager.gd` 寫入 `user://save_game.json`。 |
-| Base64 / hash 驗證 | `SaveManager.gd` 使用 Base64 payload + SHA-256 checksum。 |
-| 程序化野外地圖 | `Wasteland.gd` 使用 seed 生成資源、事件與敵人位置；事件資料在 `data/maps/events.json`。 |
-| 偽 3D 地圖層次 | `WorldProp.gd` 與 `Wasteland.gd` 依 seed 生成岩石、枯樹、殘骸、毒池、訊號塔等 Y-Sort prop；阻擋型 prop 有 `CollisionShape2D`。 |
-| 村莊功能點 | `Village.gd` 實作鍛造、合成、交易、改裝、拆解、存檔、野外入口與公會入口；配方資料在 `data/items/recipes.json`。 |
-| 冒險公會 | `Guild.gd` 實作接取委託、前往廢土與交付獎勵；委託資料在 `data/maps/quests.json`。 |
-| 任務存檔 | `GameState.gd` 會保存 active quest、completed quests 與 quest progress，`SaveManager.gd` 會一起寫入 Base64/checksum 存檔。 |
-| NPC 對話與導引 | `data/maps/npcs.json` 定義村莊與公會 NPC；`DialogueNpc.gd` 生成可交談角色，`GameState.talked_npcs` 保存一次性對話獎勵狀態。 |
-| 混合戰鬥系統 | `Player.gd` 實作近戰與遠程；敵人與投射物腳本可互動。 |
-| 敵人攻擊模式 | `data/enemies/enemies.json` 定義 6 種 `attack_pattern`；`Enemy.gd` 實作追擊、短衝、遠程污染彈、重型大範圍近戰、飛行繞行與混合型行為。 |
-| 敵人上限 30、子彈上限 200 | `Wasteland.gd` 生成 30 敵人；`ProjectilePool.gd` 依 `data/maps/wasteland_params.json` 執行 200 子彈硬上限。 |
-| 像素偽 3D / Y-Sort | 主要場景與玩家節點開啟 `y_sort_enabled`，素材採 32px 像素風。 |
-| 多角度 / 多動作玩家素材 | `Player.gd` 以 `AnimatedSprite2D` 建立 `idle/walk/shoot/draw_sword/slash/swap_tool/interact` x 8 方向 x 3 frame；優先讀取 `assets/sprites/player/recycler_player_multiaction_8dir.png` baked atlas，並保留執行期 fallback。 |
-| 玩家動作狀態 | `Player.gd` 狀態機可進入 `IDLE`、`WALK`、`SHOOT`、`DRAW_SWORD`、`SLASH`、`SWAP_TOOL`、`INTERACT`、`HIT`、`DEAD`；目前自動驗證會檢查七種主要玩家動作動畫皆具備 8 方向與 3 frame。 |
-| 像素素材生成 | `scenes/tests/PixelAssetBaker.tscn` 會輸出玩家 atlas、6 種敵人 atlas、物品 icon atlas 與 tileset PNG。 |
-| 可玩性驗證 | `scenes/tests/ValidationRunner.tscn` 自動驗證資料、場景、存檔、配方、任務、公會交付、觸控控制、近戰擊殺、遠程射擊、戰鬥後存讀檔與回村狀態；`scenes/tests/AutomatedPlaytestRunner.tscn` 用 Input action 驅動移動、背包、近戰、射擊並輸出 `docs/automated_playtest_report.json`。 |
+| Godot 4.x 2D Roguelike vertical slice | `project.godot` 使用 Godot 4.6，主流程包含村莊、公會、廢土、戰鬥、資源、裝備、存讀檔。 |
+| 像素風偽 3D / 2.5D | 村莊、公會、廢土使用 `WorldBackdrop.gd`、Y-Sort、建築與 props PNG，角色與物件以底部基準點排序，形成前後遮擋感。 |
+| 地圖概念：村莊整備、公會接任務、廢土探索、回村強化 | `Village.gd`、`Guild.gd`、`Wasteland.gd` 已建立三場景切換與核心循環。 |
+| PC 操作優先 | `GameState._ensure_input_actions()` 設定 WASD、滑鼠左鍵按住射擊、空白近戰、E 互動、I 背包、Q/1-4 快捷欄、M 小地圖、H 教學、F5/F9 存讀檔。 |
+| 暫停手機 UI | `HUD.gd` 已移除手機方向鍵與手機動作按鈕；`ValidationRunner` 檢查 touch controls 不出現。 |
+| 教學與玩家引導 | `HUD.gd` 初始顯示小型 PC 操作提示，H 可開啟完整教學；各場景 `GameState.notify` 顯示繁體中文流程提示。 |
+| NPC 指引與一次性獎勵 | `data/maps/npcs.json` 提供 NPC 對話、首次獎勵與重複對話；`GameState.talked_npcs` 防止重複領獎。 |
+| 每位 NPC 有美術圖 | `assets/sprites/npcs/*.png` 為鐵匠、商人、維修機器人、倖存者、公會櫃台、路線偵查員提供不同 PNG。 |
+| 玩家多角度像素圖 | `assets/sprites/player/recycler_player_multiaction_8dir.png` 是 7 動作 x 8 方向 x 3 frame，單格 48x56，atlas 1008x448。 |
+| 玩家動作狀態 | `Player.gd` 支援 `IDLE`、`WALK`、`SHOOT`、`DRAW_SWORD`、`SLASH`、`SWAP_TOOL`、`INTERACT`、`HIT`、`DEAD`。 |
+| 射擊與近戰循環 | 滑鼠左鍵按住射擊消耗彈藥；空白鍵近戰可清場並觸發拔刀/砍擊動畫；敵人死亡掉落資源。 |
+| 敵人種類與行為 | `data/enemies/enemies.json` 與 `Enemy.gd` 支援 6 種敵人與近戰、快速、遠程、重型、飛行、混合型行為。 |
+| 敵人與子彈上限 | `Wasteland.gd` 生成 30 名敵人；`ProjectilePool.gd` 使用資料設定限制 200 顆子彈。 |
+| 資源、裝備、合成、鍛造 | `data/items/equipment.json`、`data/items/recipes.json`、`GameState.gd`、`InventorySystem.gd` 支援撿取、堆疊、裝備、鍛造、合成與交易循環。 |
+| 存檔與 checksum | `SaveManager.gd` 使用 `user://save_game.json`，包含 Base64 payload 與 SHA-256 checksum。 |
+| 程序廢土地圖與 seed | `LevelGenerator.gd`、`Wasteland.gd` 使用 seed 產生資源點、事件點、敵人與 props。 |
+| 音樂與音效 | `AudioManager.gd` 載入 `assets/audio/*.wav`，村莊、公會、廢土各有音樂，近戰、射擊、受擊、撿取、互動、死亡有音效。 |
+| 美術 PNG runtime 載入 | `RuntimeAssetLoader.gd` 直接載入新生成 PNG/WAV，避免 Godot 尚未匯入 `.import` 時退回臨時 checker 素材。 |
+| 可玩性驗證 | `ValidationRunner.tscn`、`AutomatedPlaytestRunner.tscn` 驗證資料、場景、NPC、任務、戰鬥、存讀檔、PC HUD 與玩家動畫。 |
+| 視覺重疊檢查 | `VisualReviewRunner.tscn` 輸出 `docs/visual_review_village.png`、`docs/visual_review_guild.png`、`docs/visual_review_wasteland.png` 做畫面自我 review。 |
 
-## 尚待下一階段精修
+## 剩餘落差
 
-- 正式美術圖匯入後的 frame 切分、動畫樹精修、受擊與死亡動畫補強。
-- Android export template / SDK 實機測試。
-- 更完整 NPC 對話、更多任務分支與平衡調整。
+- 目前美術為可用 vertical slice PNG，風格已比色塊更完整，但距離正式商業像素遊戲仍需要人工精修。
+- 目前音效與音樂為本地生成 WAV，後續可替換成正式授權素材。
+- Android 匯出與觸控 UI 已暫緩，需等 PC 端視覺與手感穩定後再補。

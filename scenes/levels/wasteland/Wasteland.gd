@@ -3,6 +3,7 @@ extends Node2D
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
+const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 const BACKDROP_SCRIPT := preload("res://scripts/systems/WorldBackdrop.gd")
 const INTERACTABLE_SCRIPT := preload("res://scripts/components/Interactable.gd")
 const PICKUP_SCRIPT := preload("res://scripts/components/Pickup.gd")
@@ -17,6 +18,7 @@ var world_size := Vector2(3200, 2560)
 func _ready() -> void:
 	y_sort_enabled = true
 	GameState.current_scene_id = "wasteland"
+	AudioManager.play_music("wasteland")
 	var params := DataRegistry.map_params
 	var tile_size := int(params.get("tile_size", 32))
 	var size_tiles := Vector2i(int(params.get("width_tiles", 100)), int(params.get("height_tiles", 80)))
@@ -25,14 +27,14 @@ func _ready() -> void:
 	backdrop.setup("wasteland", size_tiles, GameState.seed)
 	add_child(backdrop)
 	_add_projectile_pool(int(params.get("projectile_limit", 200)))
-	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 180))
+	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 260))
 	_spawn_exit()
 	_spawn_props()
 	_spawn_resources()
 	_spawn_events()
 	_spawn_enemies()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("廢土外圍：回收資源、處理污染體，完成後從南側返回村莊")
+	GameState.notify("廢土外圍：擊倒污染體、回收資源，資源足夠後回村強化。")
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -56,9 +58,18 @@ func _spawn_exit() -> void:
 	add_child(exit)
 	var label := Label.new()
 	label.text = "返回村莊"
-	label.position = exit.position + Vector2(-44, -70)
+	label.position = exit.position + Vector2(-44, -170)
 	label.add_theme_font_size_override("font_size", 20)
 	add_child(label)
+	var gate := Sprite2D.new()
+	var gate_texture := ASSET_LOADER.load_png("res://assets/sprites/structures/village_return_gate.png")
+	if gate_texture != null:
+		gate.texture = gate_texture
+		gate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		gate.centered = false
+		var texture_size := gate.texture.get_size()
+		gate.position = exit.position + Vector2(-texture_size.x * 0.5, -texture_size.y)
+		add_child(gate)
 
 func _spawn_resources() -> void:
 	var count := int(DataRegistry.map_params.get("resource_nodes", 42))
@@ -143,7 +154,7 @@ func _spawn_enemies() -> void:
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")
 	if GameState.discovered_events.has(event_id):
-		GameState.notify("這個事件已經處理過")
+		GameState.notify("這個事件已經回收過。")
 		return
 	GameState.discovered_events.append(event_id)
 	for event_data in DataRegistry.events:

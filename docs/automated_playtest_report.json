@@ -110,14 +110,14 @@
 			"inventory_open": true,
 			"position": {
 				"x": 704.399658203125,
-				"y": 460.0
+				"y": 500.0
 			},
 			"talked_npcs": [
 				"forge_master"
 			]
 		},
 		"wasteland": {
-			"ammo_after_ranged": 18,
+			"ammo_after_ranged": 17,
 			"enemy_count": 30,
 			"position": {
 				"x": 720.0,

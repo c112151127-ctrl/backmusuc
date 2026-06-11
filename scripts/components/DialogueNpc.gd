@@ -2,6 +2,7 @@ extends Area2D
 class_name DialogueNpc
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
+const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 
 var npc_id := ""
 var npc_name := "NPC"
@@ -13,7 +14,7 @@ var _prompt: Label
 func setup(data: Dictionary) -> void:
 	npc_id = String(data.get("id", ""))
 	npc_name = String(data.get("name", npc_id))
-	role = String(data.get("role", "居民"))
+	role = String(data.get("role", "嚮導"))
 	color = Color.from_string(String(data.get("color", "#6f7e74")), Color8(110, 126, 116))
 	var position_data: Dictionary = data.get("position", {})
 	position = Vector2(float(position_data.get("x", 0.0)), float(position_data.get("y", 0.0)))
@@ -41,23 +42,29 @@ func _add_collision() -> void:
 
 func _add_sprite() -> void:
 	var sprite := Sprite2D.new()
-	sprite.texture = PIXEL.new().make_texture(Vector2i(34, 46), [color.darkened(0.35), color, color.lightened(0.25)], npc_id.length())
+	var npc_texture := _npc_texture()
+	sprite.texture = npc_texture if npc_texture != null else PIXEL.new().make_texture(Vector2i(56, 72), [color.darkened(0.35), color, color.lightened(0.25)], npc_id.length())
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.position = Vector2(0, -22)
+	sprite.centered = false
+	sprite.position = Vector2(-28, -72)
 	add_child(sprite)
 
 func _add_labels() -> void:
 	var name_label := Label.new()
 	name_label.text = "%s｜%s" % [npc_name, role]
-	name_label.position = Vector2(-54, -72)
+	name_label.position = Vector2(-58, -104)
 	name_label.add_theme_font_size_override("font_size", 14)
 	add_child(name_label)
 	_prompt = Label.new()
-	_prompt.text = "E: 交談"
-	_prompt.position = Vector2(-32, -92)
+	_prompt.text = "E：交談"
+	_prompt.position = Vector2(-32, -124)
 	_prompt.visible = false
 	_prompt.add_theme_font_size_override("font_size", 14)
 	add_child(_prompt)
+
+func _npc_texture() -> Texture2D:
+	var path := "res://assets/sprites/npcs/%s.png" % npc_id
+	return ASSET_LOADER.load_png(path)
 
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):

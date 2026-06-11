@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("attack_melee"):
 		_melee_attack()
-	if Input.is_action_just_pressed("attack_ranged"):
+	if Input.is_action_pressed("attack_ranged"):
 		_ranged_attack()
 	if Input.is_action_just_pressed("swap_weapon"):
 		_set_timed_state(PlayerState.SWAP_TOOL, 0.18)
@@ -73,6 +73,7 @@ func _melee_attack() -> void:
 		return
 	_set_timed_state(PlayerState.DRAW_SWORD, 0.08)
 	pending_slash = true
+	AudioManager.play_sfx("melee")
 	var weapon := DataRegistry.get_equipment(String(GameState.equipment.get("weapon", "rust_blade")))
 	attack_timer = float(weapon.get("cooldown", 0.32))
 	var damage := 12 + GameState.get_stat_bonus("attack")
@@ -89,6 +90,7 @@ func _ranged_attack() -> void:
 		GameState.notify("彈藥不足，改用近戰回收")
 		return
 	_set_timed_state(PlayerState.SHOOT, 0.18)
+	AudioManager.play_sfx("shoot")
 	var ranged := DataRegistry.get_equipment(String(GameState.equipment.get("ranged", "pipe_rifle")))
 	ranged_timer = float(ranged.get("cooldown", 0.25))
 	var aim := get_global_mouse_position() - global_position

@@ -41,7 +41,7 @@ func _ready() -> void:
 	await _check_playable_core_loop()
 	await _check_wasteland_prop_contract()
 	await _check_enemy_projectile_damage()
-	await _check_touch_controls()
+	await _check_pc_controls()
 	await _check_player_animation_contract()
 	await _check_projectile_pool_limit()
 	_finish()
@@ -83,7 +83,7 @@ func _check_enemy_behavior_contract() -> void:
 		enemy.free()
 
 func _check_baked_assets() -> void:
-	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(672, 320), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(1008, 448), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(216, 34), "baked enemy atlas has 6 enemy types")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(96, 24), "baked item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
@@ -285,7 +285,7 @@ func _check_enemy_projectile_damage() -> void:
 	instance.queue_free()
 	await get_tree().process_frame
 
-func _check_touch_controls() -> void:
+func _check_pc_controls() -> void:
 	GameState.reset_new_run(false)
 	var instance := VILLAGE_SCENE.instantiate()
 	add_child(instance)
@@ -300,6 +300,8 @@ func _check_touch_controls() -> void:
 		"interact",
 		"open_inventory",
 		"save_game",
+		"toggle_minimap",
+		"toggle_help",
 		"swap_weapon",
 		"quick_slot_1",
 		"quick_slot_2",
@@ -308,20 +310,24 @@ func _check_touch_controls() -> void:
 	]
 	for action_name in required_actions:
 		_expect(InputMap.has_action(action_name), "input action exists: " + action_name)
-	var move_buttons := get_tree().get_nodes_in_group("touch_move_control")
-	var action_buttons := get_tree().get_nodes_in_group("touch_action_control")
+	var ranged_has_left_click := false
+	for event in InputMap.action_get_events("attack_ranged"):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			ranged_has_left_click = true
+	var melee_has_left_click := false
+	for event in InputMap.action_get_events("attack_melee"):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			melee_has_left_click = true
+	_expect(ranged_has_left_click, "PC ranged attack is bound to left mouse")
+	_expect(not melee_has_left_click, "PC melee attack does not share left mouse")
 	var hotbar_slots := get_tree().get_nodes_in_group("hotbar_slot")
-	_expect(move_buttons.size() >= 4, "touch controls include 4 movement buttons")
-	_expect(action_buttons.size() >= 6, "touch controls include 6 action buttons")
-	_expect(hotbar_slots.size() >= 4, "HUD includes 4 quick slots")
-	var seen_actions: Dictionary = {}
-	for button in move_buttons + action_buttons:
-		if button.has_meta("input_action"):
-			seen_actions[String(button.get_meta("input_action"))] = true
-	for action_name in required_actions:
-		if action_name.begins_with("quick_slot_"):
-			continue
-		_expect(seen_actions.has(action_name), "touch control maps action: " + action_name)
+	var minimap_panels := get_tree().get_nodes_in_group("minimap_panel")
+	var tutorial_panels := get_tree().get_nodes_in_group("tutorial_panel")
+	var touch_buttons := get_tree().get_nodes_in_group("touch_control")
+	_expect(hotbar_slots.size() >= 4, "PC HUD includes 4 quick slots")
+	_expect(minimap_panels.size() >= 1, "PC HUD includes minimap panel")
+	_expect(tutorial_panels.size() >= 1, "PC HUD includes tutorial panel")
+	_expect(touch_buttons.is_empty(), "PC HUD does not show mobile touch buttons")
 	var seen_quick_slots: Dictionary = {}
 	for slot in hotbar_slots:
 		if slot.has_meta("quick_slot_index"):

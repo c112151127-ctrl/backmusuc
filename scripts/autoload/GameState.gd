@@ -384,13 +384,16 @@ func _ensure_input_actions() -> void:
 	_register_key("open_inventory", KEY_I)
 	_register_key("save_game", KEY_F5)
 	_register_key("load_game", KEY_F9)
+	_register_key("toggle_minimap", KEY_M)
+	_register_key("toggle_help", KEY_H)
 	_register_key("swap_weapon", KEY_Q)
 	_register_key("quick_slot_1", KEY_1)
 	_register_key("quick_slot_2", KEY_2)
 	_register_key("quick_slot_3", KEY_3)
 	_register_key("quick_slot_4", KEY_4)
 	_register_key("attack_melee", KEY_SPACE)
-	_register_mouse("attack_melee", MOUSE_BUTTON_LEFT)
+	_unregister_mouse("attack_melee", MOUSE_BUTTON_LEFT)
+	_register_mouse("attack_ranged", MOUSE_BUTTON_LEFT)
 	_register_mouse("attack_ranged", MOUSE_BUTTON_RIGHT)
 	_register_key("attack_ranged", KEY_K)
 	_register_key("dash", KEY_SHIFT)
@@ -415,3 +418,11 @@ func _register_mouse(action_name: String, button_index: MouseButton) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = button_index
 	InputMap.action_add_event(action_name, event)
+
+func _unregister_mouse(action_name: String, button_index: MouseButton) -> void:
+	if not InputMap.has_action(action_name):
+		return
+	for event in InputMap.action_get_events(action_name):
+		if event is InputEventMouseButton and event.button_index == button_index:
+			InputMap.action_erase_event(action_name, event)
+			return
