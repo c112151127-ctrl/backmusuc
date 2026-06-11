@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const MINIMAP_VIEW := preload("res://scripts/ui/MiniMapView.gd")
+const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 
 var stats_label: Label
 var quest_label: Label
@@ -77,8 +78,9 @@ func _build_inventory_panel(root: Control) -> void:
 	inventory_panel = PanelContainer.new()
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.add_to_group("equipment_panel")
-	inventory_panel.position = Vector2(28, 116)
-	inventory_panel.custom_minimum_size = Vector2(520, 520)
+	inventory_panel.position = Vector2(28, 92)
+	inventory_panel.custom_minimum_size = Vector2(620, 560)
+	inventory_panel.z_index = 40
 	inventory_panel.visible = false
 	root.add_child(inventory_panel)
 	inventory_list = VBoxContainer.new()
@@ -202,7 +204,7 @@ func _refresh_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
 	var title := Label.new()
-	title.text = "人物裝備 / 背包"
+	title.text = "人物裝備"
 	title.add_theme_font_size_override("font_size", 20)
 	inventory_list.add_child(title)
 
@@ -211,15 +213,50 @@ func _refresh_inventory() -> void:
 	active.add_theme_font_size_override("font_size", 15)
 	inventory_list.add_child(active)
 
-	var equipped := GridContainer.new()
-	equipped.columns = 2
-	equipped.add_theme_constant_override("h_separation", 14)
-	equipped.add_theme_constant_override("v_separation", 6)
-	inventory_list.add_child(equipped)
-	_add_equipment_row(equipped, "近戰武器", "weapon")
-	_add_equipment_row(equipped, "遠程武器", "ranged")
-	_add_equipment_row(equipped, "護甲", "armor")
-	_add_equipment_row(equipped, "工具", "tool")
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 16)
+	inventory_list.add_child(body)
+
+	var portrait_panel := PanelContainer.new()
+	portrait_panel.custom_minimum_size = Vector2(178, 230)
+	body.add_child(portrait_panel)
+	var portrait_stack := VBoxContainer.new()
+	portrait_stack.add_theme_constant_override("separation", 6)
+	portrait_panel.add_child(portrait_stack)
+	var portrait_title := Label.new()
+	portrait_title.text = "回收商"
+	portrait_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	portrait_stack.add_child(portrait_title)
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(140, 156)
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture = PIXEL.new().player_texture(0, 0, 1)
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait_stack.add_child(portrait)
+	var vitals := Label.new()
+	vitals.text = "HP %d/%d\nEP %d/%d\n廢鐵 %d  核心 %d" % [
+		GameState.hp,
+		GameState.MAX_HP,
+		GameState.ep,
+		GameState.MAX_EP,
+		GameState.scrap,
+		GameState.cores
+	]
+	vitals.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	portrait_stack.add_child(vitals)
+
+	var equipment_stack := VBoxContainer.new()
+	equipment_stack.add_theme_constant_override("separation", 8)
+	body.add_child(equipment_stack)
+	var equipment_grid := GridContainer.new()
+	equipment_grid.columns = 1
+	equipment_grid.add_theme_constant_override("h_separation", 10)
+	equipment_grid.add_theme_constant_override("v_separation", 8)
+	equipment_stack.add_child(equipment_grid)
+	_add_equipment_card(equipment_grid, "近戰武器", "weapon")
+	_add_equipment_card(equipment_grid, "遠程武器", "ranged")
+	_add_equipment_card(equipment_grid, "護甲", "armor")
+	_add_equipment_card(equipment_grid, "工具", "tool")
 
 	var stats := Label.new()
 	stats.text = "屬性加成：攻擊 %+d　防禦 %+d　速度 %+d" % [
@@ -228,12 +265,12 @@ func _refresh_inventory() -> void:
 		GameState.get_stat_bonus("speed")
 	]
 	stats.add_theme_font_size_override("font_size", 14)
-	inventory_list.add_child(stats)
+	equipment_stack.add_child(stats)
 
 	var quest := Label.new()
 	quest.text = "委託進度：%s" % GameState.active_quest_summary()
 	quest.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	inventory_list.add_child(quest)
+	equipment_stack.add_child(quest)
 
 	var separator := HSeparator.new()
 	inventory_list.add_child(separator)
@@ -242,13 +279,14 @@ func _refresh_inventory() -> void:
 	bag_title.add_theme_font_size_override("font_size", 16)
 	inventory_list.add_child(bag_title)
 
+	var bag_grid := GridContainer.new()
+	bag_grid.columns = 3
+	bag_grid.add_theme_constant_override("h_separation", 8)
+	bag_grid.add_theme_constant_override("v_separation", 8)
+	inventory_list.add_child(bag_grid)
 	for item_id in GameState.inventory.keys():
 		var amount := int(GameState.inventory[item_id])
-		var row := Button.new()
-		row.text = "%s x%d" % [GameState.item_display_name(String(item_id)), amount]
-		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		row.pressed.connect(_equip_from_inventory.bind(String(item_id)))
-		inventory_list.add_child(row)
+		_add_bag_button(bag_grid, String(item_id), amount)
 
 func _add_equipment_row(container: GridContainer, label_text: String, slot: String) -> void:
 	var label := Label.new()
@@ -257,6 +295,57 @@ func _add_equipment_row(container: GridContainer, label_text: String, slot: Stri
 	var value := Label.new()
 	value.text = GameState.equipped_slot_name(slot)
 	container.add_child(value)
+
+func _add_equipment_card(container: GridContainer, label_text: String, slot: String) -> void:
+	var item_id := String(GameState.equipment.get(slot, ""))
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(360, 62)
+	container.add_child(card)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	card.add_child(row)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(46, 46)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.texture = _item_icon(item_id)
+	row.add_child(icon)
+	var text := VBoxContainer.new()
+	row.add_child(text)
+	var label := Label.new()
+	label.text = label_text
+	label.add_theme_font_size_override("font_size", 12)
+	text.add_child(label)
+	var value := Label.new()
+	value.text = GameState.item_display_name(item_id)
+	value.add_theme_font_size_override("font_size", 14)
+	value.custom_minimum_size = Vector2(220, 0)
+	value.clip_text = true
+	text.add_child(value)
+
+func _add_bag_button(container: GridContainer, item_id: String, amount: int) -> void:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(180, 58)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.text = "%s x%d" % [GameState.item_display_name(item_id), amount]
+	button.icon = _item_icon(item_id)
+	button.expand_icon = true
+	button.pressed.connect(_equip_from_inventory.bind(item_id))
+	container.add_child(button)
+
+func _item_icon(item_id: String) -> Texture2D:
+	var resource := DataRegistry.get_resource(item_id)
+	if not resource.is_empty():
+		return PIXEL.new().item_texture(item_id)
+	var equipment := DataRegistry.get_equipment(item_id)
+	if not equipment.is_empty():
+		var mode := String(equipment.get("attack_mode", "passive"))
+		if mode == "ranged":
+			return PIXEL.new().item_texture("ammo")
+		if mode == "melee":
+			return PIXEL.new().item_texture("scrap")
+		return PIXEL.new().item_texture("mutant_core")
+	return PIXEL.new().item_texture("scrap")
 
 func _equip_from_inventory(item_id: String) -> void:
 	if not DataRegistry.get_equipment(item_id).is_empty():

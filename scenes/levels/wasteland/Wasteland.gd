@@ -132,7 +132,7 @@ func _spawn_events() -> void:
 		var marker_item := "bio_crystal" if i % 2 == 0 else "mutant_core"
 		marker.texture = PIXEL.new().item_texture(marker_item)
 		marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		marker.scale = Vector2(1.45, 1.45)
+		marker.scale = Vector2(0.92, 0.92)
 		marker.position = positions[i]
 		add_child(marker)
 
@@ -212,7 +212,7 @@ func _spawn_boss() -> void:
 	var beacon := Sprite2D.new()
 	beacon.texture = PIXEL.new().item_texture("mutant_core")
 	beacon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	beacon.scale = Vector2(1.8, 1.8)
+	beacon.scale = Vector2(1.05, 1.05)
 	beacon.position = boss.global_position + Vector2(0, 54)
 	add_child(beacon)
 

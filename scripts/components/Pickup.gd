@@ -30,7 +30,7 @@ func _ready() -> void:
 	sprite = Sprite2D.new()
 	sprite.texture = _item_texture(item_id)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.scale = Vector2(1.25, 1.25)
+	sprite.scale = Vector2(0.88, 0.88)
 	add_child(sprite)
 	set_process(true)
 
@@ -71,6 +71,6 @@ func _on_body_entered(body: Node) -> void:
 	GameState.add_item(item_id, amount)
 	AudioManager.play_sfx("pickup")
 	var label: String = String(DataRegistry.get_resource(item_id).get("name", item_id))
-	GameState.notify("撿起 %s x%d" % [label, amount])
+	GameState.notify("拾取 %s x%d" % [label, amount])
 	visible = false
 	call_deferred("queue_free")

@@ -2,8 +2,8 @@ extends RefCounted
 class_name PixelArtFactory
 
 const PLAYER_FRAME_SIZE := Vector2i(48, 56)
-const ENEMY_FRAME_SIZE := Vector2i(36, 34)
-const ITEM_FRAME_SIZE := Vector2i(24, 24)
+const ENEMY_FRAME_SIZE := Vector2i(56, 48)
+const ITEM_FRAME_SIZE := Vector2i(56, 44)
 const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
 const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid", "boss"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
@@ -63,62 +63,70 @@ func enemy_texture(enemy_type: String) -> ImageTexture:
 func enemy_image(enemy_type: String) -> Image:
 	var image := Image.create(ENEMY_FRAME_SIZE.x, ENEMY_FRAME_SIZE.y, false, Image.FORMAT_RGBA8)
 	image.fill(Color(0, 0, 0, 0))
-	_enemy_ellipse(image, Vector2i(18, 29), 13, 4, Color(0, 0, 0, 0.32))
+	_enemy_ellipse(image, Vector2i(28, 40), 20, 5, Color(0, 0, 0, 0.38))
 	match enemy_type:
 		"boss":
-			_enemy_ellipse(image, Vector2i(18, 27), 17, 5, Color(0, 0, 0, 0.38))
-			_enemy_ellipse(image, Vector2i(18, 17), 16, 12, Color8(64, 50, 43))
-			_enemy_ellipse(image, Vector2i(18, 16), 12, 9, Color8(129, 86, 59))
-			_enemy_rect(image, 4, 13, 9, 27, Color8(44, 38, 36))
-			_enemy_rect(image, 27, 13, 32, 27, Color8(44, 38, 36))
-			_enemy_line(image, Vector2(7, 10), Vector2(2, 4), Color8(176, 82, 58), 2)
-			_enemy_line(image, Vector2(29, 10), Vector2(34, 4), Color8(176, 82, 58), 2)
-			_enemy_rect(image, 10, 11, 26, 14, Color8(55, 38, 34))
-			_enemy_rect(image, 12, 20, 24, 25, Color8(39, 22, 18))
-			_enemy_rect(image, 14, 12, 16, 14, Color8(236, 66, 61))
-			_enemy_rect(image, 20, 12, 22, 14, Color8(236, 66, 61))
-			_enemy_line(image, Vector2(6, 23), Vector2(0, 31), Color8(93, 187, 77), 2)
-			_enemy_line(image, Vector2(30, 23), Vector2(35, 31), Color8(93, 187, 77), 2)
-			_enemy_rect(image, 15, 6, 21, 8, Color8(230, 157, 80))
+			_enemy_ellipse(image, Vector2i(28, 26), 25, 17, Color8(21, 17, 14))
+			_enemy_ellipse(image, Vector2i(28, 25), 22, 15, Color8(84, 50, 36))
+			_enemy_ellipse(image, Vector2i(31, 22), 14, 10, Color8(159, 88, 57))
+			_enemy_ellipse(image, Vector2i(21, 23), 5, 5, Color8(226, 43, 51))
+			_enemy_ellipse(image, Vector2i(35, 22), 6, 6, Color8(122, 205, 55))
+			_enemy_rect(image, 9, 25, 16, 43, Color8(39, 30, 25))
+			_enemy_rect(image, 40, 24, 48, 43, Color8(39, 30, 25))
+			_enemy_line(image, Vector2(13, 17), Vector2(4, 7), Color8(210, 112, 62), 2)
+			_enemy_line(image, Vector2(43, 17), Vector2(53, 7), Color8(210, 112, 62), 2)
+			_enemy_rect(image, 17, 31, 39, 38, Color8(31, 16, 13))
+			_enemy_line(image, Vector2(21, 37), Vector2(18, 45), Color8(135, 216, 66), 2)
+			_enemy_line(image, Vector2(34, 37), Vector2(38, 45), Color8(135, 216, 66), 2)
+			_enemy_rect(image, 22, 9, 34, 12, Color8(238, 154, 72))
 		"fast":
-			_enemy_ellipse(image, Vector2i(18, 18), 11, 8, Color8(42, 76, 38))
-			_enemy_ellipse(image, Vector2i(20, 15), 8, 5, Color8(110, 176, 57))
-			_enemy_line(image, Vector2(8, 20), Vector2(1, 29), Color8(196, 220, 73), 2)
-			_enemy_line(image, Vector2(28, 20), Vector2(35, 29), Color8(196, 220, 73), 2)
-			_enemy_rect(image, 16, 9, 20, 12, Color8(218, 255, 91))
+			_enemy_ellipse(image, Vector2i(28, 27), 19, 11, Color8(20, 28, 18))
+			_enemy_ellipse(image, Vector2i(30, 24), 15, 8, Color8(85, 153, 45))
+			_enemy_line(image, Vector2(14, 31), Vector2(4, 42), Color8(179, 220, 65), 2)
+			_enemy_line(image, Vector2(42, 31), Vector2(53, 42), Color8(179, 220, 65), 2)
+			_enemy_line(image, Vector2(20, 17), Vector2(13, 9), Color8(190, 214, 83), 2)
+			_enemy_line(image, Vector2(37, 17), Vector2(45, 8), Color8(190, 214, 83), 2)
+			_enemy_rect(image, 27, 15, 33, 18, Color8(231, 255, 92))
 		"ranged":
-			_enemy_ellipse(image, Vector2i(15, 18), 11, 10, Color8(88, 50, 64))
-			_enemy_rect(image, 20, 13, 34, 18, Color8(84, 58, 54))
-			_enemy_rect(image, 27, 14, 35, 16, Color8(232, 206, 82))
-			_enemy_ellipse(image, Vector2i(12, 15), 4, 3, Color8(224, 90, 72))
-			_enemy_line(image, Vector2(6, 24), Vector2(2, 30), Color8(92, 168, 64), 2)
+			_enemy_ellipse(image, Vector2i(23, 27), 17, 13, Color8(31, 21, 27))
+			_enemy_ellipse(image, Vector2i(22, 25), 13, 10, Color8(103, 54, 67))
+			_enemy_rect(image, 32, 20, 53, 27, Color8(67, 50, 45))
+			_enemy_rect(image, 43, 22, 55, 24, Color8(235, 197, 79))
+			_enemy_ellipse(image, Vector2i(19, 20), 5, 4, Color8(230, 73, 63))
+			_enemy_line(image, Vector2(12, 35), Vector2(5, 43), Color8(102, 185, 69), 2)
 		"heavy":
-			_enemy_ellipse(image, Vector2i(18, 18), 15, 12, Color8(82, 66, 52))
-			_enemy_ellipse(image, Vector2i(18, 19), 11, 8, Color8(138, 108, 78))
-			_enemy_rect(image, 5, 10, 10, 27, Color8(49, 42, 36))
-			_enemy_rect(image, 26, 10, 31, 27, Color8(49, 42, 36))
-			_enemy_rect(image, 13, 12, 23, 15, Color8(219, 153, 84))
-			_enemy_rect(image, 14, 21, 22, 24, Color8(44, 24, 21))
+			_enemy_ellipse(image, Vector2i(28, 26), 23, 16, Color8(28, 23, 20))
+			_enemy_ellipse(image, Vector2i(28, 27), 19, 12, Color8(122, 93, 66))
+			_enemy_rect(image, 5, 18, 14, 41, Color8(48, 40, 34))
+			_enemy_rect(image, 42, 18, 51, 41, Color8(48, 40, 34))
+			_enemy_rect(image, 18, 16, 38, 21, Color8(221, 150, 78))
+			_enemy_rect(image, 20, 31, 36, 36, Color8(36, 19, 17))
+			_enemy_line(image, Vector2(40, 33), Vector2(52, 42), Color8(133, 207, 55), 3)
 		"flying":
-			_enemy_ellipse(image, Vector2i(18, 17), 8, 7, Color8(60, 88, 93))
-			_enemy_line(image, Vector2(13, 14), Vector2(1, 8), Color8(143, 210, 210, 180), 3)
-			_enemy_line(image, Vector2(23, 14), Vector2(35, 8), Color8(143, 210, 210, 180), 3)
-			_enemy_line(image, Vector2(13, 18), Vector2(2, 24), Color8(90, 143, 146, 190), 3)
-			_enemy_line(image, Vector2(23, 18), Vector2(34, 24), Color8(90, 143, 146, 190), 3)
-			_enemy_rect(image, 16, 13, 20, 16, Color8(212, 245, 226))
+			_enemy_ellipse(image, Vector2i(28, 26), 11, 10, Color8(23, 29, 30))
+			_enemy_ellipse(image, Vector2i(28, 24), 9, 8, Color8(72, 93, 92))
+			_enemy_line(image, Vector2(20, 21), Vector2(2, 10), Color8(154, 188, 170, 195), 4)
+			_enemy_line(image, Vector2(36, 21), Vector2(54, 10), Color8(154, 188, 170, 195), 4)
+			_enemy_line(image, Vector2(20, 28), Vector2(4, 39), Color8(96, 135, 122, 205), 4)
+			_enemy_line(image, Vector2(36, 28), Vector2(52, 39), Color8(96, 135, 122, 205), 4)
+			_enemy_rect(image, 25, 20, 31, 24, Color8(222, 246, 217))
 		"hybrid":
-			_enemy_ellipse(image, Vector2i(17, 18), 12, 10, Color8(65, 54, 76))
-			_enemy_rect(image, 21, 11, 28, 24, Color8(70, 84, 88))
-			_enemy_line(image, Vector2(8, 22), Vector2(2, 30), Color8(122, 69, 145), 2)
-			_enemy_line(image, Vector2(25, 18), Vector2(35, 15), Color8(65, 198, 108), 2)
-			_enemy_rect(image, 13, 13, 17, 16, Color8(222, 60, 77))
+			_enemy_ellipse(image, Vector2i(26, 27), 18, 14, Color8(27, 24, 32))
+			_enemy_ellipse(image, Vector2i(24, 25), 13, 10, Color8(79, 60, 86))
+			_enemy_rect(image, 34, 17, 44, 36, Color8(68, 78, 79))
+			_enemy_line(image, Vector2(14, 34), Vector2(5, 44), Color8(132, 73, 154), 3)
+			_enemy_line(image, Vector2(37, 25), Vector2(54, 20), Color8(68, 211, 119), 3)
+			_enemy_rect(image, 21, 20, 26, 24, Color8(229, 53, 70))
 		_:
-			_enemy_ellipse(image, Vector2i(18, 19), 13, 9, Color8(90, 52, 43))
-			_enemy_ellipse(image, Vector2i(17, 17), 9, 6, Color8(151, 78, 52))
-			_enemy_line(image, Vector2(9, 23), Vector2(3, 30), Color8(92, 168, 64), 2)
-			_enemy_line(image, Vector2(27, 23), Vector2(33, 30), Color8(92, 168, 64), 2)
-			_enemy_rect(image, 13, 15, 23, 18, Color8(42, 22, 18))
-			_enemy_rect(image, 14, 13, 17, 15, Color8(224, 79, 61))
+			_enemy_ellipse(image, Vector2i(28, 29), 21, 13, Color8(25, 20, 17))
+			_enemy_ellipse(image, Vector2i(26, 26), 15, 9, Color8(141, 75, 50))
+			_enemy_line(image, Vector2(14, 34), Vector2(6, 44), Color8(95, 175, 69), 2)
+			_enemy_line(image, Vector2(42, 34), Vector2(51, 44), Color8(95, 175, 69), 2)
+			_enemy_line(image, Vector2(18, 19), Vector2(10, 12), Color8(191, 111, 66), 2)
+			_enemy_line(image, Vector2(35, 19), Vector2(44, 12), Color8(191, 111, 66), 2)
+			_enemy_rect(image, 20, 24, 36, 29, Color8(37, 18, 15))
+			_enemy_rect(image, 22, 21, 27, 24, Color8(225, 65, 58))
+	_enemy_highlight_noise(image, enemy_type.length() * 31)
 	return image
 
 func _enemy_set(image: Image, x: int, y: int, color: Color) -> void:
@@ -148,40 +156,58 @@ func _enemy_line(image: Image, from_point: Vector2, to_point: Vector2, color: Co
 		var p := from_point.lerp(to_point, t)
 		_enemy_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)
 
+func _enemy_highlight_noise(image: Image, seed: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	for i in range(42):
+		var x := rng.randi_range(4, image.get_width() - 5)
+		var y := rng.randi_range(5, image.get_height() - 8)
+		var c := image.get_pixel(x, y)
+		if c.a > 0.2:
+			image.set_pixel(x, y, c.lightened(rng.randf_range(0.18, 0.38)))
+
 func item_texture(item_id: String) -> ImageTexture:
 	return ImageTexture.create_from_image(item_image(item_id))
 
 func item_image(item_id: String) -> Image:
 	var image := Image.create(ITEM_FRAME_SIZE.x, ITEM_FRAME_SIZE.y, false, Image.FORMAT_RGBA8)
 	image.fill(Color(0, 0, 0, 0))
-	_item_ellipse(image, Vector2i(12, 20), 8, 2, Color(0, 0, 0, 0.30))
+	_item_ellipse(image, Vector2i(28, 37), 20, 4, Color(0, 0, 0, 0.36))
 	match item_id:
 		"ammo":
-			_item_rect(image, 5, 8, 18, 16, Color8(43, 48, 52))
-			_item_rect(image, 7, 6, 16, 9, Color8(215, 178, 72))
-			_item_rect(image, 7, 11, 16, 14, Color8(121, 81, 48))
-			_item_rect(image, 18, 10, 20, 15, Color8(218, 191, 93))
-			_item_rect(image, 5, 16, 18, 18, Color8(24, 28, 31))
+			_item_rect(image, 11, 14, 38, 31, Color8(24, 28, 30))
+			_item_rect(image, 13, 11, 36, 16, Color8(83, 101, 62))
+			_item_rect(image, 15, 17, 35, 28, Color8(78, 91, 54))
+			_item_rect(image, 39, 16, 45, 30, Color8(225, 181, 72))
+			_item_rect(image, 42, 12, 45, 17, Color8(242, 206, 105))
+			_item_rect(image, 11, 31, 38, 34, Color8(12, 15, 17))
+			_item_rect(image, 20, 13, 28, 15, Color8(231, 139, 47))
 		"mutant_core":
-			_item_ellipse(image, Vector2i(12, 12), 8, 8, Color8(70, 19, 25))
-			_item_ellipse(image, Vector2i(12, 12), 5, 5, Color8(215, 52, 63))
-			_item_ellipse(image, Vector2i(9, 9), 2, 2, Color8(255, 145, 108))
-			_item_line(image, Vector2(12, 4), Vector2(15, 1), Color8(95, 207, 88), 1)
-			_item_line(image, Vector2(17, 13), Vector2(22, 15), Color8(95, 207, 88), 1)
+			_item_ellipse(image, Vector2i(28, 23), 15, 14, Color8(46, 13, 18))
+			_item_ellipse(image, Vector2i(28, 22), 11, 11, Color8(194, 42, 52))
+			_item_ellipse(image, Vector2i(24, 18), 4, 4, Color8(255, 136, 94))
+			_item_line(image, Vector2(28, 8), Vector2(34, 2), Color8(86, 172, 76), 2)
+			_item_line(image, Vector2(40, 23), Vector2(53, 26), Color8(86, 172, 76), 2)
+			_item_line(image, Vector2(16, 25), Vector2(4, 31), Color8(113, 50, 58), 2)
 		"bio_crystal":
-			_item_line(image, Vector2(12, 3), Vector2(5, 14), Color8(77, 224, 155), 2)
-			_item_line(image, Vector2(12, 3), Vector2(19, 14), Color8(185, 92, 233), 2)
-			_item_line(image, Vector2(5, 14), Vector2(12, 21), Color8(62, 38, 91), 2)
-			_item_line(image, Vector2(19, 14), Vector2(12, 21), Color8(62, 38, 91), 2)
-			_item_rect(image, 10, 8, 14, 17, Color8(151, 246, 201))
-			_item_set(image, 13, 6, Color.WHITE)
+			_item_line(image, Vector2(28, 5), Vector2(16, 27), Color8(90, 232, 165), 4)
+			_item_line(image, Vector2(28, 5), Vector2(41, 27), Color8(202, 102, 243), 4)
+			_item_line(image, Vector2(16, 27), Vector2(28, 39), Color8(55, 30, 84), 4)
+			_item_line(image, Vector2(41, 27), Vector2(28, 39), Color8(55, 30, 84), 4)
+			_item_line(image, Vector2(18, 20), Vector2(9, 33), Color8(170, 78, 230), 3)
+			_item_line(image, Vector2(38, 20), Vector2(48, 33), Color8(122, 244, 194), 3)
+			_item_rect(image, 25, 14, 31, 31, Color8(161, 248, 214))
+			_item_set(image, 31, 9, Color.WHITE)
 		_:
-			_item_rect(image, 5, 11, 18, 17, Color8(73, 59, 45))
-			_item_rect(image, 7, 8, 13, 14, Color8(139, 92, 57))
-			_item_rect(image, 13, 7, 19, 13, Color8(95, 104, 96))
-			_item_rect(image, 4, 15, 9, 19, Color8(165, 109, 55))
-			_item_line(image, Vector2(7, 9), Vector2(18, 17), Color8(219, 159, 78), 1)
-			_item_set(image, 15, 9, Color8(78, 190, 205))
+			_item_rect(image, 10, 21, 42, 29, Color8(48, 37, 27))
+			_item_rect(image, 14, 14, 25, 25, Color8(138, 82, 43))
+			_item_rect(image, 25, 12, 38, 23, Color8(111, 114, 104))
+			_item_rect(image, 8, 27, 22, 34, Color8(168, 102, 48))
+			_item_line(image, Vector2(13, 15), Vector2(41, 29), Color8(225, 164, 83), 2)
+			_item_line(image, Vector2(17, 10), Vector2(22, 3), Color8(222, 222, 194), 2)
+			_item_line(image, Vector2(25, 11), Vector2(33, 4), Color8(222, 222, 194), 2)
+			_item_set(image, 35, 14, Color8(86, 214, 224))
+	_item_highlight_noise(image, item_id.length() * 13)
 	return image
 
 func _item_set(image: Image, x: int, y: int, color: Color) -> void:
@@ -210,6 +236,16 @@ func _item_line(image: Image, from_point: Vector2, to_point: Vector2, color: Col
 		var t := float(i) / float(steps)
 		var p := from_point.lerp(to_point, t)
 		_item_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)
+
+func _item_highlight_noise(image: Image, seed: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	for i in range(30):
+		var x := rng.randi_range(5, image.get_width() - 6)
+		var y := rng.randi_range(5, image.get_height() - 8)
+		var c := image.get_pixel(x, y)
+		if c.a > 0.2:
+			image.set_pixel(x, y, c.lightened(rng.randf_range(0.12, 0.34)))
 
 func _draw_player_legs(image: Image, origin: Vector2i, direction_index: int, action_index: int, frame_index: int, palette: Array[Color]) -> void:
 	var stride := 0
@@ -263,26 +299,36 @@ func _draw_player_arms(image: Image, direction_index: int, action_index: int, fr
 	_draw_line(image, shoulder_left, idle_left, palette[4], 2)
 	_draw_line(image, shoulder_right, idle_right, palette[4], 2)
 	if action_index == 2:
-		var hand := Vector2(origin.x, origin.y - 1) + direction * 8.0
-		var muzzle := Vector2(origin.x, origin.y - 1) + direction * (18.0 + frame_index * 2.0)
+		var recoil: Array[float] = [4.0, 0.0, -3.0]
+		var muzzle_flash: Array[int] = [1, 5, 2]
+		var hand := Vector2(origin.x, origin.y - 1) + direction * (8.0 + recoil[frame_index])
+		var muzzle := Vector2(origin.x, origin.y - 1) + direction * (19.0 + recoil[frame_index] * 0.5)
+		var back_hand := Vector2(origin.x, origin.y + 3) - direction * (5.0 + float(frame_index))
 		_draw_line(image, Vector2(origin.x, origin.y - 3), hand, palette[4].lightened(0.12), 2)
+		_draw_line(image, Vector2(origin.x, origin.y + 2), back_hand, palette[4].darkened(0.1), 2)
 		_draw_line(image, hand, muzzle, palette[0], 3)
 		_draw_line(image, hand, muzzle, palette[2].lightened(0.22), 1)
-		_fill_ellipse(image, Vector2i(int(muzzle.x), int(muzzle.y)), 2 + frame_index, 2 + frame_index, palette[3].lightened(0.2))
+		if frame_index == 1:
+			_fill_ellipse(image, Vector2i(int(muzzle.x + direction.x * 4.0), int(muzzle.y + direction.y * 4.0)), muzzle_flash[frame_index], muzzle_flash[frame_index], Color8(255, 220, 88))
+			_fill_ellipse(image, Vector2i(int(muzzle.x + direction.x * 7.0), int(muzzle.y + direction.y * 7.0)), 2, 2, Color8(77, 224, 244))
 	elif action_index == 3:
 		var hip: Vector2 = Vector2(origin.x - side * 8, origin.y + 10)
 		var draw_hand: Vector2 = Vector2(origin.x + side * (2 + frame_index * 3), origin.y - 2 - frame_index)
 		_draw_line(image, hip, draw_hand, palette[4], 2)
 		_draw_line(image, hip + Vector2(0, 5), draw_hand + Vector2(side * 4, -4), palette[5].darkened(0.12), 1)
 	elif action_index == 4:
-		var slash_center: Vector2 = Vector2(origin.x, origin.y - 4) + direction * 12.0
-		for i in range(-7, 8):
+		var arc_scale: Array[float] = [0.45, 1.15, 0.72]
+		var slash_center: Vector2 = Vector2(origin.x, origin.y - 4) + direction * (9.0 + frame_index * 4.0)
+		for i in range(-9, 10):
 			var tangent: Vector2 = direction.rotated(PI * 0.5) * float(i)
-			var forward: Vector2 = direction * (abs(i) * -0.45 + frame_index * 2.0)
+			var forward: Vector2 = direction * (abs(i) * -0.32 * arc_scale[frame_index] + frame_index * 2.5)
 			var slash_point: Vector2 = slash_center + tangent + forward
-			_fill_ellipse(image, Vector2i(int(slash_point.x), int(slash_point.y)), 2, 2, palette[5])
+			var radius := 1 if frame_index == 0 else 2
+			_fill_ellipse(image, Vector2i(int(slash_point.x), int(slash_point.y)), radius, radius, palette[5])
 			_set_pixel_safe(image, int(slash_point.x - direction.x * 2.0), int(slash_point.y - direction.y * 2.0), palette[3].lightened(0.12))
-		_draw_line(image, Vector2(origin.x, origin.y - 1), slash_center + direction * 6.0, palette[4], 2)
+		var sword_tip := slash_center + direction * (7.0 + frame_index * 2.0)
+		_draw_line(image, Vector2(origin.x, origin.y - 1), sword_tip, palette[4], 2)
+		_draw_line(image, sword_tip - direction.rotated(PI * 0.5) * 3.0, sword_tip + direction.rotated(PI * 0.5) * 3.0, palette[5], 1)
 	elif action_index == 5:
 		var tool_center := Vector2i(origin.x + side * (9 + frame_index), origin.y + 1)
 		_fill_rect(image, tool_center.x - 4, tool_center.y - 4, tool_center.x + 5, tool_center.y + 5, palette[4].lightened(0.2))

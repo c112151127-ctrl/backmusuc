@@ -34,8 +34,34 @@ func _capture_scene(scene_id: String, packed_scene: PackedScene) -> void:
 		await get_tree().process_frame
 	var image := get_viewport().get_texture().get_image()
 	_save_image(image, "visual_review_%s" % scene_id)
+	if scene_id == "village":
+		await _capture_inventory_panel()
 	if scene_id == "wasteland":
+		await _capture_wasteland_road_area()
 		await _capture_wasteland_boss_area()
+
+func _capture_inventory_panel() -> void:
+	var panels := get_tree().get_nodes_in_group("equipment_panel")
+	if panels.is_empty():
+		return
+	var panel := panels[0] as Control
+	panel.visible = true
+	for _i in range(8):
+		await get_tree().process_frame
+	var image := get_viewport().get_texture().get_image()
+	_save_image(image, "visual_review_inventory_panel")
+
+func _capture_wasteland_road_area() -> void:
+	var players := get_tree().get_nodes_in_group("player")
+	if players.is_empty():
+		return
+	var player := players[0] as Node2D
+	player.global_position = Vector2(2880, 3180)
+	GameState.player_position = player.global_position
+	for _i in range(12):
+		await get_tree().process_frame
+	var image := get_viewport().get_texture().get_image()
+	_save_image(image, "visual_review_wasteland_road")
 
 func _capture_wasteland_boss_area() -> void:
 	var bosses := get_tree().get_nodes_in_group("boss")

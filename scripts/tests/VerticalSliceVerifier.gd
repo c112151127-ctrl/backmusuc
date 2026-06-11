@@ -89,8 +89,8 @@ func _check_enemy_behavior_contract() -> void:
 
 func _check_baked_assets() -> void:
 	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(1008, 448), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
-	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(252, 34), "baked enemy atlas has 6 enemy types plus boss")
-	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(96, 24), "baked item icon atlas has 4 resource icons")
+	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(392, 48), "baked enemy atlas has 6 enemy types plus boss")
+	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(224, 44), "baked item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
 
 func _check_export_presets() -> void:

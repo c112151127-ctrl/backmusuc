@@ -38,12 +38,28 @@ func _draw() -> void:
 				draw_rect(rect, Color(c.r, c.g, c.b, 0.24 + road_strength * 0.2))
 			else:
 				draw_rect(rect, c)
+			if road_strength > 0.0:
+				_draw_road_detail(rect, x, y, road_strength, rng)
 			if (x + y) % 5 == 0:
 				draw_rect(rect, Color(0, 0, 0, 0.08), false, 1.0)
 			if mode == "wasteland" and rng.randf() < 0.025:
 				draw_circle(rect.position + Vector2(rng.randf_range(8, 24), rng.randf_range(8, 24)), rng.randf_range(2.0, 5.0), Color(0.22, 0.45, 0.25, 0.45))
 			if road_strength > 0.0 and (x + y) % 4 == 0:
 				draw_rect(rect.grow(-7), Color(0.72, 0.62, 0.42, 0.08), false, 1.0)
+
+func _draw_road_detail(rect: Rect2, x: int, y: int, road_strength: float, rng: RandomNumberGenerator) -> void:
+	var asphalt := Color(0.16, 0.15, 0.13, 0.42 + road_strength * 0.28)
+	var edge := Color(0.78, 0.62, 0.38, 0.28 + road_strength * 0.2)
+	draw_rect(rect.grow(-2), asphalt, true)
+	if mode == "wasteland":
+		if abs(y - int(map_size.y * 0.72) - int(sin(float(x) * 0.14) * 5.0)) == 2:
+			draw_rect(Rect2(rect.position.x, rect.position.y + 2, rect.size.x, 2), edge, true)
+		if x % 6 == 0:
+			draw_rect(Rect2(rect.position.x + rect.size.x * 0.46, rect.position.y + 8, 3, 12), Color(0.82, 0.78, 0.58, 0.22), true)
+		if rng.randf() < 0.22:
+			draw_line(rect.position + Vector2(rng.randf_range(4, 12), rng.randf_range(8, 24)), rect.position + Vector2(rng.randf_range(18, 28), rng.randf_range(10, 28)), Color(0.05, 0.045, 0.04, 0.42), 1.0)
+	else:
+		draw_rect(rect.grow(-6), Color(0.70, 0.58, 0.38, 0.18), false, 1.0)
 
 func _road_strength(x: int, y: int) -> float:
 	if mode == "village":

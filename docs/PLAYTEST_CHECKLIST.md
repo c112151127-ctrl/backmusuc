@@ -16,11 +16,13 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 `VisualReviewRunner` 會更新：
 
 - `docs/visual_review_village.png`
+- `docs/visual_review_inventory_panel.png`
 - `docs/visual_review_guild.png`
 - `docs/visual_review_wasteland.png`
+- `docs/visual_review_wasteland_road.png`
 - `docs/visual_review_wasteland_boss.png`
 
-請檢查截圖中是否有大面積文字重疊、NPC 標籤常駐、建築互動字遮住角色、或地圖邊界露出空白區。
+請檢查截圖中是否有大面積文字重疊、NPC 標籤常駐、建築互動字遮住角色、道路不明顯、掉落物像測試色塊、人物裝備面板資訊不足，或地圖邊界露出空白區。
 
 ## PC 操作
 
@@ -52,7 +54,7 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 11. 進入野外，確認地圖明顯比村莊大，有岩石、枯樹、廢車、毒池、資源點、事件點、冒險區域與敵人。
 12. 在野外嘗試走向邊界，確認玩家不會離開可玩區域。
 13. 與野外事件點互動，確認出現事件文字與獎勵。
-14. 確認廢鐵、彈藥、異變核心、汙染晶核掉落物都有獨立圖示，不再是棋盤格。
+14. 確認廢鐵、彈藥、異變核心、汙染晶核掉落物都有厚輪廓、陰影與獨立圖示，不再是棋盤格或純色測試方塊。
 15. 擊倒敵人後確認掉落物可撿取，任務擊殺數會更新。
 16. 前往晶化裂隙附近，確認廢土巨像 Boss 存在、尺寸明顯大於普通怪，會造成近身與遠程壓力。
 17. 讓玩家死亡或被投射物擊中後切場景，確認 console 不再出現 `Removing a CollisionObject node during a physics callback`。
@@ -61,15 +63,17 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 ## 畫面 Review 重點
 
 - 地圖不應只是一整片重複地板，需要有路徑、裂痕、汙染斑、障礙物與資源點。
+- 主道路應能從色塊、邊線、裂痕與路標辨識，不應讓玩家看不出前往公會、廢土或 Boss 區的方向。
 - 野外應能看出廢鐵公路、毒沼邊界、晶化裂隙三種區域色調。
 - 村莊、公會、野外的色調與功能建築需能區分。
 - NPC 與建築不能把大量文字固定顯示在畫面上。
 - 角色、NPC、建築和障礙物的 Y ordering 應讓前後關係合理。
 - 敵人至少要能從輪廓看出近戰、快速、遠程、重型、飛行、混合型與 Boss 差異。
 - 掉落物 icon 需要能辨識資源類型，且不應像測試色塊。
+- 人物裝備介面需要顯示角色頭像、目前左鍵行為、近戰武器、遠程武器、護甲、工具、背包與主要數值。
 
 ## 已知限制
 
-- 目前素材是可替換的像素 PNG，已改善輪廓與場景辨識，但仍不是最終商業級精修美術。
+- 目前素材已朝 `docs/art_direction_reference.png` 的厚輪廓、暗色廢土、鏽蝕金屬、污染綠、核心紅與晶體紫方向修正，但仍不是最終商業級人工精修美術。
 - 裝備介面目前是資訊檢視與背包列表，尚未支援拖曳換裝。
 - Android 觸控 UI 暫緩，現階段以 PC 鍵鼠體驗為主。
