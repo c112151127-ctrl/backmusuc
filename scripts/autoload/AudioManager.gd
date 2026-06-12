@@ -5,16 +5,23 @@ const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 const MUSIC := {
 	"village": "res://assets/audio/music_village.wav",
 	"guild": "res://assets/audio/music_guild.wav",
-	"wasteland": "res://assets/audio/music_wasteland.wav"
+	"wasteland": "res://assets/audio/music_wasteland.wav",
+	"intro": "res://assets/audio/music_village.wav"
 }
 
 const SFX := {
 	"melee": "res://assets/audio/sfx_melee.wav",
+	"sfx_melee_heavy": "res://assets/audio/sfx_melee_heavy.wav",
 	"shoot": "res://assets/audio/sfx_shoot.wav",
+	"sfx_shoot_coil": "res://assets/audio/sfx_shoot_coil.wav",
 	"hit": "res://assets/audio/sfx_hit.wav",
 	"pickup": "res://assets/audio/sfx_pickup.wav",
 	"interact": "res://assets/audio/sfx_interact.wav",
-	"death": "res://assets/audio/sfx_death.wav"
+	"death": "res://assets/audio/sfx_death.wav",
+	"hurt": "res://assets/audio/sfx_player_hurt.wav",
+	"level_up": "res://assets/audio/sfx_level_up.wav",
+	"transition": "res://assets/audio/sfx_transition.wav",
+	"ui": "res://assets/audio/sfx_ui_select.wav"
 }
 
 var music_player: AudioStreamPlayer

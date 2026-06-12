@@ -14,6 +14,7 @@ func _ready() -> void:
 		_build_title_screen()
 
 func _build_title_screen() -> void:
+	AudioManager.play_music("intro")
 	title_layer = CanvasLayer.new()
 	add_child(title_layer)
 
@@ -22,13 +23,14 @@ func _build_title_screen() -> void:
 	title_layer.add_child(root)
 
 	var backdrop := ColorRect.new()
-	backdrop.color = Color(0.02, 0.018, 0.015, 0.96)
+	backdrop.color = Color(0.018, 0.016, 0.014, 0.98)
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(backdrop)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(660, 380)
-	panel.position = Vector2(330, 170)
+	panel.custom_minimum_size = Vector2(720, 420)
+	panel.position = Vector2(300, 150)
+	panel.add_theme_stylebox_override("panel", _panel_style())
 	root.add_child(panel)
 
 	var stack := VBoxContainer.new()
@@ -38,11 +40,11 @@ func _build_title_screen() -> void:
 	var title := Label.new()
 	title.text = "廢土回收商"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_font_size_override("font_size", 42)
 	stack.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "R-17 是村莊重啟的回收機器人。探索四條廢土路線、擊倒污染體、回收資源，讓據點重新運轉。"
+	subtitle.text = "人類文明崩壞後，資源被污染區吞沒。R-17 在維修艙甦醒，必須回收廢鐵、核心與晶體，替村莊換取下一天的能源。"
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 18)
@@ -60,7 +62,7 @@ func _build_title_screen() -> void:
 	stack.add_child(new_button)
 
 	var help := Label.new()
-	help.text = "WASD 移動｜滑鼠左鍵依裝備行動｜E 互動｜Tab 人物裝備｜M 地圖"
+	help.text = "WASD 移動｜滑鼠左鍵依裝備攻擊｜E 互動｜Tab 人物裝備｜M 地圖｜Esc 暫停"
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help.add_theme_font_size_override("font_size", 14)
 	stack.add_child(help)
@@ -82,13 +84,14 @@ func _show_intro() -> void:
 	title_layer.add_child(root)
 
 	var backdrop := ColorRect.new()
-	backdrop.color = Color(0.015, 0.014, 0.012, 0.97)
+	backdrop.color = Color(0.012, 0.012, 0.014, 0.98)
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(backdrop)
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(220, 150)
-	panel.custom_minimum_size = Vector2(860, 430)
+	panel.position = Vector2(220, 140)
+	panel.custom_minimum_size = Vector2(900, 470)
+	panel.add_theme_stylebox_override("panel", _panel_style())
 	root.add_child(panel)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 16)
@@ -100,15 +103,20 @@ func _show_intro() -> void:
 	stack.add_child(title)
 
 	var body := Label.new()
-	body.text = "一場核心污染讓舊工廠、排水區與公路全部失控。村莊只剩下最後一台可修復的回收機器人：R-17。\n\n你要從維修艙甦醒，接下公會委託，從四個出口進入廢土，回收廢鐵、彈藥與晶核。每次回村整備，都會讓下一趟探索更深入。"
+	body.text = "最後一座村莊的能源只剩七天。\n\n污染雨摧毀了農地，舊工廠仍在夜裡噴出毒霧。人類倖存者把最後一台回收機器人 R-17 推進維修艙，重新接上記憶核心。\n\n你的任務很簡單：出村、戰鬥、回收、升級，然後把資源帶回來。廢土不會等你準備好。"
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_size_override("font_size", 20)
 	stack.add_child(body)
 
 	var start_button := Button.new()
-	start_button.text = "開始任務"
+	start_button.text = "開始行動"
 	start_button.pressed.connect(_start_new_run_after_intro)
 	stack.add_child(start_button)
+
+	var skip := Label.new()
+	skip.text = "開場只會在新遊戲第一次出現；存檔會記錄已看過。"
+	skip.add_theme_font_size_override("font_size", 13)
+	stack.add_child(skip)
 
 func _start_new_run_after_intro() -> void:
 	GameState.mark_intro_seen()
@@ -116,3 +124,21 @@ func _start_new_run_after_intro() -> void:
 	if title_layer != null:
 		title_layer.queue_free()
 	SceneRouter.change_to("village", "default")
+
+func _panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.027, 0.026, 0.92)
+	style.border_color = Color(0.80, 0.58, 0.26, 0.96)
+	style.border_width_left = 2
+	style.border_width_right = 2
+	style.border_width_top = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 16
+	style.content_margin_bottom = 16
+	return style

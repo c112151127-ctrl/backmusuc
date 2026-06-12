@@ -4,7 +4,6 @@ class_name WorldMapView
 signal expand_requested
 
 var full_screen := false
-var route_label := ""
 
 const MARKER_COLORS := {
 	"player": Color(0.35, 0.95, 0.95, 1.0),
@@ -25,10 +24,7 @@ func _ready() -> void:
 
 func set_full_screen(enabled: bool) -> void:
 	full_screen = enabled
-	if full_screen:
-		custom_minimum_size = Vector2(900, 560)
-	else:
-		custom_minimum_size = Vector2(210, 116)
+	custom_minimum_size = Vector2(900, 560) if full_screen else Vector2(210, 116)
 	queue_redraw()
 
 func _process(_delta: float) -> void:
@@ -66,10 +62,10 @@ func _draw_group_markers(origin: Vector2, scale: float) -> void:
 			var marker := String(node.get_meta("map_marker", _marker_from_group(group_name)))
 			var color: Color = MARKER_COLORS.get(marker, Color.WHITE)
 			var node2d := node as Node2D
-			var pos: Vector2 = origin + node2d.global_position * scale
-			var radius: float = _marker_radius(marker)
+			var pos := origin + node2d.global_position * scale
+			var radius := _marker_radius(marker)
 			draw_circle(pos, radius, color)
-			draw_circle(pos, max(1.5, radius * 0.42), Color(1, 1, 0.78, 0.9))
+			draw_circle(pos, max(1.5, radius * 0.42), Color(1.0, 1.0, 0.78, 0.9))
 			if full_screen and marker != "prop":
 				var label := String(node.get_meta("map_label", ""))
 				if not label.is_empty():
@@ -81,18 +77,18 @@ func _draw_viewport_box(origin: Vector2, scale: float, world: Vector2) -> void:
 		return
 	var viewport_size := get_viewport_rect().size
 	var player_pos: Vector2 = (player_nodes[0] as Node2D).global_position
-	var camera_rect: Rect2 = Rect2(player_pos - viewport_size * 0.5, viewport_size).intersection(Rect2(Vector2.ZERO, world))
+	var camera_rect := Rect2(player_pos - viewport_size * 0.5, viewport_size).intersection(Rect2(Vector2.ZERO, world))
 	draw_rect(Rect2(origin + camera_rect.position * scale, camera_rect.size * scale), Color(0.65, 0.82, 1.0, 0.28), false, 1.0)
 
 func _draw_legend() -> void:
 	var labels := [
 		["player", "玩家"],
 		["npc", "NPC"],
-		["station", "建築"],
+		["station", "設施"],
 		["gate", "出口"],
 		["enemy", "敵人"],
 		["boss", "Boss"],
-		["pickup", "掉落物"],
+		["pickup", "資源"],
 		["event", "事件"]
 	]
 	var x := 28.0
@@ -104,9 +100,9 @@ func _draw_legend() -> void:
 		x += 82.0
 
 func _draw_title() -> void:
-	var route: Dictionary = DataRegistry.get_wasteland_route(GameState.current_route_id)
-	var route_name: String = String(route.get("name", "村莊據點")) if GameState.current_scene_id == "wasteland" else _scene_label()
-	var title: String = "%s｜任務：%s" % [route_name, GameState.active_quest_summary()]
+	var route := DataRegistry.get_wasteland_route(GameState.current_route_id)
+	var route_name := String(route.get("name", "村莊")) if GameState.current_scene_id == "wasteland" else _scene_label()
+	var title := "%s｜任務：%s" % [route_name, GameState.active_quest_summary()]
 	draw_string(ThemeDB.fallback_font, Vector2(28, 28), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color.WHITE)
 
 func _world_size() -> Vector2:

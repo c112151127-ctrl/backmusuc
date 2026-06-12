@@ -6,7 +6,7 @@ const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 
 var npc_id := ""
 var npc_name := "NPC"
-var role := "居民"
+var role := "倖存者"
 var color := Color8(110, 126, 116)
 var sprite_asset_id := ""
 var portrait_asset_id := ""
@@ -21,7 +21,7 @@ var _talk_timer := 0.0
 func setup(data: Dictionary) -> void:
 	npc_id = String(data.get("id", ""))
 	npc_name = String(data.get("name", npc_id))
-	role = String(data.get("role", "居民"))
+	role = String(data.get("role", "倖存者"))
 	color = Color.from_string(String(data.get("color", "#6f7e74")), Color8(110, 126, 116))
 	sprite_asset_id = String(data.get("sprite_asset_id", "npc_%s" % npc_id))
 	portrait_asset_id = String(data.get("portrait_asset_id", sprite_asset_id))

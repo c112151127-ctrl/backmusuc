@@ -2,27 +2,35 @@
   "events": [
     {
       "id": "supply_cache",
-      "name": "補給箱",
-      "description": "找到一箱還能使用的彈藥。",
-      "reward": { "ammo": 5 }
+      "name": "廢土補給箱",
+      "description": "一只被沙塵半埋的軍用箱，裡面還有可用彈藥。",
+      "reward": {
+        "ammo": 5
+      }
     },
     {
       "id": "broken_robot",
-      "name": "故障機械人",
-      "description": "R-17 拆下損壞零件，回收成可用廢鐵。",
-      "reward": { "scrap": 8 }
+      "name": "損壞維修機",
+      "description": "R-17 拆下可用零件，替村莊維修艙補充材料。",
+      "reward": {
+        "scrap": 8
+      }
     },
     {
       "id": "survivor_note",
       "name": "倖存者筆記",
-      "description": "筆記標出一處異變核心藏點。",
-      "reward": { "mutant_core": 1 }
+      "description": "紙頁上記著污染核心的弱點與一段未完成的求救訊號。",
+      "reward": {
+        "mutant_core": 1
+      }
     },
     {
       "id": "toxic_pool",
-      "name": "污染液坑",
-      "description": "採樣後取得一枚污染晶核。",
-      "reward": { "bio_crystal": 1 }
+      "name": "毒液採樣點",
+      "description": "綠色毒泥仍在發光，可提煉成維修與升級用晶核。",
+      "reward": {
+        "bio_crystal": 1
+      }
     }
   ]
 }

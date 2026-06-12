@@ -33,7 +33,7 @@ func _ready() -> void:
 	var size_tiles := Vector2i(int(params.get("width_tiles", 180)), int(params.get("height_tiles", 140)))
 	world_size = Vector2(size_tiles.x * tile_size, size_tiles.y * tile_size)
 	set_meta("map_world_size", world_size)
-	set_meta("map_scene_label", String(route_data.get("name", "廢土區域")))
+	set_meta("map_scene_label", String(route_data.get("name", "廢土")))
 	route_seed = GameState.seed + int(route_data.get("seed_offset", 0))
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("wasteland", size_tiles, route_seed, route_id)
@@ -49,7 +49,7 @@ func _ready() -> void:
 	_spawn_enemies()
 	_spawn_boss()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify(String(route_data.get("notice", "進入廢土區域。")))
+	GameState.notify(String(route_data.get("notice", "進入廢土。沿道路探索、擊倒污染體、回收資源後返回村莊。")))
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -72,7 +72,7 @@ func _spawn_exit() -> void:
 	exit.prompt = "返回村莊"
 	exit.position = Vector2(world_size.x * 0.5, world_size.y - 90)
 	exit.add_to_group("map_gate")
-	exit.set_meta("map_label", "回村出口")
+	exit.set_meta("map_label", "回村門")
 	exit.set_meta("map_marker", "gate")
 	exit.interacted.connect(func(_id: String) -> void: SceneRouter.change_to("village", "from_wasteland"))
 	add_child(exit)
@@ -276,7 +276,7 @@ func _add_boundary(pos: Vector2, size: Vector2) -> void:
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")
 	if GameState.discovered_events.has(event_id):
-		GameState.notify("這個事件已經處理過。")
+		GameState.notify("這個事件已經回收過。")
 		return
 	GameState.discovered_events.append(event_id)
 	for event_data in DataRegistry.events:

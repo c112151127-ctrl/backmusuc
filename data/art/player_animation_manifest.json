@@ -1,0 +1,66 @@
+{
+  "frame_size": [
+    80,
+    96
+  ],
+  "directions": 8,
+  "frames_per_action": 4,
+  "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
+  "reference_path": "res://docs/art_direction_reference_r17_v4.png",
+  "actions": [
+    {
+      "id": "idle",
+      "frames": 4,
+      "loop": true,
+      "fps": 8
+    },
+    {
+      "id": "walk",
+      "frames": 4,
+      "loop": true,
+      "fps": 8
+    },
+    {
+      "id": "shoot",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "draw_sword",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "slash",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "swap_tool",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "interact",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "hit",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    },
+    {
+      "id": "dead",
+      "frames": 4,
+      "loop": false,
+      "fps": 14
+    }
+  ]
+}

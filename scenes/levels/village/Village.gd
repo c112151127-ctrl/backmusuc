@@ -33,7 +33,7 @@ func _ready() -> void:
 	y_sort_enabled = true
 	GameState.current_scene_id = "village"
 	set_meta("map_world_size", Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
-	set_meta("map_scene_label", "村莊據點")
+	set_meta("map_scene_label", "廢土村莊")
 	AudioManager.play_music("village")
 
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
@@ -47,7 +47,7 @@ func _ready() -> void:
 	_add_projectile_pool(200)
 	_spawn_player(_spawn_position())
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("村莊據點：靠近 NPC 交談、用 Tab 整備裝備，從四個出口選擇廢土路線。")
+	GameState.notify("村莊據點：靠近 NPC 或設施按 E 互動，Tab 開啟維修裝備面板，四個出口通往不同廢土區。")
 
 func _spawn_position() -> Vector2:
 	match GameState.active_spawn_point:
@@ -78,9 +78,9 @@ func _add_stations() -> void:
 	_add_station("forge", "鍛造爐：廢鐵換彈藥", Vector2(1248, 370), Color8(102, 68, 45), "鍛造")
 	_add_station("craft", "合成台：製作近戰武器", Vector2(680, 650), Color8(72, 92, 96), "合成")
 	_add_station("shop", "補給商：購買彈藥", Vector2(1810, 650), Color8(93, 75, 47), "商店")
-	_add_station("mod", "改裝站：打造線圈發射器", Vector2(720, 1130), Color8(54, 77, 91), "改裝")
+	_add_station("mod", "改裝站：打造線圈武器", Vector2(720, 1130), Color8(54, 77, 91), "改裝")
 	_add_station("recycle", "拆解機：核心換材料", Vector2(1248, 1180), Color8(69, 88, 78), "拆解")
-	_add_station("save", "維修存檔點", Vector2(1760, 1130), Color8(42, 92, 108), "存檔")
+	_add_station("save", "維修存檔點：修復與儲存", Vector2(1760, 1130), Color8(42, 92, 108), "存檔")
 	_add_station("to_guild", "前往冒險公會", Vector2(2060, 900), Color8(90, 82, 120), "公會")
 
 func _add_route_gates() -> void:
@@ -140,7 +140,7 @@ func _add_route_gate(route_id: String, label: String, pos: Vector2) -> void:
 		sprite.centered = false
 		sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
 	node.add_child(sprite)
-	var gate = ROUTE_GATE_SCRIPT.new()
+	var gate := ROUTE_GATE_SCRIPT.new()
 	gate.setup_route(route_id, label, Vector2.ZERO, 76.0)
 	gate.interacted.connect(_on_route_gate_interacted)
 	node.add_child(gate)
@@ -216,5 +216,6 @@ func _on_station_interacted(id: String) -> void:
 		"save":
 			GameState.heal_full()
 			SaveManager.save_game(true)
+			GameState.notify("維修完成。Tab 可使用升級點強化 R-17。")
 		"to_guild":
 			SceneRouter.change_to("guild", "from_village")

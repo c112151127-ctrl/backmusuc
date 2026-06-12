@@ -32,10 +32,10 @@ func _ready() -> void:
 	add_child(backdrop)
 	_add_boundaries(Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
 	_add_decor()
-	_add_counter("contract", "委託板：接下一個委託", Vector2(330, 275), Color8(102, 74, 118), "委託板")
-	_add_counter("reward", "獎勵櫃台：交付委託", Vector2(680, 275), Color8(75, 96, 122), "獎勵櫃台")
-	_add_counter("to_wasteland", "前往目前廢土路線", Vector2(1080, 540), Color8(92, 88, 56), "廢土出口")
-	_add_counter("to_village", "返回村莊據點", Vector2(560, 720), Color8(64, 110, 70), "回村出口")
+	_add_counter("contract", "委託板：選擇下一份委託", Vector2(330, 275), Color8(102, 74, 118), "委託板")
+	_add_counter("reward", "回報櫃台：交付完成委託", Vector2(680, 275), Color8(75, 96, 122), "回報櫃台")
+	_add_counter("to_wasteland", "前往目前委託路線", Vector2(1080, 540), Color8(92, 88, 56), "出擊門")
+	_add_counter("to_village", "返回村莊", Vector2(560, 720), Color8(64, 110, 70), "回村門")
 	_spawn_npcs()
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
@@ -44,7 +44,7 @@ func _ready() -> void:
 	if player.has_method("set_world_bounds"):
 		player.set_world_bounds(WORLD_RECT)
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("冒險公會：接委託、確認路線，再前往廢土回收資源。")
+	GameState.notify("冒險公會：接委託、交付獎勵，或直接前往目前路線。")
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
@@ -136,9 +136,8 @@ func _on_interacted(id: String) -> void:
 			GameState.complete_active_quest()
 		"to_wasteland":
 			if GameState.active_quest_id.is_empty():
-				GameState.notify("建議先接一個委託，公會會幫你標記路線。")
+				GameState.notify("尚未接委託，仍可從村莊四門選擇探索路線。")
 			GameState.seed = randi_range(1000, 999999)
-			GameState.level += 1
 			SceneRouter.change_to("wasteland", "from_guild")
 		"to_village":
 			SceneRouter.change_to("village", "from_guild")

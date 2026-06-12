@@ -62,13 +62,13 @@ func _prop_texture() -> Texture2D:
 	return _make_prop_texture()
 
 func _deterministic_scale() -> Vector2:
-	var seed := int(abs(round(global_position.x * 3.0 + global_position.y * 5.0))) + prop_id.length()
-	var factor := 0.92 + float(seed % 17) / 100.0
+	var seed_value := int(abs(round(global_position.x * 3.0 + global_position.y * 5.0))) + prop_id.length()
+	var factor := 0.92 + float(seed_value % 17) / 100.0
 	return Vector2(factor, factor)
 
 func _deterministic_tint() -> Color:
-	var seed := int(abs(round(global_position.x + global_position.y))) + prop_id.length() * 19
-	var light := 0.92 + float(seed % 13) / 100.0
+	var seed_value := int(abs(round(global_position.x + global_position.y))) + prop_id.length() * 19
+	var light := 0.92 + float(seed_value % 13) / 100.0
 	return Color(light, light, light, 1.0)
 
 func _prop_label() -> String:
@@ -78,9 +78,9 @@ func _prop_label() -> String:
 		"scrap_wall":
 			return "廢鐵牆"
 		"toxic_pool":
-			return "毒液池"
+			return "毒泥池"
 		"wreck":
-			return "車輛殘骸"
+			return "車骸"
 		"signal_pylon":
 			return "訊號塔"
 		"road_marker":
@@ -88,7 +88,7 @@ func _prop_label() -> String:
 		"scrap_barricade":
 			return "廢鐵路障"
 		_:
-			return "鏽石"
+			return "荒地障礙"
 
 func _make_prop_texture() -> Texture2D:
 	var palette: Array[Color] = [Color8(62, 55, 48), Color8(101, 83, 63), Color8(158, 103, 57)]
@@ -125,10 +125,10 @@ func _carve_shape(image: Image) -> void:
 func _clear_corners(image: Image, edge_ratio: float) -> void:
 	var size: Vector2i = image.get_size()
 	var center := Vector2(size.x * 0.5, size.y * 0.55)
-	var radius: float = min(size.x, size.y) * (0.5 + edge_ratio)
+	var radius: float = float(min(size.x, size.y)) * (0.5 + edge_ratio)
 	for y in size.y:
 		for x in size.x:
-			var point := Vector2(x, y)
+			var point := Vector2(float(x), float(y))
 			if point.distance_to(center) > radius and y < size.y * 0.82:
 				image.set_pixel(x, y, Color(0, 0, 0, 0))
 
@@ -136,8 +136,8 @@ func _clear_outside_trunk(image: Image) -> void:
 	var size: Vector2i = image.get_size()
 	for y in size.y:
 		for x in size.x:
-			var trunk_width: int = 7 + int((float(y) / max(1.0, size.y)) * 12.0)
-			var trunk_center: int = size.x / 2 + int(sin(float(y) * 0.14) * 4.0)
+			var trunk_width: int = 7 + int((float(y) / max(1.0, float(size.y))) * 12.0)
+			var trunk_center: int = int(size.x / 2) + int(sin(float(y) * 0.14) * 4.0)
 			var crown: bool = y < size.y * 0.32 and abs(x - trunk_center) < 20
 			var trunk: bool = abs(x - trunk_center) < trunk_width
 			if not crown and not trunk:
@@ -147,7 +147,7 @@ func _clear_outside_pylon(image: Image) -> void:
 	var size: Vector2i = image.get_size()
 	for y in size.y:
 		for x in size.x:
-			var center_x: int = size.x / 2
+			var center_x: int = int(size.x / 2)
 			var arm: bool = y > size.y * 0.18 and y < size.y * 0.28 and abs(x - center_x) < 22
 			var mast: bool = abs(x - center_x) < 5
 			var legs: bool = y > size.y * 0.56 and (abs(x - (center_x - 10)) < 4 or abs(x - (center_x + 10)) < 4)

@@ -60,6 +60,6 @@ func _on_body_entered(body: Node) -> void:
 	set_deferred("monitoring", false)
 	GameState.add_item(item_id, amount)
 	AudioManager.play_sfx("pickup")
-	GameState.notify("取得 %s x%d" % [GameState.item_display_name(item_id), amount])
+	GameState.notify("拾取：%s x%d" % [GameState.item_display_name(item_id), amount])
 	visible = false
 	call_deferred("queue_free")

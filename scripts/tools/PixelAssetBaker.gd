@@ -24,16 +24,16 @@ func _ensure_asset_dirs() -> void:
 func _save_player_sheet(factory: PixelArtFactory) -> void:
 	var frame_size := PixelArtFactory.PLAYER_FRAME_SIZE
 	var output_path := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
-	if _asset_has_size(output_path, Vector2i(frame_size.x * 3 * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8)):
+	if _asset_has_size(output_path, Vector2i(frame_size.x * PixelArtFactory.PLAYER_FRAMES_PER_ACTION * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8)):
 		print("[ASSET] Kept reference-sheet player atlas")
 		return
-	var sheet := Image.create(frame_size.x * 3 * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8, false, Image.FORMAT_RGBA8)
+	var sheet := Image.create(frame_size.x * PixelArtFactory.PLAYER_FRAMES_PER_ACTION * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8, false, Image.FORMAT_RGBA8)
 	sheet.fill(Color(0, 0, 0, 0))
 	for action_index in PixelArtFactory.PLAYER_ACTIONS.size():
 		for direction_index in range(8):
-			for frame_index in range(3):
+			for frame_index in range(PixelArtFactory.PLAYER_FRAMES_PER_ACTION):
 				var frame := factory.player_image(direction_index, action_index, frame_index)
-				var dest := Vector2i((action_index * 3 + frame_index) * frame_size.x, direction_index * frame_size.y)
+				var dest := Vector2i((action_index * PixelArtFactory.PLAYER_FRAMES_PER_ACTION + frame_index) * frame_size.x, direction_index * frame_size.y)
 				sheet.blit_rect(frame, Rect2i(Vector2i.ZERO, frame_size), dest)
 	sheet.save_png(output_path)
 

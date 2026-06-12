@@ -2,47 +2,61 @@
   "quests": [
     {
       "id": "clear_scrap_route",
-      "name": "清理廢鐵公路",
-      "description": "南門公路被污染體占住，先清出道路，再回收足夠廢鐵讓村莊補強圍牆。",
+      "name": "清理廢鐵通道",
+      "description": "南門公路被污染體堵住，擊倒敵人並帶回足夠廢鐵，讓村莊恢復基本補給線。",
       "route": "scrap_highway",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
         { "type": "collect", "item": "scrap", "amount": 12 }
       ],
-      "reward": { "ammo": 12, "mutant_core": 1, "breaker_hammer": 1 }
+      "reward": {
+        "ammo": 12,
+        "mutant_core": 1,
+        "breaker_hammer": 1
+      }
     },
     {
       "id": "toxic_sample",
       "name": "採集毒沼樣本",
-      "description": "西門排水區的污染晶核正在增生。帶回晶核樣本，並壓低飛行體數量。",
+      "description": "西門排水區仍有可提煉晶核。收集污染晶核並壓制快速突襲的污染體。",
       "route": "toxic_marsh",
       "objectives": [
         { "type": "collect", "item": "bio_crystal", "amount": 2 },
         { "type": "defeat", "counter": "defeat_enemy", "amount": 3 }
       ],
-      "reward": { "scrap": 24, "coil_launcher": 1 }
+      "reward": {
+        "scrap": 24,
+        "coil_launcher": 1
+      }
     },
     {
       "id": "crystal_scar_recon",
       "name": "偵查紫晶裂隙",
-      "description": "北門裂隙有遠程污染體聚集。R-17 需要確認晶脈狀態，並帶回足夠晶核。",
+      "description": "北門裂隙有強烈核心反應。R-17 必須標記礦脈並擊倒守衛污染體。",
       "route": "crystal_scar",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 6 },
         { "type": "collect", "item": "bio_crystal", "amount": 3 }
       ],
-      "reward": { "scrap": 18, "crystal_guard": 1 }
+      "reward": {
+        "scrap": 18,
+        "crystal_guard": 1
+      }
     },
     {
       "id": "old_factory_core",
       "name": "奪回舊工廠核心",
-      "description": "東門舊工廠仍有可用動力核心，但機械污染體守在外圍。清出路線並回收核心。",
+      "description": "東門工廠外圍仍有大型污染核心。擊倒精英與 Boss，帶回足以維持村莊的能源。",
       "route": "old_factory",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 8 },
         { "type": "collect", "item": "mutant_core", "amount": 2 }
       ],
-      "reward": { "ammo": 18, "industrial_exoshell": 1, "acid_sprayer": 1 }
+      "reward": {
+        "ammo": 18,
+        "industrial_exoshell": 1,
+        "acid_sprayer": 1
+      }
     }
   ]
 }

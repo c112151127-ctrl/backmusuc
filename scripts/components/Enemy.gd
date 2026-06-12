@@ -105,6 +105,7 @@ func take_damage(amount: int, melee := false) -> void:
 		return
 	hp -= amount
 	AudioManager.play_sfx("hit")
+	GameState.request_feedback("enemy_hit", 0.08 if melee else 0.04)
 	_show_damage_feedback(amount, melee)
 	if _health_bar != null:
 		_health_bar.show_value(hp, max_hp)
@@ -128,14 +129,14 @@ func _show_damage_feedback(amount: int, melee: bool) -> void:
 		tween.tween_property(_sprite, "position", _base_sprite_pos + Vector2(randf_range(-8, 8), -4), 0.04)
 		tween.tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 
-func _die(melee: bool) -> void:
+func _die(_melee: bool) -> void:
 	if is_dead:
 		return
 	is_dead = true
 	AudioManager.play_sfx("death")
 	GameState.record_enemy_defeated()
 	if enemy_type == "boss":
-		GameState.notify("Boss 已崩解，污染核心暴露在地面上。")
+		GameState.notify("Boss 已被擊破，污染核心掉落。")
 	for child in get_children():
 		if child is CollisionShape2D:
 			child.set_deferred("disabled", true)
@@ -157,7 +158,7 @@ func _spawn_drops(drop_position: Vector2) -> void:
 			get_tree().current_scene.add_child(pickup)
 
 func _enemy_texture(type_id: String) -> Texture2D:
-	var atlas: Texture2D = _load_atlas_texture(ENEMY_ATLAS_PATH)
+	var atlas := _load_atlas_texture(ENEMY_ATLAS_PATH)
 	if atlas == null:
 		return PIXEL.new().enemy_texture(type_id)
 	var index := PixelArtFactory.ENEMY_TYPES.find(type_id)
@@ -175,7 +176,7 @@ func _load_atlas_texture(path: String) -> Texture2D:
 		if loaded != null:
 			return loaded
 	if FileAccess.file_exists(path):
-		var image: Image = Image.load_from_file(path)
+		var image := Image.load_from_file(path)
 		if image != null:
 			return ImageTexture.create_from_image(image)
 	return null

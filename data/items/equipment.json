@@ -6,7 +6,12 @@
       "attack_mode": "melee",
       "cooldown": 0.32,
       "icon_asset_id": "item_rust_blade",
-      "stats": { "attack": 8, "defense": 0, "speed": 0 }
+      "stats": { "attack": 8, "defense": 0, "speed": 0 },
+      "world_drop_asset_id": "item_rust_blade",
+      "weapon_sprite_asset_id": "player_weapon_rust_blade",
+      "attack_vfx_id": "slash_rust",
+      "sfx_id": "sfx_melee_heavy",
+      "shake_strength": 0.08
     },
     "spark_cutter": {
       "name": "火花切割斧",
@@ -14,7 +19,12 @@
       "attack_mode": "melee",
       "cooldown": 0.42,
       "icon_asset_id": "item_spark_cutter",
-      "stats": { "attack": 15, "defense": 0, "speed": -2 }
+      "stats": { "attack": 15, "defense": 0, "speed": -2 },
+      "world_drop_asset_id": "item_spark_cutter",
+      "weapon_sprite_asset_id": "player_weapon_spark_cutter",
+      "attack_vfx_id": "slash_spark",
+      "sfx_id": "sfx_melee_heavy",
+      "shake_strength": 0.12
     },
     "breaker_hammer": {
       "name": "重型拆解槌",
@@ -22,7 +32,12 @@
       "attack_mode": "melee",
       "cooldown": 0.62,
       "icon_asset_id": "item_breaker_hammer",
-      "stats": { "attack": 24, "defense": 2, "speed": -8 }
+      "stats": { "attack": 24, "defense": 2, "speed": -8 },
+      "world_drop_asset_id": "item_breaker_hammer",
+      "weapon_sprite_asset_id": "player_weapon_breaker_hammer",
+      "attack_vfx_id": "slam_spark",
+      "sfx_id": "sfx_melee_heavy",
+      "shake_strength": 0.2
     },
     "pipe_rifle": {
       "name": "管線釘槍",
@@ -30,15 +45,25 @@
       "attack_mode": "ranged",
       "cooldown": 0.22,
       "icon_asset_id": "item_pipe_rifle",
-      "stats": { "attack": 6, "defense": 0, "speed": 0 }
+      "stats": { "attack": 6, "defense": 0, "speed": 0 },
+      "world_drop_asset_id": "item_pipe_rifle",
+      "weapon_sprite_asset_id": "player_weapon_pipe_rifle",
+      "attack_vfx_id": "muzzle_pipe",
+      "sfx_id": "shoot",
+      "shake_strength": 0.06
     },
     "coil_launcher": {
-      "name": "線圈發射器",
+      "name": "線圈步槍",
       "slot": "ranged",
       "attack_mode": "ranged",
       "cooldown": 0.55,
       "icon_asset_id": "item_coil_launcher",
-      "stats": { "attack": 18, "defense": 0, "speed": -6 }
+      "stats": { "attack": 18, "defense": 0, "speed": -6 },
+      "world_drop_asset_id": "item_coil_launcher",
+      "weapon_sprite_asset_id": "player_weapon_coil_launcher",
+      "attack_vfx_id": "muzzle_coil",
+      "sfx_id": "sfx_shoot_coil",
+      "shake_strength": 0.1
     },
     "acid_sprayer": {
       "name": "酸蝕噴射器",
@@ -46,7 +71,12 @@
       "attack_mode": "ranged",
       "cooldown": 0.36,
       "icon_asset_id": "item_acid_sprayer",
-      "stats": { "attack": 12, "defense": 0, "speed": -1 }
+      "stats": { "attack": 12, "defense": 0, "speed": -1 },
+      "world_drop_asset_id": "item_acid_sprayer",
+      "weapon_sprite_asset_id": "player_weapon_acid_sprayer",
+      "attack_vfx_id": "acid_spray",
+      "sfx_id": "sfx_shoot_coil",
+      "shake_strength": 0.08
     },
     "patched_armor": {
       "name": "補丁護甲",
@@ -54,7 +84,10 @@
       "attack_mode": "passive",
       "cooldown": 0.0,
       "icon_asset_id": "item_patched_armor",
-      "stats": { "attack": 0, "defense": 3, "speed": -4 }
+      "stats": { "attack": 0, "defense": 3, "speed": -4 },
+      "world_drop_asset_id": "item_patched_armor",
+      "sfx_id": "ui",
+      "shake_strength": 0.0
     },
     "crystal_guard": {
       "name": "晶核護盾",
@@ -62,7 +95,10 @@
       "attack_mode": "passive",
       "cooldown": 0.0,
       "icon_asset_id": "item_crystal_guard",
-      "stats": { "attack": 0, "defense": 7, "speed": -3 }
+      "stats": { "attack": 0, "defense": 7, "speed": -3 },
+      "world_drop_asset_id": "item_crystal_guard",
+      "sfx_id": "ui",
+      "shake_strength": 0.0
     },
     "industrial_exoshell": {
       "name": "工業外骨架",
@@ -70,7 +106,10 @@
       "attack_mode": "passive",
       "cooldown": 0.0,
       "icon_asset_id": "item_industrial_exoshell",
-      "stats": { "attack": 3, "defense": 10, "speed": -8 }
+      "stats": { "attack": 3, "defense": 10, "speed": -8 },
+      "world_drop_asset_id": "item_industrial_exoshell",
+      "sfx_id": "ui",
+      "shake_strength": 0.0
     },
     "recycler_glove": {
       "name": "回收商手套",
@@ -78,7 +117,12 @@
       "attack_mode": "tool",
       "cooldown": 0.0,
       "icon_asset_id": "item_recycler_glove",
-      "stats": { "attack": 1, "defense": 0, "speed": 8 }
+      "stats": { "attack": 1, "defense": 0, "speed": 8 },
+      "world_drop_asset_id": "item_recycler_glove",
+      "weapon_sprite_asset_id": "player_tool_recycler_glove",
+      "attack_vfx_id": "scan_pulse",
+      "sfx_id": "interact",
+      "shake_strength": 0.02
     },
     "magnet_breaker": {
       "name": "磁吸拆解器",
@@ -86,13 +130,38 @@
       "attack_mode": "tool",
       "cooldown": 0.0,
       "icon_asset_id": "item_magnet_breaker",
-      "stats": { "attack": 4, "defense": 1, "speed": 5 }
+      "stats": { "attack": 4, "defense": 1, "speed": 5 },
+      "world_drop_asset_id": "item_magnet_breaker",
+      "weapon_sprite_asset_id": "player_tool_magnet_breaker",
+      "attack_vfx_id": "magnet_pulse",
+      "sfx_id": "interact",
+      "shake_strength": 0.04
     }
   },
   "resources": {
-    "scrap": { "name": "廢鐵", "stack": 999, "icon_asset_id": "item_scrap" },
-    "ammo": { "name": "彈藥", "stack": 200, "icon_asset_id": "item_ammo" },
-    "mutant_core": { "name": "異變核心", "stack": 99, "icon_asset_id": "item_mutant_core" },
-    "bio_crystal": { "name": "污染晶核", "stack": 99, "icon_asset_id": "item_bio_crystal" }
+    "scrap": {
+      "name": "廢鐵",
+      "stack": 999,
+      "icon_asset_id": "item_scrap",
+      "world_drop_asset_id": "item_scrap"
+    },
+    "ammo": {
+      "name": "彈藥",
+      "stack": 200,
+      "icon_asset_id": "item_ammo",
+      "world_drop_asset_id": "item_ammo"
+    },
+    "mutant_core": {
+      "name": "異變核心",
+      "stack": 99,
+      "icon_asset_id": "item_mutant_core",
+      "world_drop_asset_id": "item_mutant_core"
+    },
+    "bio_crystal": {
+      "name": "污染晶核",
+      "stack": 99,
+      "icon_asset_id": "item_bio_crystal",
+      "world_drop_asset_id": "item_bio_crystal"
+    }
   }
 }

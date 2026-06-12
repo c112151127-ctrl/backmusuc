@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://bslifvbp4egcc" path="res://scenes/player/Player.gd" id="1_dovo2"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lvxji"]
-radius = 11.0
-height = 30.0
+radius = 16.0
+height = 42.0
 
 [node name="Player" type="CharacterBody2D" unique_id=1306666244]
 y_sort_enabled = true
@@ -14,9 +14,9 @@ script = ExtResource("1_dovo2")
 shape = SubResource("CapsuleShape2D_lvxji")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=767709038]
-position = Vector2(0, -24)
+position = Vector2(0, -46)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(0, -16)
-zoom = Vector2(1.35, 1.35)
+position = Vector2(0, -28)
+zoom = Vector2(1.15, 1.15)
 enabled = true

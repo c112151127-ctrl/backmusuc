@@ -1,9 +1,10 @@
 extends RefCounted
 class_name PixelArtFactory
 
-const PLAYER_FRAME_SIZE := Vector2i(48, 56)
+const PLAYER_FRAME_SIZE := Vector2i(80, 96)
+const PLAYER_FRAMES_PER_ACTION := 4
 const ENEMY_FRAME_SIZE := Vector2i(96, 72)
-const ITEM_FRAME_SIZE := Vector2i(80, 64)
+const ITEM_FRAME_SIZE := Vector2i(88, 72)
 const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact", "hit", "dead"]
 const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid", "boss"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
@@ -32,7 +33,7 @@ func player_texture(direction_index := 0, action_index := 0, frame_index := 0) -
 	var atlas := _load_texture(PLAYER_ATLAS_PATH)
 	if atlas != null:
 		return _atlas_frame(atlas, Rect2(
-			(action_index * 3 + frame_index) * PLAYER_FRAME_SIZE.x,
+			(action_index * PLAYER_FRAMES_PER_ACTION + frame_index) * PLAYER_FRAME_SIZE.x,
 			direction_index * PLAYER_FRAME_SIZE.y,
 			PLAYER_FRAME_SIZE.x,
 			PLAYER_FRAME_SIZE.y
@@ -57,7 +58,7 @@ func player_image(direction_index := 0, action_index := 0, frame_index := 0) -> 
 		sway = 1 if frame_index == 1 else 0
 	elif action_index == 1:
 		var walk_offsets: Array[int] = [-1, 0, 1]
-		sway = walk_offsets[frame_index]
+		sway = walk_offsets[frame_index % walk_offsets.size()]
 		bob = abs(sway)
 	var direction := _direction_vector(direction_index)
 	var origin := Vector2i(24 + sway, 29 + bob)
@@ -308,7 +309,7 @@ func _item_highlight_noise(image: Image, seed: int) -> void:
 func _draw_player_legs(image: Image, origin: Vector2i, direction_index: int, action_index: int, frame_index: int, palette: Array[Color]) -> void:
 	var stride := 0
 	if action_index == 1:
-		stride = [-2, 0, 2][frame_index]
+		stride = [-2, 0, 2][frame_index % 3]
 	var left_x := origin.x - 7
 	var right_x := origin.x + 5
 	var front_y := 37 if direction_index in [1, 2, 3] else 36
@@ -359,15 +360,16 @@ func _draw_player_arms(image: Image, direction_index: int, action_index: int, fr
 	if action_index == 2:
 		var recoil: Array[float] = [4.0, 0.0, -3.0]
 		var muzzle_flash: Array[int] = [1, 5, 2]
-		var hand := Vector2(origin.x, origin.y - 1) + direction * (8.0 + recoil[frame_index])
-		var muzzle := Vector2(origin.x, origin.y - 1) + direction * (19.0 + recoil[frame_index] * 0.5)
+		var recoil_value: float = recoil[frame_index % recoil.size()]
+		var hand := Vector2(origin.x, origin.y - 1) + direction * (8.0 + recoil_value)
+		var muzzle := Vector2(origin.x, origin.y - 1) + direction * (19.0 + recoil_value * 0.5)
 		var back_hand := Vector2(origin.x, origin.y + 3) - direction * (5.0 + float(frame_index))
 		_draw_line(image, Vector2(origin.x, origin.y - 3), hand, palette[4].lightened(0.12), 2)
 		_draw_line(image, Vector2(origin.x, origin.y + 2), back_hand, palette[4].darkened(0.1), 2)
 		_draw_line(image, hand, muzzle, palette[0], 3)
 		_draw_line(image, hand, muzzle, palette[2].lightened(0.22), 1)
 		if frame_index == 1:
-			_fill_ellipse(image, Vector2i(int(muzzle.x + direction.x * 4.0), int(muzzle.y + direction.y * 4.0)), muzzle_flash[frame_index], muzzle_flash[frame_index], Color8(255, 220, 88))
+			_fill_ellipse(image, Vector2i(int(muzzle.x + direction.x * 4.0), int(muzzle.y + direction.y * 4.0)), muzzle_flash[frame_index % muzzle_flash.size()], muzzle_flash[frame_index % muzzle_flash.size()], Color8(255, 220, 88))
 			_fill_ellipse(image, Vector2i(int(muzzle.x + direction.x * 7.0), int(muzzle.y + direction.y * 7.0)), 2, 2, Color8(77, 224, 244))
 	elif action_index == 3:
 		var hip: Vector2 = Vector2(origin.x - side * 8, origin.y + 10)
