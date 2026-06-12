@@ -10,7 +10,7 @@ const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiact
 enum PlayerState { IDLE, WALK, SHOOT, DRAW_SWORD, SLASH, SWAP_TOOL, INTERACT, HIT, DEAD }
 
 var state := PlayerState.IDLE
-var last_direction := Vector2.DOWN
+var last_direction := Vector2.RIGHT
 var attack_timer := 0.0
 var ranged_timer := 0.0
 var action_state_timer := 0.0
@@ -34,7 +34,7 @@ func _physics_process(delta: float) -> void:
 	action_state_timer = max(0.0, action_state_timer - delta)
 	if pending_slash and action_state_timer <= 0.0:
 		pending_slash = false
-		_set_timed_state(PlayerState.SLASH, 0.16)
+		_set_timed_state(PlayerState.SLASH, 0.22)
 
 	var input_direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if not _is_action_state_locked():
@@ -58,11 +58,11 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("attack_ranged") or Input.is_action_pressed("attack_ranged"):
 		_ranged_attack()
 	if Input.is_action_just_pressed("swap_weapon"):
-		_set_timed_state(PlayerState.SWAP_TOOL, 0.18)
+		_set_timed_state(PlayerState.SWAP_TOOL, 0.20)
 		GameState.use_next_quick_slot()
 	for slot_index in range(4):
 		if Input.is_action_just_pressed("quick_slot_%d" % [slot_index + 1]):
-			_set_timed_state(PlayerState.SWAP_TOOL, 0.18)
+			_set_timed_state(PlayerState.SWAP_TOOL, 0.20)
 			GameState.use_quick_slot(slot_index)
 	if Input.is_action_just_pressed("interact"):
 		_set_timed_state(PlayerState.INTERACT, 0.18)
@@ -86,12 +86,14 @@ func _primary_attack_pressed() -> void:
 	if GameState.active_attack_mode() == "ranged":
 		_ranged_attack()
 	else:
-		_melee_attack()
+		_melee_attack(true)
 
-func _melee_attack() -> void:
+func _melee_attack(use_mouse_aim := false) -> void:
 	if attack_timer > 0.0:
 		return
-	_set_timed_state(PlayerState.DRAW_SWORD, 0.08)
+	if use_mouse_aim:
+		last_direction = _aim_direction()
+	_set_timed_state(PlayerState.DRAW_SWORD, 0.11)
 	pending_slash = true
 	AudioManager.play_sfx("melee")
 	var weapon_id := GameState.active_attack_item_id()
@@ -101,28 +103,25 @@ func _melee_attack() -> void:
 	attack_timer = float(weapon.get("cooldown", 0.32))
 	var damage := 12 + GameState.get_stat_bonus("attack")
 	for enemy in get_tree().get_nodes_in_group("enemy"):
-		if enemy is Node2D and global_position.distance_to(enemy.global_position) <= 70:
+		if enemy is Node2D and global_position.distance_to(enemy.global_position) <= 74:
 			var facing: Vector2 = (enemy.global_position - global_position).normalized()
-			if last_direction.dot(facing) > -0.2 and enemy.has_method("take_damage"):
+			if last_direction.dot(facing) > -0.05 and enemy.has_method("take_damage"):
 				enemy.take_damage(damage, true)
 
 func _ranged_attack() -> void:
 	if ranged_timer > 0.0:
 		return
 	if not GameState.spend_ammo(1):
-		GameState.notify("彈藥不足，切回近戰武器回收資源")
+		GameState.notify("彈藥不足，先用近戰清出空間或回村補給。")
 		return
-	_set_timed_state(PlayerState.SHOOT, 0.18)
+	last_direction = _aim_direction()
+	_set_timed_state(PlayerState.SHOOT, 0.22)
 	AudioManager.play_sfx("shoot")
 	var ranged_id := GameState.active_attack_item_id()
 	var ranged := DataRegistry.get_equipment(ranged_id)
 	if String(ranged.get("attack_mode", "ranged")) != "ranged":
 		ranged = DataRegistry.get_equipment(String(GameState.equipment.get("ranged", "pipe_rifle")))
 	ranged_timer = float(ranged.get("cooldown", 0.25))
-	var aim := get_global_mouse_position() - global_position
-	if aim.length() < 8:
-		aim = last_direction
-	last_direction = aim.normalized()
 	var projectile_damage := 10 + GameState.get_stat_bonus("attack")
 	var projectile_start := global_position + last_direction * 28.0
 	var pools := get_tree().get_nodes_in_group("projectile_pool")
@@ -133,6 +132,14 @@ func _ranged_attack() -> void:
 		var projectile: Area2D = PROJECTILE_SCRIPT.new()
 		projectile.setup(projectile_start, last_direction, projectile_damage)
 		get_tree().current_scene.add_child(projectile)
+
+func _aim_direction() -> Vector2:
+	var aim := get_global_mouse_position() - global_position
+	if aim.length() < 8.0:
+		aim = last_direction
+	if aim.length() < 0.05:
+		return Vector2.RIGHT
+	return aim.normalized()
 
 func _direction_index() -> int:
 	var angle := last_direction.angle()
@@ -148,7 +155,7 @@ func _build_sprite_frames() -> void:
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
 			frames.add_animation(animation_name)
-			frames.set_animation_speed(animation_name, 6.0 if action_name in ["idle", "walk"] else 10.0)
+			frames.set_animation_speed(animation_name, 7.0 if action_name in ["idle", "walk"] else 12.0)
 			frames.set_animation_loop(animation_name, action_name in ["idle", "walk"])
 			for frame_index in range(3):
 				if atlas != null:
@@ -199,6 +206,7 @@ func _update_locomotion_state(input_direction: Vector2) -> void:
 func _set_timed_state(next_state: int, duration: float) -> void:
 	state = next_state
 	action_state_timer = max(action_state_timer, duration)
+	current_animation = ""
 
 func _is_action_state_locked() -> bool:
 	return action_state_timer > 0.0 and state in [

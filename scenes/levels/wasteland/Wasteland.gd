@@ -17,7 +17,6 @@ var world_size := Vector2(5760, 4480)
 var route_id := "scrap_highway"
 var route_data: Dictionary = {}
 var route_seed := 9527
-var zone_hints: Dictionary = {}
 
 func _ready() -> void:
 	y_sort_enabled = true
@@ -48,7 +47,7 @@ func _ready() -> void:
 	_spawn_enemies()
 	_spawn_boss()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify(String(route_data.get("notice", "廢土區域：探索、戰鬥、回收資源，再回村強化。")))
+	GameState.notify(String(route_data.get("notice", "抵達廢土外圍。沿著道路探索、清理污染體並回收資源。")))
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -84,7 +83,8 @@ func _spawn_exit() -> void:
 
 func _spawn_resources() -> void:
 	var count := int(DataRegistry.map_params.get("resource_nodes", 80))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(180, 180, world_size.x - 360, world_size.y - 620), route_seed + 11, 110)
+	var rect := _route_resource_rect()
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, rect, route_seed + 11, 110)
 	var ids: Array = route_data.get("resource_mix", ["scrap", "ammo", "bio_crystal", "mutant_core"])
 	for i in range(positions.size()):
 		var id := String(ids[i % ids.size()])
@@ -114,33 +114,54 @@ func _spawn_route_landmarks() -> void:
 	match route_id:
 		"scrap_highway":
 			landmarks = [
-				["wreck", Vector2(world_size.x * 0.34, world_size.y * 0.48), true, Vector2i(136, 92)],
-				["road_marker", Vector2(world_size.x * 0.54, world_size.y * 0.38), false, Vector2i(46, 62)],
-				["scrap_barricade", Vector2(world_size.x * 0.68, world_size.y * 0.64), true, Vector2i(126, 78)]
+				["wreck", Vector2(world_size.x * 0.28, world_size.y * 0.52), true, Vector2i(150, 96)],
+				["road_marker", Vector2(world_size.x * 0.45, world_size.y * 0.48), false, Vector2i(48, 64)],
+				["scrap_barricade", Vector2(world_size.x * 0.66, world_size.y * 0.57), true, Vector2i(138, 82)],
+				["scrap_wall", Vector2(world_size.x * 0.76, world_size.y * 0.42), true, Vector2i(128, 76)],
+				["rust_rock", Vector2(world_size.x * 0.56, world_size.y * 0.68), true, Vector2i(94, 70)]
 			]
 		"toxic_marsh":
 			landmarks = [
-				["toxic_pool", Vector2(world_size.x * 0.40, world_size.y * 0.44), false, Vector2i(128, 72)],
-				["signal_pylon", Vector2(world_size.x * 0.58, world_size.y * 0.35), true, Vector2i(62, 132)],
-				["dead_tree", Vector2(world_size.x * 0.70, world_size.y * 0.60), true, Vector2i(78, 124)]
+				["toxic_pool", Vector2(world_size.x * 0.35, world_size.y * 0.40), false, Vector2i(160, 88)],
+				["toxic_pool", Vector2(world_size.x * 0.58, world_size.y * 0.55), false, Vector2i(136, 74)],
+				["signal_pylon", Vector2(world_size.x * 0.47, world_size.y * 0.32), true, Vector2i(62, 134)],
+				["dead_tree", Vector2(world_size.x * 0.70, world_size.y * 0.62), true, Vector2i(82, 132)],
+				["scrap_wall", Vector2(world_size.x * 0.28, world_size.y * 0.62), true, Vector2i(120, 70)]
 			]
 		"crystal_scar":
 			landmarks = [
 				["signal_pylon", Vector2(world_size.x * 0.50, world_size.y * 0.18), true, Vector2i(64, 138)],
 				["toxic_pool", Vector2(world_size.x * 0.42, world_size.y * 0.36), false, Vector2i(112, 62)],
-				["rust_rock", Vector2(world_size.x * 0.62, world_size.y * 0.30), true, Vector2i(96, 72)]
+				["rust_rock", Vector2(world_size.x * 0.62, world_size.y * 0.30), true, Vector2i(108, 80)],
+				["dead_tree", Vector2(world_size.x * 0.35, world_size.y * 0.58), true, Vector2i(78, 126)],
+				["scrap_wall", Vector2(world_size.x * 0.68, world_size.y * 0.50), true, Vector2i(132, 80)]
 			]
 		"old_factory":
 			landmarks = [
-				["scrap_wall", Vector2(world_size.x * 0.42, world_size.y * 0.42), true, Vector2i(134, 86)],
-				["signal_pylon", Vector2(world_size.x * 0.63, world_size.y * 0.30), true, Vector2i(70, 140)],
-				["scrap_barricade", Vector2(world_size.x * 0.70, world_size.y * 0.56), true, Vector2i(134, 82)]
+				["scrap_wall", Vector2(world_size.x * 0.42, world_size.y * 0.42), true, Vector2i(150, 92)],
+				["signal_pylon", Vector2(world_size.x * 0.63, world_size.y * 0.30), true, Vector2i(70, 142)],
+				["scrap_barricade", Vector2(world_size.x * 0.70, world_size.y * 0.56), true, Vector2i(146, 86)],
+				["wreck", Vector2(world_size.x * 0.36, world_size.y * 0.63), true, Vector2i(126, 82)],
+				["road_marker", Vector2(world_size.x * 0.56, world_size.y * 0.50), false, Vector2i(42, 58)]
 			]
 	for item in landmarks:
 		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()
 		prop.setup(String(item[0]), bool(item[2]), item[3])
 		prop.global_position = item[1]
 		add_child(prop)
+
+func _route_resource_rect() -> Rect2:
+	match route_id:
+		"scrap_highway":
+			return Rect2(220, world_size.y * 0.36, world_size.x - 440, world_size.y * 0.38)
+		"toxic_marsh":
+			return Rect2(world_size.x * 0.20, 220, world_size.x * 0.55, world_size.y - 900)
+		"crystal_scar":
+			return Rect2(260, 180, world_size.x - 520, world_size.y * 0.60)
+		"old_factory":
+			return Rect2(world_size.x * 0.28, 220, world_size.x * 0.62, world_size.y - 940)
+		_:
+			return Rect2(180, 180, world_size.x - 360, world_size.y - 620)
 
 func _prop_size(id: String, index: int) -> Vector2i:
 	match id:
@@ -241,7 +262,7 @@ func _add_boundary(pos: Vector2, size: Vector2) -> void:
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")
 	if GameState.discovered_events.has(event_id):
-		GameState.notify("這個事件已經處理過")
+		GameState.notify("這個事件已經處理過了。")
 		return
 	GameState.discovered_events.append(event_id)
 	for event_data in DataRegistry.events:
@@ -251,6 +272,6 @@ func _on_event_interacted(interaction_id: String) -> void:
 				GameState.add_item(String(item_id), int(reward[item_id]))
 			var event_name := String(event_data.get("name", event_id))
 			var description := String(event_data.get("description", ""))
-			GameState.notify("%s 完成：%s" % [event_name, description])
+			GameState.notify("%s 已完成：%s" % [event_name, description])
 			SaveManager.save_game(false)
 			return
