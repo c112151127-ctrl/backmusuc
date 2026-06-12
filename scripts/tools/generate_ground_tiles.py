@@ -45,12 +45,16 @@ def make_ground_tile(base: tuple[int, int, int], accent: tuple[int, int, int], c
             points.append((x, y))
         draw.line(points, fill=(*cracks, rng.randint(72, 135)), width=1)
     if stone:
-        for _ in range(5):
-            x = rng.randint(0, 22)
-            y = rng.randint(0, 24)
-            w = rng.randint(8, 16)
-            h = rng.randint(6, 12)
-            draw.rounded_rectangle((x, y, x + w, y + h), radius=2, outline=(*cracks, 65), fill=(*jitter(base, rng, 8)[:3], 32), width=1)
+        for _ in range(7):
+            x = rng.randint(-2, 27)
+            y = rng.randint(-2, 27)
+            points = [
+                (x + rng.randint(0, 3), y),
+                (x + rng.randint(8, 17), y + rng.randint(1, 4)),
+                (x + rng.randint(9, 18), y + rng.randint(7, 14)),
+                (x + rng.randint(0, 5), y + rng.randint(8, 15)),
+            ]
+            draw.polygon(points, outline=(*cracks, 42), fill=(*jitter(base, rng, 8)[:3], 24))
     return img
 
 

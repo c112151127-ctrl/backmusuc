@@ -3,25 +3,25 @@
     {
       "id": "supply_cache",
       "name": "補給箱",
-      "description": "找到前哨留下的乾淨彈藥。",
+      "description": "找到一箱還能使用的彈藥。",
       "reward": { "ammo": 5 }
     },
     {
       "id": "broken_robot",
-      "name": "損毀機器人",
-      "description": "拆下可用零件，R-17 的資料庫記錄了故障原因。",
+      "name": "故障機械人",
+      "description": "R-17 拆下損壞零件，回收成可用廢鐵。",
       "reward": { "scrap": 8 }
     },
     {
       "id": "survivor_note",
       "name": "倖存者筆記",
-      "description": "筆記標出附近污染核心的位置。",
+      "description": "筆記標出一處異變核心藏點。",
       "reward": { "mutant_core": 1 }
     },
     {
       "id": "toxic_pool",
-      "name": "毒液採樣點",
-      "description": "收集到可分析的污染晶核。",
+      "name": "污染液坑",
+      "description": "採樣後取得一枚污染晶核。",
       "reward": { "bio_crystal": 1 }
     }
   ]

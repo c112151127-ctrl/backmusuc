@@ -1,7 +1,7 @@
 {
   "enemies": {
     "scrap_biter": {
-      "name": "腐爛掠食者",
+      "name": "廢鋼掠食者",
       "type": "melee",
       "attack_pattern": "chase_and_bite",
       "hp": 28,
@@ -31,7 +31,7 @@
       "drop_table": { "ammo": 4, "bio_crystal": 1 }
     },
     "rust_brute": {
-      "name": "巨噬腐肉獸",
+      "name": "鏽甲腐肉獸",
       "type": "heavy",
       "attack_pattern": "slow_wide_melee",
       "hp": 72,
@@ -61,7 +61,7 @@
       "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 }
     },
     "waste_titan": {
-      "name": "廢土巨像",
+      "name": "巨噬廢肉獸",
       "type": "boss",
       "attack_pattern": "boss_stomp_and_core_barrage",
       "hp": 220,

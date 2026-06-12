@@ -47,8 +47,13 @@ func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 
 func _ready() -> void:
 	add_to_group("enemy")
+	add_to_group("map_enemy")
+	set_meta("map_label", enemy_name)
+	set_meta("map_marker", "enemy")
 	if enemy_type == "boss":
 		add_to_group("boss")
+		add_to_group("map_boss")
+		set_meta("map_marker", "boss")
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
 	shape.radius = 32 if enemy_type == "boss" else 18
@@ -68,30 +73,6 @@ func _ready() -> void:
 	_health_bar.position = Vector2(0, -90 if enemy_type == "boss" else -54)
 	_health_bar.visible = false
 	add_child(_health_bar)
-
-func _enemy_texture(type_id: String) -> Texture2D:
-	var atlas: Texture2D = _load_atlas_texture(ENEMY_ATLAS_PATH)
-	if atlas == null:
-		return PIXEL.new().enemy_texture(type_id)
-	var index := PixelArtFactory.ENEMY_TYPES.find(type_id)
-	if index < 0:
-		index = 0
-	var frame_size := PixelArtFactory.ENEMY_FRAME_SIZE
-	var texture := AtlasTexture.new()
-	texture.atlas = atlas
-	texture.region = Rect2(index * frame_size.x, 0, frame_size.x, frame_size.y)
-	return texture
-
-func _load_atlas_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var loaded: Texture2D = load(path) as Texture2D
-		if loaded != null:
-			return loaded
-	if FileAccess.file_exists(path):
-		var image: Image = Image.load_from_file(path)
-		if image != null:
-			return ImageTexture.create_from_image(image)
-	return null
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
@@ -154,7 +135,7 @@ func _die(melee: bool) -> void:
 	AudioManager.play_sfx("death")
 	GameState.record_enemy_defeated()
 	if enemy_type == "boss":
-		GameState.notify("Boss 廢土巨像倒下，污染核心開始崩解")
+		GameState.notify("Boss 已崩解，污染核心暴露在地面上。")
 	for child in get_children():
 		if child is CollisionShape2D:
 			child.set_deferred("disabled", true)
@@ -174,6 +155,30 @@ func _spawn_drops(drop_position: Vector2) -> void:
 			pickup.setup(String(item_id), int(drop_table[item_id]))
 			pickup.global_position = drop_position + Vector2(randf_range(-28, 28), randf_range(-22, 22))
 			get_tree().current_scene.add_child(pickup)
+
+func _enemy_texture(type_id: String) -> Texture2D:
+	var atlas: Texture2D = _load_atlas_texture(ENEMY_ATLAS_PATH)
+	if atlas == null:
+		return PIXEL.new().enemy_texture(type_id)
+	var index := PixelArtFactory.ENEMY_TYPES.find(type_id)
+	if index < 0:
+		index = 0
+	var frame_size := PixelArtFactory.ENEMY_FRAME_SIZE
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = Rect2(index * frame_size.x, 0, frame_size.x, frame_size.y)
+	return texture
+
+func _load_atlas_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var loaded: Texture2D = load(path) as Texture2D
+		if loaded != null:
+			return loaded
+	if FileAccess.file_exists(path):
+		var image: Image = Image.load_from_file(path)
+		if image != null:
+			return ImageTexture.create_from_image(image)
+	return null
 
 func _configure_behavior() -> void:
 	contact_range = 42.0

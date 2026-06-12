@@ -23,7 +23,7 @@
     },
     {
       "id": "coil_launcher",
-      "name": "線圈步槍",
+      "name": "線圈發射器",
       "station": "mod",
       "cost": { "scrap": 28, "mutant_core": 2 },
       "result": { "coil_launcher": 1 }

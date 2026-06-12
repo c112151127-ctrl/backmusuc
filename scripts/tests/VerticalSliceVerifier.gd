@@ -56,6 +56,7 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(DataRegistry.npcs.size() >= 6, "npc data has village and guild dialogue characters")
 	_expect(DataRegistry.wasteland_routes.size() >= 4, "wasteland has four route definitions")
+	_expect(DataRegistry.visual_assets.size() >= 35, "visual asset manifest has formal art entries")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
 	_expect(int(DataRegistry.map_params.get("prop_nodes", 0)) >= 60, "wasteland has enough pseudo-3D props configured")
@@ -89,7 +90,7 @@ func _check_enemy_behavior_contract() -> void:
 		enemy.free()
 
 func _check_baked_assets() -> void:
-	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(1008, 448), "baked player atlas exists at 7 actions x 8 directions x 3 frames")
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(1296, 448), "baked player atlas exists at 9 actions x 8 directions x 3 frames")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(672, 72), "baked enemy atlas has 6 enemy types plus boss")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(320, 64), "baked item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
@@ -391,7 +392,7 @@ func _check_player_animation_contract() -> void:
 		_expect(animated_sprite is AnimatedSprite2D, "player uses AnimatedSprite2D")
 		if animated_sprite is AnimatedSprite2D:
 			var frame_set: SpriteFrames = animated_sprite.sprite_frames
-			var actions: Array[String] = ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
+			var actions: Array[String] = ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact", "hit", "dead"]
 			for action_name in actions:
 				for direction_index in range(8):
 					var animation_name := "%s_%d" % [action_name, direction_index]

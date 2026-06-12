@@ -32,6 +32,8 @@ func _ready() -> void:
 	var tile_size := int(params.get("tile_size", 32))
 	var size_tiles := Vector2i(int(params.get("width_tiles", 180)), int(params.get("height_tiles", 140)))
 	world_size = Vector2(size_tiles.x * tile_size, size_tiles.y * tile_size)
+	set_meta("map_world_size", world_size)
+	set_meta("map_scene_label", String(route_data.get("name", "廢土區域")))
 	route_seed = GameState.seed + int(route_data.get("seed_offset", 0))
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("wasteland", size_tiles, route_seed, route_id)
@@ -47,7 +49,7 @@ func _ready() -> void:
 	_spawn_enemies()
 	_spawn_boss()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify(String(route_data.get("notice", "抵達廢土外圍。沿著道路探索、清理污染體並回收資源。")))
+	GameState.notify(String(route_data.get("notice", "進入廢土區域。")))
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -69,10 +71,13 @@ func _spawn_exit() -> void:
 	exit.interaction_id = "to_village"
 	exit.prompt = "返回村莊"
 	exit.position = Vector2(world_size.x * 0.5, world_size.y - 90)
+	exit.add_to_group("map_gate")
+	exit.set_meta("map_label", "回村出口")
+	exit.set_meta("map_marker", "gate")
 	exit.interacted.connect(func(_id: String) -> void: SceneRouter.change_to("village", "from_wasteland"))
 	add_child(exit)
 	var gate := Sprite2D.new()
-	var gate_texture := ASSET_LOADER.load_png("res://assets/sprites/structures/village_return_gate.png")
+	var gate_texture := ASSET_LOADER.load_png(DataRegistry.asset_path("structure_village_return_gate"))
 	if gate_texture != null:
 		gate.texture = gate_texture
 		gate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -86,6 +91,8 @@ func _spawn_resources() -> void:
 	var rect := _route_resource_rect()
 	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, rect, route_seed + 11, 110)
 	var ids: Array = route_data.get("resource_mix", ["scrap", "ammo", "bio_crystal", "mutant_core"])
+	if ids.is_empty():
+		ids = ["scrap", "ammo", "bio_crystal", "mutant_core"]
 	for i in range(positions.size()):
 		var id := String(ids[i % ids.size()])
 		var amount := 1 + (i % 4)
@@ -100,6 +107,8 @@ func _spawn_props() -> void:
 	var count := int(DataRegistry.map_params.get("prop_nodes", 160))
 	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 900), route_seed + 301, 86)
 	var prop_ids: Array = route_data.get("prop_mix", ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"])
+	if prop_ids.is_empty():
+		prop_ids = ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"]
 	for i in range(positions.size()):
 		var id := String(prop_ids[i % prop_ids.size()])
 		var blocking := id != "toxic_pool" and id != "road_marker"
@@ -183,6 +192,8 @@ func _prop_size(id: String, index: int) -> Vector2i:
 			return Vector2i(56 + (index % 2) * 14, 48 + (index % 3) * 8)
 
 func _spawn_events() -> void:
+	if DataRegistry.events.is_empty():
+		return
 	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(int(DataRegistry.map_params.get("event_nodes", 18)), Rect2(240, 260, world_size.x - 480, world_size.y - 800), route_seed + 25, 260)
 	for i in range(positions.size()):
 		var event_data: Dictionary = DataRegistry.events[i % DataRegistry.events.size()]
@@ -192,6 +203,9 @@ func _spawn_events() -> void:
 		node.interaction_id = "event:" + event_id
 		node.prompt = event_name
 		node.position = positions[i]
+		node.add_to_group("map_event")
+		node.set_meta("map_label", event_name)
+		node.set_meta("map_marker", "event")
 		node.interacted.connect(_on_event_interacted)
 		add_child(node)
 		var marker := Sprite2D.new()
@@ -262,7 +276,7 @@ func _add_boundary(pos: Vector2, size: Vector2) -> void:
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")
 	if GameState.discovered_events.has(event_id):
-		GameState.notify("這個事件已經處理過了。")
+		GameState.notify("這個事件已經處理過。")
 		return
 	GameState.discovered_events.append(event_id)
 	for event_data in DataRegistry.events:
@@ -272,6 +286,6 @@ func _on_event_interacted(interaction_id: String) -> void:
 				GameState.add_item(String(item_id), int(reward[item_id]))
 			var event_name := String(event_data.get("name", event_id))
 			var description := String(event_data.get("description", ""))
-			GameState.notify("%s 已完成：%s" % [event_name, description])
+			GameState.notify("%s 完成：%s" % [event_name, description])
 			SaveManager.save_game(false)
 			return

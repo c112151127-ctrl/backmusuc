@@ -3,71 +3,80 @@
 ## 自動驗證
 
 ```powershell
-node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
-python scripts\tools\build_robot_player_atlas.py
+node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/art/visual_assets.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('JSON OK', f); }"
+python scripts\tools\generate_formal_visual_assets.py
+python scripts\tools\verify_visual_assets.py
+python scripts\tools\generate_ground_tiles.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/VisualReviewRunner.tscn'
 ```
 
-## 開場與存檔
+## 啟動與存檔
 
-- 標題畫面顯示「廢土回收商」與「繼續遊戲 / 新遊戲」。
-- 若已有存檔，選擇「繼續遊戲」會讀回血量、資源、裝備、任務、場景與路線。
-- 新遊戲顯示 R-17 背景導入。
-- 存檔點會修復 HP / EP 並保存。
-- 關閉遊戲後重開，不會整個重新計算進度。
+- 啟動後若有存檔，主選單顯示「繼續遊戲 / 新遊戲」。
+- 新遊戲第一次進入會播放 R-17 背景導入。
+- 在村莊、接任務、完成任務或使用存檔點後，關閉再開遊戲可保留 HP、資源、任務、路線與 NPC 一次性獎勵狀態。
+- 存檔損壞時不應崩潰，應回到新遊戲流程。
 
-## 移動與方向
+## 移動與主角外觀
 
-- `A` 讓角色往左走，角色朝左。
-- `D` 讓角色往右走，角色朝右。
-- `W` 朝上，`S` 朝下，斜向移動時角色朝向合理。
-- 玩家角色是人形仿真回收機 R-17，不是小箱型機器人。
+- `A` 往左、`D` 往右，左右視角不能反。
+- `W` 往上、`S` 往下，八方向動畫能依移動方向切換。
+- 主角應為原創 R-17 回收機器人，不可出現人類頭髮、背包角色或人類與機器人重疊。
+- 受擊與死亡會有可見閃光、震動或回村維修提示。
 
-## 左鍵與武器
+## 戰鬥與裝備
 
-- 快捷欄選近戰武器時，滑鼠左鍵朝滑鼠方向揮砍。
-- 快捷欄選遠程武器時，滑鼠左鍵朝滑鼠方向射擊。
-- 連續揮砍時每次都有拔刀與刀光，不會卡在同一張靜態圖。
-- 連續射擊時有舉槍、後座與槍口火光。
-- 彈藥不足時顯示「彈藥不足，先用近戰清出空間或回村補給。」
+- 目前裝備近戰武器時，滑鼠左鍵會先拔刀再揮砍。
+- 目前裝備遠程武器時，滑鼠左鍵會依滑鼠方向射擊，消耗彈藥並顯示槍口回饋。
+- `1-4` 或 `Q` 可切換快捷裝備。
+- 怪物受擊會顯示血條、傷害數字、擊退與污染液 / 火花效果。
+- Boss 受擊、死亡與掉落都可見。
 
 ## UI 與人物面板
 
-- `Tab / I` 可開關人物裝備面板。
-- 面板顯示目前左鍵行動、近戰、遠程、護甲、工具、背包與屬性加成。
-- 開啟人物面板時，底部快捷提示不應蓋住面板內容。
-- `M` 可開關小地圖，`H` 可開關教學，`Esc` 可關閉所有面板。
+- `Tab / I` 開啟人物裝備面板。
+- 面板顯示 R-17 預覽、近戰武器、遠程武器、護甲、工具、屬性加成、目前左鍵動作與背包格。
+- 人物面板開啟時，快捷列、小提示、小地圖不應和面板重疊。
+- `H` 開啟教學，`Esc` 關閉目前面板。
+- 底部提示列固定在安全區，文字不遮住角色中心。
+
+## 小地圖與全屏地圖
+
+- 右上角小地圖顯示玩家、NPC、建築、出口、敵人、Boss、掉落物、事件與重要障礙物。
+- 按 `M` 或點擊小地圖可開啟全屏地圖。
+- 全屏地圖顯示目前路線名稱、玩家位置、視野框、圖例與任務目標。
+- `Esc` 可關閉全屏地圖。
 
 ## NPC 與對話
 
-- 靠近 NPC 才顯示 `E` 互動提示。
-- 按 `E` 會出現下方對話框。
-- 離開 NPC 範圍時對話框立即關閉。
-- 首次對話獎勵只給一次，重複對話不會重複領取。
+- 只有靠近 NPC 時才顯示 `E` 互動提示。
+- 按 `E` 會開啟正式對話框，包含 NPC 頭像、名稱、職業與對話內容。
+- 離開 NPC 範圍時，對話框會自動關閉。
+- 每個 NPC 的一次性獎勵只能領一次，重新讀檔後也不能重複領。
 
-## 四方向廢土
+## 地圖與路線
 
-- 北門進入「紫晶裂隙」：紫色晶體感明顯，遠程敵人較多，Boss 區存在。
-- 南門進入「廢鐵公路」：破柏油、砂黃路肩、鏽橘車骸與道路感明顯。
-- 西門進入「毒沼排水區」：深綠毒泥、管線與毒池明顯。
-- 東門進入「舊工廠外圍」：灰藍鋼板、橘色警示線、工業障礙物明顯，Boss 區存在。
-- 四區看起來不能像同一張地圖換名字。
+- 村莊是十字樞紐，四個方向都有清楚出口。
+- 南門廢鐵公路有破柏油、車骸、路障與彈藥箱。
+- 西門毒沼排水區有毒池、管線、飛行敵人與毒液資源。
+- 北門紫晶裂隙有紫晶礦脈、裂谷、遠程敵人與 Boss 前哨。
+- 東門舊工廠外圍有鐵板、警戒線、工業建物、機械敵人與精英事件。
+- 地板不應呈現明顯棋盤格或網格線。
+- 建築、NPC、障礙物與玩家不可互相重疊到無法辨識，Y-sort 遮擋應合理。
 
-## 戰鬥與回饋
+## 美術 Review
 
-- 敵人移動時不是完全靜態。
-- 敵人受擊會有震動、傷害數字、短暫血條、火花或污染液效果。
-- Boss 有更大的血條與更明顯的受擊 / 死亡表現。
-- 掉落物是高細節 icon，位置與地面不混淆。
-- 場景切換不應再出現 physics callback 直接移除 CollisionObject 的錯誤。
+- 命名 NPC、建築、裝備、掉落物、敵人與 Boss 不能共用同一張正式 PNG。
+- 大量程序 props 可使用變體，但同畫面不能出現肉眼明顯相同的排列。
+- 掉落物 icon 要對應實際物品，不能用方塊占位。
+- 畫面色彩需有荒野對比：灰石、鏽橘、毒綠、紫晶、冷藍光源與深色廢土陰影。
+- UI 不應遮住 NPC 對話、角色、出口或戰鬥重點。
 
-## 視覺 Review
+## 已知剩餘風險
 
-- 畫面不能整片單色；廢土應有砂黃、鏽橘、毒綠、紫晶、灰藍等分區對比。
-- 地板不能像明顯棋盤格。
-- 建築、NPC、敵人、掉落物、props 風格需接近圖二高細節廢土像素風。
-- Y-sort 遮擋合理，玩家靠近建築與障礙物時不應出現嚴重穿插。
-- UI 不遮擋玩家中心、NPC 對話或重要戰鬥區域。
+- Headless 模式離開 Godot 時可能仍有 ObjectDB leaked warning，目前不影響自動驗證與 playable flow。
+- 真正上架前仍需人工美術精修、完整逐格動畫、音效混音與更多關卡事件。

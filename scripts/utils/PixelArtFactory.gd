@@ -4,7 +4,7 @@ class_name PixelArtFactory
 const PLAYER_FRAME_SIZE := Vector2i(48, 56)
 const ENEMY_FRAME_SIZE := Vector2i(96, 72)
 const ITEM_FRAME_SIZE := Vector2i(80, 64)
-const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
+const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact", "hit", "dead"]
 const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid", "boss"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
 const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"

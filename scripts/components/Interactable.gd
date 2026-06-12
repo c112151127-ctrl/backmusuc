@@ -23,7 +23,7 @@ func _ready() -> void:
 	add_child(shape)
 
 	_label = Label.new()
-	_label.text = "E：" + prompt
+	_label.text = "E：%s" % prompt
 	_label.position = Vector2(-50, -58)
 	_label.visible = false
 	_label.add_theme_font_size_override("font_size", 14)

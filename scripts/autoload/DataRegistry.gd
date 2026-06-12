@@ -9,6 +9,7 @@ var recipes: Array = []
 var quests: Array = []
 var npcs: Array = []
 var wasteland_routes: Dictionary = {}
+var visual_assets: Dictionary = {}
 
 func _ready() -> void:
 	load_all()
@@ -21,6 +22,7 @@ func load_all() -> void:
 	enemies = _load_json("res://data/enemies/enemies.json").get("enemies", {})
 	map_params = _load_json("res://data/maps/wasteland_params.json")
 	wasteland_routes = _load_json("res://data/maps/wasteland_routes.json").get("routes", {})
+	visual_assets = _load_json("res://data/art/visual_assets.json").get("assets", {})
 	events = _load_json("res://data/maps/events.json").get("events", [])
 	quests = _load_json("res://data/maps/quests.json").get("quests", [])
 	npcs = _load_json("res://data/maps/npcs.json").get("npcs", [])
@@ -63,6 +65,15 @@ func get_npc(npc_id: String) -> Dictionary:
 
 func get_wasteland_route(route_id: String) -> Dictionary:
 	return wasteland_routes.get(route_id, {})
+
+func get_visual_asset(asset_id: String) -> Dictionary:
+	return visual_assets.get(asset_id, {})
+
+func asset_path(asset_id: String, fallback := "") -> String:
+	return String(get_visual_asset(asset_id).get("path", fallback))
+
+func asset_portrait_path(asset_id: String, fallback := "") -> String:
+	return String(get_visual_asset(asset_id).get("portrait", fallback))
 
 func wasteland_route_ids() -> Array:
 	return wasteland_routes.keys()

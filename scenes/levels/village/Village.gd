@@ -16,15 +16,15 @@ const MAP_TILES := Vector2i(78, 56)
 const TILE_SIZE := 32
 const WORLD_RECT := Rect2(Vector2(48, 48), Vector2(MAP_TILES.x * TILE_SIZE - 96, MAP_TILES.y * TILE_SIZE - 96))
 
-const STATION_TEXTURES := {
-	"forge": "res://assets/sprites/structures/forge.png",
-	"craft": "res://assets/sprites/structures/craft.png",
-	"shop": "res://assets/sprites/structures/shop.png",
-	"mod": "res://assets/sprites/structures/mod_station.png",
-	"recycle": "res://assets/sprites/structures/recycle_machine.png",
-	"save": "res://assets/sprites/structures/save_station.png",
-	"to_guild": "res://assets/sprites/structures/guild_gate.png",
-	"route_gate": "res://assets/sprites/structures/wasteland_gate.png"
+const STATION_ASSETS := {
+	"forge": "structure_forge",
+	"craft": "structure_craft",
+	"shop": "structure_shop",
+	"mod": "structure_mod_station",
+	"recycle": "structure_recycle_machine",
+	"save": "structure_save_station",
+	"to_guild": "structure_guild_gate",
+	"route_gate": "structure_wasteland_gate"
 }
 
 var player: Node2D
@@ -32,6 +32,8 @@ var player: Node2D
 func _ready() -> void:
 	y_sort_enabled = true
 	GameState.current_scene_id = "village"
+	set_meta("map_world_size", Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
+	set_meta("map_scene_label", "村莊據點")
 	AudioManager.play_music("village")
 
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
@@ -45,7 +47,7 @@ func _ready() -> void:
 	_add_projectile_pool(200)
 	_spawn_player(_spawn_position())
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("村莊據點：找 NPC 了解操作，或從四個出口進入不同廢土區。")
+	GameState.notify("村莊據點：靠近 NPC 交談、用 Tab 整備裝備，從四個出口選擇廢土路線。")
 
 func _spawn_position() -> Vector2:
 	match GameState.active_spawn_point:
@@ -73,13 +75,13 @@ func _add_projectile_pool(limit: int) -> void:
 	add_child(pool)
 
 func _add_stations() -> void:
-	_add_station("forge", "鍛造：廢鐵換彈藥", Vector2(1248, 370), Color8(102, 68, 45))
-	_add_station("craft", "合成：製作近戰武器", Vector2(680, 650), Color8(72, 92, 96))
-	_add_station("shop", "商店：購買彈藥", Vector2(1810, 650), Color8(93, 75, 47))
-	_add_station("mod", "改裝：升級遠程武器", Vector2(720, 1130), Color8(54, 77, 91))
-	_add_station("recycle", "拆解：核心換材料", Vector2(1248, 1180), Color8(69, 88, 78))
-	_add_station("save", "存檔：維修與保存", Vector2(1760, 1130), Color8(42, 92, 108))
-	_add_station("to_guild", "前往冒險公會", Vector2(2060, 900), Color8(90, 82, 120))
+	_add_station("forge", "鍛造爐：廢鐵換彈藥", Vector2(1248, 370), Color8(102, 68, 45), "鍛造")
+	_add_station("craft", "合成台：製作近戰武器", Vector2(680, 650), Color8(72, 92, 96), "合成")
+	_add_station("shop", "補給商：購買彈藥", Vector2(1810, 650), Color8(93, 75, 47), "商店")
+	_add_station("mod", "改裝站：打造線圈發射器", Vector2(720, 1130), Color8(54, 77, 91), "改裝")
+	_add_station("recycle", "拆解機：核心換材料", Vector2(1248, 1180), Color8(69, 88, 78), "拆解")
+	_add_station("save", "維修存檔點", Vector2(1760, 1130), Color8(42, 92, 108), "存檔")
+	_add_station("to_guild", "前往冒險公會", Vector2(2060, 900), Color8(90, 82, 120), "公會")
 
 func _add_route_gates() -> void:
 	_add_route_gate("crystal_scar", "北門：紫晶裂隙", Vector2(1248, 170))
@@ -87,10 +89,13 @@ func _add_route_gates() -> void:
 	_add_route_gate("toxic_marsh", "西門：毒沼排水區", Vector2(230, 900))
 	_add_route_gate("old_factory", "東門：舊工廠外圍", Vector2(2260, 900))
 
-func _add_station(id: String, label: String, pos: Vector2, color: Color) -> void:
+func _add_station(id: String, label: String, pos: Vector2, color: Color, map_label: String) -> void:
 	var node := Node2D.new()
 	node.position = pos
 	node.y_sort_enabled = true
+	node.add_to_group("map_station")
+	node.set_meta("map_label", map_label)
+	node.set_meta("map_marker", "station")
 	add_child(node)
 	var sprite := Sprite2D.new()
 	var texture := _station_texture(id)
@@ -100,17 +105,32 @@ func _add_station(id: String, label: String, pos: Vector2, color: Color) -> void
 	sprite.centered = false
 	sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
 	node.add_child(sprite)
+	_add_station_collision(node, texture_size)
 	var interactable: Area2D = INTERACTABLE_SCRIPT.new()
 	interactable.interaction_id = id
 	interactable.prompt = label
-	interactable.radius = max(texture_size.x, texture_size.y) * 0.36
+	interactable.radius = max(texture_size.x, texture_size.y) * 0.34
 	interactable.interacted.connect(_on_station_interacted)
 	node.add_child(interactable)
+
+func _add_station_collision(node: Node2D, texture_size: Vector2) -> void:
+	var body := StaticBody2D.new()
+	body.add_to_group("obstacle")
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(max(52.0, texture_size.x * 0.58), max(22.0, texture_size.y * 0.18))
+	var collision := CollisionShape2D.new()
+	collision.shape = shape
+	collision.position = Vector2(0, -shape.size.y * 0.5)
+	body.add_child(collision)
+	node.add_child(body)
 
 func _add_route_gate(route_id: String, label: String, pos: Vector2) -> void:
 	var node := Node2D.new()
 	node.position = pos
 	node.y_sort_enabled = true
+	node.add_to_group("map_gate")
+	node.set_meta("map_label", label)
+	node.set_meta("map_marker", "gate")
 	add_child(node)
 	var sprite := Sprite2D.new()
 	sprite.texture = _station_texture("route_gate")
@@ -126,7 +146,8 @@ func _add_route_gate(route_id: String, label: String, pos: Vector2) -> void:
 	node.add_child(gate)
 
 func _station_texture(id: String) -> Texture2D:
-	var path := String(STATION_TEXTURES.get(id, ""))
+	var asset_id := String(STATION_ASSETS.get(id, ""))
+	var path := DataRegistry.asset_path(asset_id)
 	return ASSET_LOADER.load_png(path) if not path.is_empty() else null
 
 func _add_decor() -> void:
@@ -139,7 +160,8 @@ func _add_decor() -> void:
 		["road_marker", Vector2(1248, 1060), false, Vector2i(44, 58)],
 		["signal_pylon", Vector2(2050, 1240), true, Vector2i(72, 128)],
 		["toxic_pool", Vector2(430, 1220), false, Vector2i(86, 50)],
-		["wreck", Vector2(1980, 1420), true, Vector2i(116, 80)]
+		["wreck", Vector2(1980, 1420), true, Vector2i(116, 80)],
+		["scrap_barricade", Vector2(1500, 1460), true, Vector2i(120, 72)]
 	]
 	for prop_data in props:
 		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()

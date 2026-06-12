@@ -57,22 +57,24 @@ func _draw() -> void:
 				draw_circle(rect.position + Vector2(rng.randf_range(8, 24), rng.randf_range(8, 24)), rng.randf_range(2.0, 5.0), Color(0.22, 0.45, 0.25, 0.45))
 			if mode == "wasteland" and rng.randf() < 0.018:
 				draw_rect(rect.grow(-rng.randf_range(8.0, 13.0)), Color(accent.r, accent.g, accent.b, 0.16), true)
-			if road_strength > 0.0 and (x + y) % 4 == 0:
-				draw_rect(rect.grow(-7), Color(0.72, 0.62, 0.42, 0.08), false, 1.0)
 
 func _draw_road_detail(rect: Rect2, x: int, y: int, road_strength: float, rng: RandomNumberGenerator) -> void:
-	var asphalt := Color(0.11, 0.10, 0.09, 0.42 + road_strength * 0.30)
 	var edge := _road_edge_color()
-	draw_rect(rect.grow(-2), asphalt, true)
+	draw_rect(rect, Color(0.10, 0.09, 0.08, 0.12 + road_strength * 0.16), true)
 	if mode == "wasteland":
-		if abs(y - int(map_size.y * 0.72) - int(sin(float(x) * 0.14) * 5.0)) == 2:
-			draw_rect(Rect2(rect.position.x, rect.position.y + 2, rect.size.x, 2), Color(edge.r, edge.g, edge.b, 0.36 + road_strength * 0.18), true)
-		if x % 6 == 0:
-			draw_rect(Rect2(rect.position.x + rect.size.x * 0.46, rect.position.y + 8, 3, 12), Color(edge.r, edge.g, edge.b, 0.24), true)
-		if rng.randf() < 0.22:
+		if rng.randf() < 0.16:
+			draw_circle(rect.position + Vector2(rng.randf_range(4, 28), rng.randf_range(4, 28)), rng.randf_range(1.5, 3.5), Color(edge.r, edge.g, edge.b, 0.12 + road_strength * 0.12))
+		if x % 8 == 0 and rng.randf() < 0.65:
+			draw_rect(Rect2(rect.position.x + rect.size.x * 0.47, rect.position.y + 9, 2, 9), Color(edge.r, edge.g, edge.b, 0.20), true)
+		if rng.randf() < 0.28:
 			draw_line(rect.position + Vector2(rng.randf_range(4, 12), rng.randf_range(8, 24)), rect.position + Vector2(rng.randf_range(18, 28), rng.randf_range(10, 28)), Color(0.05, 0.045, 0.04, 0.42), 1.0)
 	else:
-		draw_rect(rect.grow(-6), Color(0.70, 0.58, 0.38, 0.18), false, 1.0)
+		if rng.randf() < 0.12:
+			draw_circle(rect.position + Vector2(rng.randf_range(5, 27), rng.randf_range(5, 27)), rng.randf_range(1.0, 2.4), Color(edge.r, edge.g, edge.b, 0.08))
+		if rng.randf() < 0.22:
+			var start := rect.position + Vector2(rng.randf_range(4, 12), rng.randf_range(7, 23))
+			var end := start + Vector2(rng.randf_range(9, 24), rng.randf_range(-6, 8))
+			draw_line(start, end, Color(0.13, 0.11, 0.08, 0.28), 1.0)
 
 func _road_strength(x: int, y: int) -> float:
 	if mode == "village":

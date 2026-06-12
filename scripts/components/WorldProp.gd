@@ -17,6 +17,9 @@ func setup(id: String, blocking := true, size := Vector2i(56, 56)) -> void:
 
 func _ready() -> void:
 	add_to_group("world_prop")
+	add_to_group("map_prop")
+	set_meta("map_label", _prop_label())
+	set_meta("map_marker", "prop")
 	y_sort_enabled = true
 	if blocks_movement:
 		add_to_group("obstacle")
@@ -38,14 +41,54 @@ func _add_sprite() -> void:
 	sprite.centered = false
 	var texture_size := sprite.texture.get_size() if sprite.texture != null else Vector2(visual_size)
 	sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
+	sprite.scale = _deterministic_scale()
+	sprite.modulate = _deterministic_tint()
 	add_child(sprite)
 
 func _prop_texture() -> Texture2D:
-	var path := "res://assets/sprites/props/%s.png" % prop_id
+	var asset := DataRegistry.get_visual_asset("prop_%s" % prop_id)
+	var variant_prefix := String(asset.get("variant_prefix", ""))
+	var variants := int(asset.get("variants", 0))
+	if not variant_prefix.is_empty() and variants > 0:
+		var index := int(abs(round(global_position.x * 0.17 + global_position.y * 0.31 + prop_id.length() * 13.0))) % variants
+		var variant_path := "%s%d.png" % [variant_prefix, index]
+		var variant_texture := ASSET_LOADER.load_png(variant_path)
+		if variant_texture != null:
+			return variant_texture
+	var path := String(asset.get("path", "res://assets/sprites/props/%s.png" % prop_id))
 	var texture := ASSET_LOADER.load_png(path)
 	if texture != null:
 		return texture
 	return _make_prop_texture()
+
+func _deterministic_scale() -> Vector2:
+	var seed := int(abs(round(global_position.x * 3.0 + global_position.y * 5.0))) + prop_id.length()
+	var factor := 0.92 + float(seed % 17) / 100.0
+	return Vector2(factor, factor)
+
+func _deterministic_tint() -> Color:
+	var seed := int(abs(round(global_position.x + global_position.y))) + prop_id.length() * 19
+	var light := 0.92 + float(seed % 13) / 100.0
+	return Color(light, light, light, 1.0)
+
+func _prop_label() -> String:
+	match prop_id:
+		"dead_tree":
+			return "枯樹"
+		"scrap_wall":
+			return "廢鐵牆"
+		"toxic_pool":
+			return "毒液池"
+		"wreck":
+			return "車輛殘骸"
+		"signal_pylon":
+			return "訊號塔"
+		"road_marker":
+			return "路標"
+		"scrap_barricade":
+			return "廢鐵路障"
+		_:
+			return "鏽石"
 
 func _make_prop_texture() -> Texture2D:
 	var palette: Array[Color] = [Color8(62, 55, 48), Color8(101, 83, 63), Color8(158, 103, 57)]

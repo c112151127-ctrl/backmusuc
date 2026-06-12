@@ -1,92 +1,114 @@
-# 廢土回收商 Vertical Slice v2.1 實作計畫
+# 廢土回收商美術與地圖系統重製實作計畫
 
 ## 目前狀態
 
-專案是 Godot 4.6.3 PC 版像素偽 3D vertical slice。核心流程已可驗證：標題畫面、村莊、冒險公會、四方向廢土、戰鬥、掉落、任務、人物裝備面板、存讀檔與自動驗證 runner。
+本專案是 Godot 4.6.3 PC 版像素風偽 3D vertical slice。核心流程已保留並可驗證：標題畫面、村莊整備、冒險公會、四方向廢土探索、戰鬥、掉落、任務、人物裝備面板、小地圖 / 全屏地圖、存讀檔與自動 playtest runner。
 
-本輪 v2.1 針對使用者回饋修正三個重點：
+本輪重點不是微調舊占位素材，而是建立正式素材管線與可驗收的地圖系統：
 
-1. 主角不能是小箱型機器人，改成圖二風格的人形仿真回收機 R-17。
-2. A / D 視角與素材 row 必須和程式方向索引一致。
-3. 廢土背景不能單色單調，四區要有荒野對比色與清楚道路感。
+1. 主角改為原創 R-17 回收機器人，避免人類角色和機器人外殼重疊。
+2. 命名 NPC、建築、裝備、掉落物、敵人與 Boss 都由 `data/art/visual_assets.json` 宣告正式素材。
+3. 地板移除明顯網格感，改成不規則石板、荒土、破柏油、毒泥與晶體地形混鋪。
+4. 小地圖與全屏地圖改為從場景中的 map groups 讀取玩家、NPC、建築、敵人、Boss、掉落物、事件與出口位置。
 
 ## Vertical Slice 目標
 
-玩家進入遊戲後可以選擇繼續或新遊戲。新遊戲會看到 R-17 背景導入，進入村莊後與 NPC 交談、接任務、開人物裝備面板，從四個出口前往不同廢土路線。廢土中能使用左鍵依目前裝備做近戰或射擊，怪物受擊會顯示血條、傷害數字與火花 / 污染液效果，玩家可撿取資源、回村存檔並延續進度。
+玩家啟動遊戲後可選擇繼續或新遊戲。新遊戲會看到 R-17 在廢土村莊甦醒的背景導入，之後在村莊向 NPC 取得指引與一次性獎勵，前往公會接委託，再由村莊四方向出口進入不同廢土區。玩家可使用滑鼠左鍵依目前裝備進行近戰或射擊、撿取掉落物、查看人物裝備、開啟地圖、完成任務並存檔。
 
-## 必改檔案
+## 已修改的主要檔案
 
-- `scenes/player/Player.gd`
-- `scripts/tools/build_robot_player_atlas.py`
-- `assets/sprites/player/recycler_player_multiaction_8dir.png`
-- `scripts/systems/WorldBackdrop.gd`
-- `scenes/levels/wasteland/Wasteland.gd`
+- `data/art/visual_assets.json`
+- `data/items/equipment.json`
+- `data/items/recipes.json`
+- `data/maps/npcs.json`
+- `data/maps/quests.json`
+- `data/maps/events.json`
 - `data/maps/wasteland_routes.json`
-- `docs/PLAYTEST_CHECKLIST.md`
-- `docs/SRS_TRACEABILITY.md`
+- `data/enemies/enemies.json`
+- `scripts/tools/generate_formal_visual_assets.py`
+- `scripts/tools/verify_visual_assets.py`
+- `scripts/tools/build_robot_player_atlas.py`
+- `scripts/tools/generate_ground_tiles.py`
+- `scripts/ui/WorldMapView.gd`
+- `scripts/ui/MiniMapView.gd`
+- `scenes/ui/HUD.gd`
+- `scenes/player/Player.gd`
+- `scenes/levels/village/Village.gd`
+- `scenes/levels/guild/Guild.gd`
+- `scenes/levels/wasteland/Wasteland.gd`
+- `scripts/components/DialogueNpc.gd`
+- `scripts/components/Pickup.gd`
+- `scripts/components/Enemy.gd`
+- `scripts/components/WorldProp.gd`
+- `scripts/systems/WorldBackdrop.gd`
 
 ## 玩家流程
 
-1. 標題畫面顯示「繼續遊戲 / 新遊戲」。
-2. 玩家使用 WASD 移動，A 往左、D 往右，角色朝向與動作一致。
-3. 滑鼠左鍵依目前快捷裝備決定行動：近戰武器揮砍，遠程武器射擊。
-4. 近戰與射擊都朝滑鼠方向，不再只依最後移動方向。
-5. `Tab / I` 開人物裝備面板，面板中可確認目前左鍵行動與裝備。
-6. `M` 開地圖，`H` 開教學，`E` 互動，`Esc` 關閉面板。
+1. 進入標題畫面，若有存檔可選「繼續遊戲」，否則開始新遊戲。
+2. 新遊戲播放短篇背景導入：R-17 在廢土村莊維修艙甦醒，接受清理污染與回收資源任務。
+3. 在村莊使用 WASD 移動，靠近 NPC 才顯示互動提示。
+4. 使用 `E` 對話、取得一次性獎勵與玩法指引。
+5. 前往公會接委託，或從村莊上下左右四個出口進入不同廢土路線。
+6. 在廢土中打怪、撿資源、觀察小地圖、切換裝備。
+7. 回村交付任務、合成裝備、存檔，形成「探索、戰鬥、回收、強化、再探索」循環。
 
-## NPC 與對話流程
+## NPC 指引流程
 
-- 玩家靠近 NPC 才顯示互動提示。
-- `E` 開啟對話框，對話框位於下方安全區。
-- 玩家離開 NPC 範圍時對話框自動關閉。
-- NPC 首次對話獎勵只給一次，狀態寫入存檔。
+- 鍛造老陳：介紹近戰清空間、補彈與鍛造用途。
+- 補給商阿洛：介紹資源、彈藥與購買補給。
+- 維修機 R-17：介紹存檔、維修與系統狀態。
+- 倖存者小隊長：介紹四方向廢土路線與地圖功能。
+- 公會櫃員：介紹委託接取與交付。
+- 路線斥候：介紹各區敵人、資源與 Boss 風險。
 
-## 互動與獎勵驗證
+NPC 離開互動範圍時會自動關閉對話框，避免對話殘留遮住畫面。
 
-- 村莊 NPC：首次對話給基本資源或教學提示。
-- 公會 NPC：接委託、完成條件、回報領獎。
-- 廢土事件：處理一次後不可重複領取。
-- 存檔：場景、路線、血量、資源、裝備、任務與 NPC 狀態都保存。
+## 一次性互動與獎勵驗證
 
-## 主角美術規格
+NPC 對話透過 `GameState.talk_to_npc()` 記錄 `talked_npcs`。第一次對話給予獎勵並寫入存檔，之後只顯示 repeat line，不會重複領取。`ValidationRunner.tscn` 與 `AutomatedPlaytestRunner.tscn` 會驗證一次性獎勵行為。
 
-- 主角為 R-17 人形仿真回收機，不使用小箱型 NPC 機器人作為正式玩家。
-- atlas 路徑：`assets/sprites/player/recycler_player_multiaction_8dir.png`。
-- 尺寸：7 動作 x 8 方向 x 3 frame，單 frame `48x56`，總尺寸 `1008x448`。
-- 方向索引：`0=右`、`1=右下`、`2=下`、`3=左下`、`4=左`、`5=左上`、`6=上`、`7=右上`。
-- 視覺特徵：廢土回收裝、金屬關節、青藍 visor、胸口能源核心、橘鏽色裝甲與高對比輪廓。
+## 像素主角規格
 
-## 玩家動作規格
+- 正式主角：原創 R-17 回收機器人。
+- 造型方向：白灰陶瓷外殼、青色感測眼、圓潤身軀、長臂、荒野刮痕、回收工具掛件。
+- 限制：只能參考「圓潤、自然磨損、友善仿生機器人」方向，不直接複製任何電影角色。
+- Atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`
+- 單格尺寸：`48x56`
+- 排列：9 動作 x 8 方向 x 3 frame，總尺寸 `1296x448`
+- 方向 row：下、右下、右、右上、上、左上、左、左下。
 
-- `idle`：待機呼吸與機體微光。
-- `walk`：三幀步伐，方向列與 WASD 一致。
-- `shoot`：舉槍、後座、槍口火光。
-- `draw_sword`：拔出回收刀的準備動作。
-- `slash`：橘黃刀光與青藍能量弧線。
-- `swap_tool`：工具切換能量脈衝。
-- `interact`：掃描光點與互動手勢。
+## 玩家動作狀態
 
-## 四區廢土視覺策略
+- `idle`：待機呼吸、感測眼微亮。
+- `walk`：八方向移動，A / D 視角與動畫方向一致。
+- `draw_sword`：近戰前先拔出回收刀。
+- `slash`：揮砍弧光與工具殘影。
+- `shoot`：舉槍、後座力、槍口光。
+- `swap_tool`：手臂工具亮起或切換姿態。
+- `interact`：面向互動目標，手臂伸出。
+- `hit`：受擊閃光與短暫震動。
+- `dead`：機體停擺後回村維修。
 
-- 南門廢鐵公路：破柏油、砂黃路肩、鏽橘車骸、彈藥箱。
-- 西門毒沼排水區：深綠毒泥、黃綠棧道、管線、飛行怪。
-- 北門紫晶裂隙：紫晶高光、灰藍裂岩、遠程怪、Boss 前哨。
-- 東門舊工廠外圍：灰藍鋼板、橘色警示線、工業管線、機械敵人與 Boss。
+## 地圖與小地圖規格
+
+- 村莊：十字樞紐、中央廣場、四方向出口、功能建築分區、NPC 站位互不重疊。
+- 南門廢鐵公路：破柏油、車骸、路障、彈藥箱。
+- 西門毒沼排水區：毒池、管線、飛行敵人與毒液資源。
+- 北門紫晶裂隙：紫晶礦脈、裂谷、遠程敵人與 Boss 前哨。
+- 東門舊工廠外圍：鐵板、警戒線、工業建物、機械敵人與精英事件。
+- `WorldMapView.gd` 讀取 `map_player`、`map_npc`、`map_station`、`map_gate`、`map_pickup`、`map_enemy`、`map_boss`、`map_prop`、`map_event`。
+- 小地圖顯示目前位置與附近物件；按 `M` 或點擊小地圖可切換全屏地圖。
 
 ## 驗證清單
 
-- JSON 全部可解析。
-- `build_robot_player_atlas.py` 可重新產生 player atlas。
-- Godot headless 可載入。
-- `PixelAssetBaker.tscn` 不覆蓋正式圖二風格素材。
-- `ValidationRunner.tscn` 通過。
-- `AutomatedPlaytestRunner.tscn` 通過。
-- `VisualReviewRunner.tscn` 在 headless 下安全 skip 截圖，在視窗模式可輸出畫面。
-- Computer Use 可用時擷取標題、村莊、人物面板、四區廢土與 Boss 畫面。
+- JSON 驗證：NPC、任務、事件、路線、裝備、配方、敵人與 visual assets 都必須可解析。
+- 素材驗證：`scripts/tools/verify_visual_assets.py` 檢查缺圖、透明空圖、重複 hash、prop 變體與 mojibake sentinel。
+- Godot 驗證：headless 載入、`PixelAssetBaker.tscn`、`ValidationRunner.tscn`、`AutomatedPlaytestRunner.tscn`。
+- 視覺驗證：`VisualReviewRunner.tscn` 或 Computer Use 實機 review 村莊、四路線、人物面板、小地圖、全屏地圖、戰鬥與 Boss 區。
 
 ## 剩餘 TODO
 
-- 補完整 NPC / 怪物逐格動畫 atlas。
-- 補更多正式音樂與分敵人命中特效。
-- 擴充更多手工事件與支線任務。
-- 後續 Android 觸控 UI 仍暫緩，PC 版優先。
+- 補完整逐格 NPC 工作動畫、怪物攻擊動畫與 Boss 階段動畫。
+- 補正式 BGM、命中音效、UI 音效與音量混音。
+- 擴充更多任務事件、地牢節點與 Boss 招式。
+- 後續由人工美術再精修像素邊緣、光影一致性與角色辨識度。

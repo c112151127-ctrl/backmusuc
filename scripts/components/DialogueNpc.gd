@@ -8,6 +8,8 @@ var npc_id := ""
 var npc_name := "NPC"
 var role := "居民"
 var color := Color8(110, 126, 116)
+var sprite_asset_id := ""
+var portrait_asset_id := ""
 var _player_near := false
 var _name_label: Label
 var _prompt: Label
@@ -21,12 +23,18 @@ func setup(data: Dictionary) -> void:
 	npc_name = String(data.get("name", npc_id))
 	role = String(data.get("role", "居民"))
 	color = Color.from_string(String(data.get("color", "#6f7e74")), Color8(110, 126, 116))
+	sprite_asset_id = String(data.get("sprite_asset_id", "npc_%s" % npc_id))
+	portrait_asset_id = String(data.get("portrait_asset_id", sprite_asset_id))
 	var position_data: Dictionary = data.get("position", {})
 	position = Vector2(float(position_data.get("x", 0.0)), float(position_data.get("y", 0.0)))
 
 func _ready() -> void:
 	add_to_group("npc")
 	add_to_group("interactable")
+	add_to_group("map_npc")
+	set_meta("map_label", npc_name)
+	set_meta("map_marker", "npc")
+	set_meta("portrait_asset_id", portrait_asset_id)
 	monitoring = true
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -80,7 +88,8 @@ func _add_labels() -> void:
 	add_child(_prompt)
 
 func _npc_texture() -> Texture2D:
-	var path := "res://assets/sprites/npcs/%s.png" % npc_id
+	var asset := DataRegistry.get_visual_asset(sprite_asset_id)
+	var path := String(asset.get("path", "res://assets/sprites/npcs/%s.png" % npc_id))
 	return ASSET_LOADER.load_png(path)
 
 func _on_body_entered(body: Node) -> void:

@@ -1,7 +1,8 @@
 extends CanvasLayer
 
-const MINIMAP_VIEW := preload("res://scripts/ui/MiniMapView.gd")
+const MAP_VIEW := preload("res://scripts/ui/WorldMapView.gd")
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
+const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 
 var root: Control
 var stats_label: Label
@@ -13,13 +14,18 @@ var inventory_list: VBoxContainer
 var notice_label: Label
 var notice_timer: Timer
 var minimap_panel: PanelContainer
+var minimap_title: Label
+var map_view: Control
 var tutorial_panel: PanelContainer
 var controls_hint: Label
 var dialogue_panel: PanelContainer
+var dialogue_portrait: TextureRect
 var dialogue_speaker: Label
 var dialogue_role: Label
 var dialogue_body: Label
 var dialogue_timer: Timer
+var map_open := true
+var map_fullscreen := false
 
 func _ready() -> void:
 	_build_hud()
@@ -32,14 +38,14 @@ func _ready() -> void:
 	GameState.dialogue_closed.connect(_hide_dialogue)
 	_refresh()
 	_refresh_inventory()
+	_refresh_overlay_visibility()
 	_layout()
 
 func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("open_inventory"):
 		_set_inventory_visible(not inventory_panel.visible)
 	if Input.is_action_just_pressed("toggle_minimap"):
-		minimap_panel.visible = not minimap_panel.visible
-		_refresh_overlay_visibility()
+		_toggle_map()
 	if Input.is_action_just_pressed("toggle_help"):
 		tutorial_panel.visible = not tutorial_panel.visible
 		_refresh_overlay_visibility()
@@ -52,8 +58,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif tutorial_panel.visible:
 			tutorial_panel.visible = false
 			_refresh_overlay_visibility()
-		elif minimap_panel.visible:
-			minimap_panel.visible = false
+		elif map_fullscreen:
+			map_fullscreen = false
+			_refresh_overlay_visibility()
+		elif map_open:
+			map_open = false
 			_refresh_overlay_visibility()
 		elif dialogue_panel.visible:
 			_hide_dialogue()
@@ -61,13 +70,23 @@ func _unhandled_input(event: InputEvent) -> void:
 func _layout() -> void:
 	var size := get_viewport().get_visible_rect().size
 	if quick_bar_panel != null:
-		quick_bar_panel.position = Vector2(max(16, (size.x - 520.0) * 0.5), size.y - 76.0)
+		quick_bar_panel.position = Vector2(max(16, (size.x - 600.0) * 0.5), size.y - 76.0)
 	if controls_hint != null:
-		controls_hint.position = Vector2(max(16, (size.x - controls_hint.size.x) * 0.5), size.y - 108.0)
+		controls_hint.position = Vector2(max(16, (size.x - controls_hint.size.x) * 0.5), size.y - 112.0)
 	if dialogue_panel != null:
-		dialogue_panel.position = Vector2(max(24, (size.x - 840.0) * 0.5), size.y - 210.0)
+		dialogue_panel.position = Vector2(max(24, (size.x - 900.0) * 0.5), size.y - 220.0)
 	if minimap_panel != null:
-		minimap_panel.position = Vector2(size.x - 250.0, 18.0)
+		if map_fullscreen:
+			minimap_panel.position = Vector2(48, 48)
+			minimap_panel.custom_minimum_size = size - Vector2(96, 96)
+			minimap_panel.size = size - Vector2(96, 96)
+		else:
+			minimap_panel.position = Vector2(size.x - 264.0, 18.0)
+			minimap_panel.custom_minimum_size = Vector2(238, 172)
+			minimap_panel.size = Vector2(238, 172)
+	if inventory_panel != null:
+		inventory_panel.position = Vector2(34, 92)
+		inventory_panel.custom_minimum_size = Vector2(min(820.0, size.x - 68.0), min(610.0, size.y - 130.0))
 
 func _build_hud() -> void:
 	root = Control.new()
@@ -77,7 +96,7 @@ func _build_hud() -> void:
 
 	var top_bar := PanelContainer.new()
 	top_bar.position = Vector2(16, 16)
-	top_bar.custom_minimum_size = Vector2(560, 74)
+	top_bar.custom_minimum_size = Vector2(640, 82)
 	root.add_child(top_bar)
 	var top_stack := VBoxContainer.new()
 	top_bar.add_child(top_stack)
@@ -90,7 +109,7 @@ func _build_hud() -> void:
 	top_stack.add_child(quest_label)
 
 	notice_label = Label.new()
-	notice_label.position = Vector2(18, 100)
+	notice_label.position = Vector2(18, 108)
 	notice_label.add_theme_font_size_override("font_size", 15)
 	notice_label.visible = false
 	root.add_child(notice_label)
@@ -110,19 +129,20 @@ func _build_inventory_panel() -> void:
 	inventory_panel = PanelContainer.new()
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.add_to_group("equipment_panel")
-	inventory_panel.position = Vector2(34, 92)
-	inventory_panel.custom_minimum_size = Vector2(720, 560)
-	inventory_panel.z_index = 50
+	inventory_panel.z_index = 70
 	inventory_panel.visible = false
 	root.add_child(inventory_panel)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(780, 560)
+	inventory_panel.add_child(scroll)
 	inventory_list = VBoxContainer.new()
 	inventory_list.add_theme_constant_override("separation", 8)
-	inventory_panel.add_child(inventory_list)
+	scroll.add_child(inventory_list)
 
 func _add_quick_bar() -> void:
 	quick_bar_panel = PanelContainer.new()
 	quick_bar_panel.name = "QuickBarPanel"
-	quick_bar_panel.custom_minimum_size = Vector2(520, 58)
+	quick_bar_panel.custom_minimum_size = Vector2(600, 58)
 	root.add_child(quick_bar_panel)
 	quick_bar = HBoxContainer.new()
 	quick_bar.name = "QuickBar"
@@ -133,17 +153,17 @@ func _add_minimap() -> void:
 	minimap_panel = PanelContainer.new()
 	minimap_panel.name = "MiniMapPanel"
 	minimap_panel.add_to_group("minimap_panel")
-	minimap_panel.custom_minimum_size = Vector2(220, 154)
-	minimap_panel.visible = false
+	minimap_panel.z_index = 45
 	root.add_child(minimap_panel)
 	var map_stack := VBoxContainer.new()
 	map_stack.add_theme_constant_override("separation", 4)
 	minimap_panel.add_child(map_stack)
-	var title := Label.new()
-	title.text = "地圖 M"
-	title.add_theme_font_size_override("font_size", 15)
-	map_stack.add_child(title)
-	var map_view: Control = MINIMAP_VIEW.new()
+	minimap_title = Label.new()
+	minimap_title.text = "地圖 M"
+	minimap_title.add_theme_font_size_override("font_size", 15)
+	map_stack.add_child(minimap_title)
+	map_view = MAP_VIEW.new()
+	map_view.expand_requested.connect(_open_full_map)
 	map_stack.add_child(map_view)
 
 func _add_tutorial() -> void:
@@ -151,17 +171,19 @@ func _add_tutorial() -> void:
 	tutorial_panel.name = "TutorialPanel"
 	tutorial_panel.add_to_group("tutorial_panel")
 	tutorial_panel.position = Vector2(780, 380)
-	tutorial_panel.custom_minimum_size = Vector2(450, 236)
+	tutorial_panel.custom_minimum_size = Vector2(500, 250)
+	tutorial_panel.z_index = 65
 	tutorial_panel.visible = false
 	root.add_child(tutorial_panel)
 	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
 	tutorial_panel.add_child(stack)
 	var title := Label.new()
 	title.text = "R-17 操作教學"
 	title.add_theme_font_size_override("font_size", 20)
 	stack.add_child(title)
 	var body := Label.new()
-	body.text = "WASD：移動\n滑鼠左鍵：依目前裝備攻擊\n空白鍵：強制近戰\n右鍵 / K：遠程射擊\nE：互動 / 推進對話\nTab / I：人物裝備\n1-4 / Q：切換快捷裝備\nM：地圖\nF5 / F9：手動存檔 / 讀檔\nEsc：關閉面板"
+	body.text = "WASD 移動\n滑鼠左鍵依目前裝備行動：刀會揮砍，槍會射擊\n右鍵或 K：持續射擊\nE：互動 / 對話 / 事件\nTab 或 I：人物裝備\n1-4 或 Q：切換快捷裝備\nM：小地圖 / 全屏地圖\nF5 / F9：存檔 / 讀檔\nEsc：關閉面板"
 	body.add_theme_font_size_override("font_size", 14)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(body)
@@ -176,19 +198,19 @@ func _add_dialogue_box() -> void:
 	dialogue_panel = PanelContainer.new()
 	dialogue_panel.name = "DialoguePanel"
 	dialogue_panel.add_to_group("dialogue_panel")
-	dialogue_panel.custom_minimum_size = Vector2(840, 150)
-	dialogue_panel.z_index = 60
+	dialogue_panel.custom_minimum_size = Vector2(900, 160)
+	dialogue_panel.z_index = 80
 	dialogue_panel.visible = false
 	root.add_child(dialogue_panel)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	dialogue_panel.add_child(row)
-	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(88, 104)
-	portrait.texture = PIXEL.new().player_texture(0, 0, 1)
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	row.add_child(portrait)
+	dialogue_portrait = TextureRect.new()
+	dialogue_portrait.custom_minimum_size = Vector2(104, 120)
+	dialogue_portrait.texture = PIXEL.new().player_texture(0, 0, 1)
+	dialogue_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	dialogue_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(dialogue_portrait)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 4)
 	row.add_child(stack)
@@ -200,11 +222,11 @@ func _add_dialogue_box() -> void:
 	stack.add_child(dialogue_role)
 	dialogue_body = Label.new()
 	dialogue_body.add_theme_font_size_override("font_size", 16)
-	dialogue_body.custom_minimum_size = Vector2(690, 60)
+	dialogue_body.custom_minimum_size = Vector2(740, 62)
 	dialogue_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(dialogue_body)
 	var hint := Label.new()
-	hint.text = "E 繼續｜Esc 關閉｜離開 NPC 會自動收起"
+	hint.text = "E 繼續互動｜Esc 關閉｜離開 NPC 範圍會自動關閉"
 	hint.add_theme_font_size_override("font_size", 12)
 	stack.add_child(hint)
 	dialogue_timer = Timer.new()
@@ -212,16 +234,39 @@ func _add_dialogue_box() -> void:
 	dialogue_timer.timeout.connect(_hide_dialogue)
 	add_child(dialogue_timer)
 
+func _toggle_map() -> void:
+	if not map_open:
+		map_open = true
+		map_fullscreen = false
+	elif not map_fullscreen:
+		map_fullscreen = true
+	else:
+		map_open = false
+		map_fullscreen = false
+	_refresh_overlay_visibility()
+
+func _open_full_map() -> void:
+	if map_open and not inventory_panel.visible and not tutorial_panel.visible:
+		map_fullscreen = true
+		_refresh_overlay_visibility()
+
 func _set_inventory_visible(is_visible: bool) -> void:
 	inventory_panel.visible = is_visible
-	_refresh_overlay_visibility()
 	if is_visible:
+		map_fullscreen = false
 		_refresh_inventory()
+	_refresh_overlay_visibility()
 
 func _refresh_overlay_visibility() -> void:
-	var modal_open := inventory_panel.visible or tutorial_panel.visible or minimap_panel.visible or dialogue_panel.visible
+	var modal_open := inventory_panel.visible or tutorial_panel.visible or map_fullscreen or dialogue_panel.visible
 	quick_bar_panel.visible = not modal_open
 	controls_hint.visible = not modal_open
+	minimap_panel.visible = map_open and not inventory_panel.visible and not tutorial_panel.visible and not dialogue_panel.visible
+	if map_view != null:
+		map_view.set_full_screen(map_fullscreen)
+	if minimap_title != null:
+		minimap_title.text = "全屏地圖 Esc" if map_fullscreen else "地圖 M"
+	_layout()
 
 func _refresh() -> void:
 	var route := DataRegistry.get_wasteland_route(GameState.current_route_id)
@@ -248,7 +293,7 @@ func _refresh_hotbar() -> void:
 		var item_id := String(GameState.quick_slots[i])
 		var button := Button.new()
 		button.name = "QuickSlot%d" % [i + 1]
-		button.custom_minimum_size = Vector2(120, 44)
+		button.custom_minimum_size = Vector2(138, 44)
 		button.add_to_group("hotbar_slot")
 		button.set_meta("quick_slot_index", i)
 		button.text = "%s%d %s" % ["> " if i == GameState.active_quick_slot else "", i + 1, _short_name(item_id)]
@@ -277,7 +322,7 @@ func _refresh_inventory() -> void:
 	inventory_list.add_child(body)
 
 	var portrait_panel := PanelContainer.new()
-	portrait_panel.custom_minimum_size = Vector2(190, 250)
+	portrait_panel.custom_minimum_size = Vector2(210, 260)
 	body.add_child(portrait_panel)
 	var portrait_stack := VBoxContainer.new()
 	portrait_stack.add_theme_constant_override("separation", 6)
@@ -287,9 +332,9 @@ func _refresh_inventory() -> void:
 	portrait_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	portrait_stack.add_child(portrait_title)
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(150, 160)
+	portrait.custom_minimum_size = Vector2(170, 170)
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.texture = PIXEL.new().player_texture(0, 0, 1)
+	portrait.texture = PIXEL.new().player_texture(2, 0, 1)
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	portrait_stack.add_child(portrait)
 	var vitals := Label.new()
@@ -312,7 +357,7 @@ func _refresh_inventory() -> void:
 	_add_equipment_card(equipment_stack, "護甲", "armor")
 	_add_equipment_card(equipment_stack, "工具", "tool")
 	var stats := Label.new()
-	stats.text = "屬性加成：攻擊 %+d　防禦 %+d　速度 %+d" % [
+	stats.text = "屬性加成：攻擊 %+d｜防禦 %+d｜速度 %+d" % [
 		GameState.get_stat_bonus("attack"),
 		GameState.get_stat_bonus("defense"),
 		GameState.get_stat_bonus("speed")
@@ -340,13 +385,13 @@ func _refresh_inventory() -> void:
 func _add_equipment_card(container: VBoxContainer, label_text: String, slot: String) -> void:
 	var item_id := String(GameState.equipment.get(slot, ""))
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(420, 62)
+	card.custom_minimum_size = Vector2(440, 62)
 	container.add_child(card)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	card.add_child(row)
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(46, 46)
+	icon.custom_minimum_size = Vector2(54, 48)
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.texture = _item_icon(item_id)
@@ -364,7 +409,7 @@ func _add_equipment_card(container: VBoxContainer, label_text: String, slot: Str
 
 func _add_bag_button(container: GridContainer, item_id: String, amount: int) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(210, 58)
+	button.custom_minimum_size = Vector2(230, 58)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.text = "%s x%d" % [GameState.item_display_name(item_id), amount]
 	button.icon = _item_icon(item_id)
@@ -374,19 +419,13 @@ func _add_bag_button(container: GridContainer, item_id: String, amount: int) -> 
 
 func _item_icon(item_id: String) -> Texture2D:
 	var resource := DataRegistry.get_resource(item_id)
-	if not resource.is_empty():
-		return PIXEL.new().item_texture(item_id)
 	var equipment := DataRegistry.get_equipment(item_id)
-	if not equipment.is_empty():
-		var mode := String(equipment.get("attack_mode", "passive"))
-		if mode == "ranged":
-			return PIXEL.new().item_texture("ammo")
-		if mode == "melee":
-			return PIXEL.new().item_texture("scrap")
-		if String(equipment.get("slot", "")) == "armor":
-			return PIXEL.new().item_texture("mutant_core")
-		return PIXEL.new().item_texture("bio_crystal")
-	return PIXEL.new().item_texture("scrap")
+	var asset_id := String(resource.get("icon_asset_id", equipment.get("icon_asset_id", "")))
+	if not asset_id.is_empty():
+		var texture := ASSET_LOADER.load_png(DataRegistry.asset_path(asset_id))
+		if texture != null:
+			return texture
+	return PIXEL.new().item_texture(item_id)
 
 func _equip_from_inventory(item_id: String) -> void:
 	if not DataRegistry.get_equipment(item_id).is_empty():
@@ -395,8 +434,8 @@ func _equip_from_inventory(item_id: String) -> void:
 
 func _short_name(item_id: String) -> String:
 	var name := GameState.item_display_name(item_id)
-	if name.length() > 6:
-		return name.substr(0, 6)
+	if name.length() > 7:
+		return name.substr(0, 7)
 	return name
 
 func _attack_mode_label(mode: String) -> String:
@@ -419,10 +458,20 @@ func _show_dialogue(speaker: String, role: String, message: String) -> void:
 	dialogue_speaker.text = speaker
 	dialogue_role.text = role
 	dialogue_body.text = message
+	dialogue_portrait.texture = _portrait_for_speaker(speaker)
 	dialogue_panel.visible = true
 	dialogue_timer.start(8.0)
 	_refresh_overlay_visibility()
 	_layout()
+
+func _portrait_for_speaker(speaker: String) -> Texture2D:
+	for npc in DataRegistry.npcs:
+		if String(npc.get("name", "")) == speaker:
+			var asset_id := String(npc.get("portrait_asset_id", npc.get("sprite_asset_id", "")))
+			var texture := ASSET_LOADER.load_png(DataRegistry.asset_portrait_path(asset_id, DataRegistry.asset_path(asset_id)))
+			if texture != null:
+				return texture
+	return PIXEL.new().player_texture(0, 0, 1)
 
 func _hide_dialogue() -> void:
 	dialogue_panel.visible = false

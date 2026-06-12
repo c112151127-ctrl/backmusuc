@@ -1,0 +1,55 @@
+{
+  "assets": {
+    "player_r17": { "type": "player", "path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png", "size": [48, 56], "map_marker": "player" },
+
+    "npc_forge_master": { "type": "npc", "path": "res://assets/sprites/npcs/forge_master.png", "portrait": "res://assets/sprites/npcs/forge_master_portrait.png", "size": [56, 72], "map_marker": "npc" },
+    "npc_scrap_merchant": { "type": "npc", "path": "res://assets/sprites/npcs/scrap_merchant.png", "portrait": "res://assets/sprites/npcs/scrap_merchant_portrait.png", "size": [56, 72], "map_marker": "npc" },
+    "npc_repair_robot": { "type": "npc", "path": "res://assets/sprites/npcs/repair_robot.png", "portrait": "res://assets/sprites/npcs/repair_robot_portrait.png", "size": [56, 72], "map_marker": "npc" },
+    "npc_wasteland_survivor": { "type": "npc", "path": "res://assets/sprites/npcs/wasteland_survivor.png", "portrait": "res://assets/sprites/npcs/wasteland_survivor_portrait.png", "size": [56, 72], "map_marker": "npc" },
+    "npc_guild_clerk": { "type": "npc", "path": "res://assets/sprites/npcs/guild_clerk.png", "portrait": "res://assets/sprites/npcs/guild_clerk_portrait.png", "size": [56, 72], "map_marker": "npc" },
+    "npc_route_scout": { "type": "npc", "path": "res://assets/sprites/npcs/route_scout.png", "portrait": "res://assets/sprites/npcs/route_scout_portrait.png", "size": [56, 72], "map_marker": "npc" },
+
+    "enemy_scrap_biter": { "type": "enemy", "path": "res://assets/sprites/enemies/scrap_biter.png", "size": [96, 72], "map_marker": "enemy" },
+    "enemy_toxic_runner": { "type": "enemy", "path": "res://assets/sprites/enemies/toxic_runner.png", "size": [96, 72], "map_marker": "enemy" },
+    "enemy_spore_gunner": { "type": "enemy", "path": "res://assets/sprites/enemies/spore_gunner.png", "size": [96, 72], "map_marker": "enemy" },
+    "enemy_rust_brute": { "type": "enemy", "path": "res://assets/sprites/enemies/rust_brute.png", "size": [96, 72], "map_marker": "enemy" },
+    "enemy_rot_wing": { "type": "enemy", "path": "res://assets/sprites/enemies/rot_wing.png", "size": [96, 72], "map_marker": "enemy" },
+    "enemy_mech_husk": { "type": "enemy", "path": "res://assets/sprites/enemies/mech_husk.png", "size": [96, 72], "map_marker": "enemy" },
+    "boss_waste_titan": { "type": "boss", "path": "res://assets/sprites/enemies/waste_titan.png", "size": [96, 72], "map_marker": "boss" },
+
+    "structure_forge": { "type": "structure", "path": "res://assets/sprites/structures/forge.png", "size": [192, 150], "collision": [150, 42], "map_marker": "station" },
+    "structure_craft": { "type": "structure", "path": "res://assets/sprites/structures/craft.png", "size": [176, 140], "collision": [140, 40], "map_marker": "station" },
+    "structure_shop": { "type": "structure", "path": "res://assets/sprites/structures/shop.png", "size": [184, 132], "collision": [142, 38], "map_marker": "station" },
+    "structure_mod_station": { "type": "structure", "path": "res://assets/sprites/structures/mod_station.png", "size": [196, 146], "collision": [152, 42], "map_marker": "station" },
+    "structure_recycle_machine": { "type": "structure", "path": "res://assets/sprites/structures/recycle_machine.png", "size": [184, 132], "collision": [142, 38], "map_marker": "station" },
+    "structure_save_station": { "type": "structure", "path": "res://assets/sprites/structures/save_station.png", "size": [168, 132], "collision": [132, 38], "map_marker": "station" },
+    "structure_guild_gate": { "type": "structure", "path": "res://assets/sprites/structures/guild_gate.png", "size": [190, 128], "collision": [152, 42], "map_marker": "gate" },
+    "structure_wasteland_gate": { "type": "structure", "path": "res://assets/sprites/structures/wasteland_gate.png", "size": [184, 128], "collision": [148, 40], "map_marker": "gate" },
+    "structure_village_return_gate": { "type": "structure", "path": "res://assets/sprites/structures/village_return_gate.png", "size": [184, 128], "collision": [148, 40], "map_marker": "gate" },
+
+    "prop_rust_rock": { "type": "prop", "path": "res://assets/sprites/props/rust_rock.png", "variant_prefix": "res://assets/sprites/props/variants/rust_rock_", "variants": 8, "size": [72, 62], "map_marker": "prop" },
+    "prop_dead_tree": { "type": "prop", "path": "res://assets/sprites/props/dead_tree.png", "variant_prefix": "res://assets/sprites/props/variants/dead_tree_", "variants": 8, "size": [72, 110], "map_marker": "prop" },
+    "prop_scrap_wall": { "type": "prop", "path": "res://assets/sprites/props/scrap_wall.png", "variant_prefix": "res://assets/sprites/props/variants/scrap_wall_", "variants": 8, "size": [96, 66], "map_marker": "prop" },
+    "prop_toxic_pool": { "type": "prop", "path": "res://assets/sprites/props/toxic_pool.png", "variant_prefix": "res://assets/sprites/props/variants/toxic_pool_", "variants": 8, "size": [88, 54], "map_marker": "resource" },
+    "prop_wreck": { "type": "prop", "path": "res://assets/sprites/props/wreck.png", "variant_prefix": "res://assets/sprites/props/variants/wreck_", "variants": 8, "size": [104, 78], "map_marker": "prop" },
+    "prop_signal_pylon": { "type": "prop", "path": "res://assets/sprites/props/signal_pylon.png", "variant_prefix": "res://assets/sprites/props/variants/signal_pylon_", "variants": 8, "size": [72, 128], "map_marker": "prop" },
+    "prop_road_marker": { "type": "prop", "path": "res://assets/sprites/props/road_marker.png", "variant_prefix": "res://assets/sprites/props/variants/road_marker_", "variants": 8, "size": [42, 58], "map_marker": "event" },
+    "prop_scrap_barricade": { "type": "prop", "path": "res://assets/sprites/props/scrap_barricade.png", "variant_prefix": "res://assets/sprites/props/variants/scrap_barricade_", "variants": 8, "size": [104, 70], "map_marker": "prop" },
+
+    "item_scrap": { "type": "item", "path": "res://assets/sprites/items/scrap_bundle.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_ammo": { "type": "item", "path": "res://assets/sprites/items/ammo_crate.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_mutant_core": { "type": "item", "path": "res://assets/sprites/items/mutant_core.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_bio_crystal": { "type": "item", "path": "res://assets/sprites/items/bio_crystal.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_rust_blade": { "type": "equipment", "path": "res://assets/sprites/items/rust_blade.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_spark_cutter": { "type": "equipment", "path": "res://assets/sprites/items/spark_cutter.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_breaker_hammer": { "type": "equipment", "path": "res://assets/sprites/items/breaker_hammer.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_pipe_rifle": { "type": "equipment", "path": "res://assets/sprites/items/pipe_rifle.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_coil_launcher": { "type": "equipment", "path": "res://assets/sprites/items/coil_launcher.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_acid_sprayer": { "type": "equipment", "path": "res://assets/sprites/items/acid_sprayer.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_patched_armor": { "type": "equipment", "path": "res://assets/sprites/items/patched_armor.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_crystal_guard": { "type": "equipment", "path": "res://assets/sprites/items/crystal_guard.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_industrial_exoshell": { "type": "equipment", "path": "res://assets/sprites/items/industrial_exoshell.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_recycler_glove": { "type": "equipment", "path": "res://assets/sprites/items/recycler_glove.png", "size": [80, 64], "map_marker": "pickup" },
+    "item_magnet_breaker": { "type": "equipment", "path": "res://assets/sprites/items/magnet_breaker.png", "size": [80, 64], "map_marker": "pickup" }
+  }
+}

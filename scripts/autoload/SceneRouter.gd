@@ -11,7 +11,7 @@ var _pending_scene_id := ""
 
 func change_to(scene_id: String, spawn_point := "default") -> void:
 	if not SCENES.has(scene_id):
-		GameState.notify("找不到場景：%s" % scene_id)
+		GameState.notify("未知場景：%s" % scene_id)
 		return
 	_pending_scene_id = scene_id
 	GameState.set_scene(scene_id, spawn_point)

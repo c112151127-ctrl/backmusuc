@@ -24,6 +24,9 @@ var world_bounds := Rect2()
 
 func _ready() -> void:
 	add_to_group("player")
+	add_to_group("map_player")
+	set_meta("map_label", "R-17")
+	set_meta("map_marker", "player")
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_build_sprite_frames()
 	_update_animation()
@@ -112,7 +115,7 @@ func _ranged_attack() -> void:
 	if ranged_timer > 0.0:
 		return
 	if not GameState.spend_ammo(1):
-		GameState.notify("彈藥不足，先用近戰清出空間或回村補給。")
+		GameState.notify("彈藥不足，先用近戰清出空間，或回村補給。")
 		return
 	last_direction = _aim_direction()
 	_set_timed_state(PlayerState.SHOOT, 0.22)
@@ -147,11 +150,9 @@ func _direction_index() -> int:
 
 func _build_sprite_frames() -> void:
 	var frames := SpriteFrames.new()
-	var actions: Dictionary = {}
-	for i in range(PixelArtFactory.PLAYER_ACTIONS.size()):
-		actions[String(PixelArtFactory.PLAYER_ACTIONS[i])] = i
 	var atlas: Texture2D = ASSET_LOADER.load_png(PLAYER_ATLAS_PATH)
-	for action_name in actions.keys():
+	for action_index in range(PixelArtFactory.PLAYER_ACTIONS.size()):
+		var action_name := String(PixelArtFactory.PLAYER_ACTIONS[action_index])
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
 			frames.add_animation(animation_name)
@@ -159,9 +160,9 @@ func _build_sprite_frames() -> void:
 			frames.set_animation_loop(animation_name, action_name in ["idle", "walk"])
 			for frame_index in range(3):
 				if atlas != null:
-					frames.add_frame(animation_name, _atlas_frame(atlas, int(actions[action_name]), direction_index, frame_index))
+					frames.add_frame(animation_name, _atlas_frame(atlas, action_index, direction_index, frame_index))
 				else:
-					frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, int(actions[action_name]), frame_index))
+					frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, action_index, frame_index))
 	sprite.sprite_frames = frames
 
 func _atlas_frame(atlas: Texture2D, action_index: int, direction_index: int, frame_index: int) -> AtlasTexture:
@@ -179,18 +180,23 @@ func _atlas_frame(atlas: Texture2D, action_index: int, direction_index: int, fra
 func _update_animation() -> void:
 	var direction_index := _direction_index()
 	var action_name := "idle"
-	if state == PlayerState.WALK:
-		action_name = "walk"
-	elif state == PlayerState.SHOOT:
-		action_name = "shoot"
-	elif state == PlayerState.DRAW_SWORD:
-		action_name = "draw_sword"
-	elif state == PlayerState.SLASH:
-		action_name = "slash"
-	elif state == PlayerState.SWAP_TOOL:
-		action_name = "swap_tool"
-	elif state == PlayerState.INTERACT:
-		action_name = "interact"
+	match state:
+		PlayerState.WALK:
+			action_name = "walk"
+		PlayerState.SHOOT:
+			action_name = "shoot"
+		PlayerState.DRAW_SWORD:
+			action_name = "draw_sword"
+		PlayerState.SLASH:
+			action_name = "slash"
+		PlayerState.SWAP_TOOL:
+			action_name = "swap_tool"
+		PlayerState.INTERACT:
+			action_name = "interact"
+		PlayerState.HIT:
+			action_name = "hit"
+		PlayerState.DEAD:
+			action_name = "dead"
 	var next_animation := "%s_%d" % [action_name, direction_index]
 	if current_animation != next_animation:
 		current_animation = next_animation

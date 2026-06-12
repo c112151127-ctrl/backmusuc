@@ -5,66 +5,78 @@
       "scene": "village",
       "name": "鍛造老陳",
       "role": "鍛造師",
-      "line": "R-17，你的刀適合清空近身空間，槍適合處理遠處威脅。先補彈，再去公會接委託或從四個出口出村。",
-      "repeat_line": "左鍵會依照你目前裝備行動：刀會揮砍，槍會射擊。遇到怪物先看距離，不要硬吃傷害。",
+      "line": "R-17，先確認左鍵裝備。刀適合清出空間，槍適合處理遠處污染體。收集廢鐵後回來，我會幫你把武器做得更穩。",
+      "repeat_line": "先補彈，再去公會接委託或從四個出口出村。廢土不會等你慢慢翻背包。",
       "reward": { "ammo": 3 },
       "position": { "x": 560, "y": 410 },
-      "color": "#8f5f34"
+      "color": "#8f5f34",
+      "sprite_asset_id": "npc_forge_master",
+      "portrait_asset_id": "npc_forge_master"
     },
     {
       "id": "scrap_merchant",
       "scene": "village",
       "name": "補給商阿洛",
       "role": "商人",
-      "line": "廢鐵不是垃圾，是村莊的血。你帶回廢鐵，我就能替你換彈藥、護甲與工具。",
-      "repeat_line": "背包用 Tab 或 I 打開。點擊背包裡的裝備就能穿戴，快捷欄會跟著更新。",
+      "line": "廢鐵不是垃圾，是活下去的價格。撿到箱子、彈藥和晶核就帶回來，Tab 可以打開人物裝備面板。",
+      "repeat_line": "快捷列只放真正會用到的東西。你的左鍵行動會跟目前選中的裝備走。",
       "reward": { "scrap": 6 },
       "position": { "x": 1130, "y": 420 },
-      "color": "#b18a46"
+      "color": "#b18a46",
+      "sprite_asset_id": "npc_scrap_merchant",
+      "portrait_asset_id": "npc_scrap_merchant"
     },
     {
       "id": "repair_robot",
       "scene": "village",
       "name": "維修機 R-17",
-      "role": "維修機器人",
-      "line": "機體同步完成。你的生命值、能源、彈藥與任務狀態都會寫入存檔。若機體損毀，會回到維修點重啟。",
-      "repeat_line": "存檔點會修復機體並保存進度。系統也會在切換場景、完成任務時自動存檔。",
+      "role": "機械人",
+      "line": "機體外殼有刮傷，但核心運作正常。靠近存檔點互動可以修復並保存狀態，下次啟動就不會從頭計算。",
+      "repeat_line": "若血量歸零，我會把你拖回維修艙。不要把這當成探索策略。",
       "reward": { "bio_crystal": 1 },
       "position": { "x": 810, "y": 610 },
-      "color": "#47a4b5"
+      "color": "#47a4b5",
+      "sprite_asset_id": "npc_repair_robot",
+      "portrait_asset_id": "npc_repair_robot"
     },
     {
       "id": "wasteland_survivor",
       "scene": "village",
       "name": "倖存者小隊長",
       "role": "倖存者",
-      "line": "村莊現在是十字據點。北方是紫晶裂隙，南方是廢鐵公路，西方是毒沼，東方是舊工廠。",
-      "repeat_line": "不同路線會出現不同敵人與地標。迷路時按 M 開小地圖，回村門會在入口附近。",
+      "line": "村外四條路都壞得不一樣。南邊有公路殘骸，西邊是毒沼，北邊有紫晶裂隙，東邊則是舊工廠。",
+      "repeat_line": "M 可以開地圖。放大後看得到出口、NPC、敵人、掉落物和重要地標。",
       "reward": { "mutant_core": 1 },
       "position": { "x": 930, "y": 760 },
-      "color": "#6f8f62"
+      "color": "#6f8f62",
+      "sprite_asset_id": "npc_wasteland_survivor",
+      "portrait_asset_id": "npc_wasteland_survivor"
     },
     {
       "id": "guild_clerk",
       "scene": "guild",
-      "name": "公會櫃檯艾琳",
+      "name": "公會書記曉霜",
       "role": "委託管理員",
-      "line": "公會會依照路線發布委託。接下任務後再出村，回來交付資源可以換裝備與核心。",
-      "repeat_line": "委託不是單純打怪。你也需要帶回廢鐵、晶核或異變核心，村莊才能繼續升級。",
+      "line": "公會只發能被驗證的委託。接下任務後，地圖會標出目標路線，完成後回櫃台領獎。",
+      "repeat_line": "委託不只是打怪，也會要求回收、調查與清除地標。完成前不要空手回來。",
       "reward": { "ammo": 4 },
       "position": { "x": 505, "y": 330 },
-      "color": "#9b78b8"
+      "color": "#9b78b8",
+      "sprite_asset_id": "npc_guild_clerk",
+      "portrait_asset_id": "npc_guild_clerk"
     },
     {
       "id": "route_scout",
       "scene": "guild",
-      "name": "路線偵察員卡特",
-      "role": "偵察員",
-      "line": "四條路線的污染型態不同。別只看小怪數量，地形、障礙物和回村距離才是生存關鍵。",
-      "repeat_line": "南方公路資源多，北方裂隙適合拿晶核，西方毒沼危險，東方工廠會出現機械敵人。",
+      "name": "路線斥候阿拓",
+      "role": "斥候",
+      "line": "我把四條廢土路線都標好了。南門適合回收彈藥，西門危險但晶核多，北門與東門可能出現大型污染體。",
+      "repeat_line": "同一條路每次仍會有不同資源與敵人，但主要地標和道路語言會維持一致。",
       "reward": { "scrap": 8 },
       "position": { "x": 820, "y": 540 },
-      "color": "#78906f"
+      "color": "#78906f",
+      "sprite_asset_id": "npc_route_scout",
+      "portrait_asset_id": "npc_route_scout"
     }
   ]
 }

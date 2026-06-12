@@ -46,10 +46,31 @@ func _capture_inventory_panel() -> void:
 	if panels.is_empty():
 		return
 	var panel := panels[0] as Control
-	panel.visible = true
+	var hud := panel.get_parent().get_parent()
+	if hud != null and hud.has_method("_set_inventory_visible"):
+		hud.call("_set_inventory_visible", true)
+	else:
+		panel.visible = true
 	for _i in range(8):
 		await get_tree().process_frame
 	_save_viewport_image("visual_review_inventory_panel")
+	if hud != null and hud.has_method("_set_inventory_visible"):
+		hud.call("_set_inventory_visible", false)
+	for _i in range(4):
+		await get_tree().process_frame
+	await _capture_fullscreen_map()
+
+func _capture_fullscreen_map() -> void:
+	var panels := get_tree().get_nodes_in_group("minimap_panel")
+	if panels.is_empty():
+		return
+	var panel := panels[0] as Control
+	var hud := panel.get_parent().get_parent()
+	if hud != null and hud.has_method("_open_full_map"):
+		hud.call("_open_full_map")
+		for _i in range(8):
+			await get_tree().process_frame
+		_save_viewport_image("visual_review_fullscreen_map")
 
 func _capture_wasteland_road_area() -> void:
 	var players := get_tree().get_nodes_in_group("player")
@@ -62,7 +83,7 @@ func _capture_wasteland_road_area() -> void:
 		await get_tree().process_frame
 	_save_viewport_image("visual_review_wasteland_road")
 
-func _capture_wasteland_boss_area() -> void:
+func _capture_wasteland_boss_area(name := "visual_review_wasteland_boss") -> void:
 	var bosses := get_tree().get_nodes_in_group("boss")
 	var players := get_tree().get_nodes_in_group("player")
 	if bosses.is_empty() or players.is_empty():
@@ -73,7 +94,7 @@ func _capture_wasteland_boss_area() -> void:
 	GameState.player_position = player.global_position
 	for _i in range(12):
 		await get_tree().process_frame
-	_save_viewport_image("visual_review_wasteland_boss")
+	_save_viewport_image(name)
 
 func _capture_wasteland_route(route_id: String) -> void:
 	if _active_scene != null:
@@ -88,6 +109,8 @@ func _capture_wasteland_route(route_id: String) -> void:
 	for _i in range(10):
 		await get_tree().process_frame
 	_save_viewport_image("visual_review_route_%s" % route_id)
+	if not get_tree().get_nodes_in_group("boss").is_empty():
+		await _capture_wasteland_boss_area("visual_review_boss_%s" % route_id)
 
 func _save_viewport_image(name: String) -> void:
 	if DisplayServer.get_name().to_lower().contains("headless"):

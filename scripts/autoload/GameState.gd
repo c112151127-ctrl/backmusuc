@@ -93,11 +93,11 @@ func set_scene(scene_id: String, spawn_point := "default") -> void:
 
 func set_current_route(route_id: String) -> void:
 	if DataRegistry.get_wasteland_route(route_id).is_empty():
-		notify("找不到廢土路線：%s" % route_id)
+		notify("未知的廢土路線：%s" % route_id)
 		return
 	current_route_id = route_id
 	var route := DataRegistry.get_wasteland_route(route_id)
-	notify("已選擇路線：%s" % String(route.get("name", route_id)))
+	notify("已標記路線：%s" % String(route.get("name", route_id)))
 	stats_changed.emit()
 
 func mark_intro_seen() -> void:
@@ -125,7 +125,7 @@ func can_equip(item_id: String) -> bool:
 
 func equip_item(item_id: String) -> bool:
 	if not can_equip(item_id):
-		notify("背包中沒有可裝備物品：%s" % item_id)
+		notify("背包裡沒有可裝備物品：%s" % item_display_name(item_id))
 		return false
 	var item := DataRegistry.get_equipment(item_id)
 	var slot := String(item.get("slot", "tool"))
@@ -142,17 +142,17 @@ func use_quick_slot(index: int) -> bool:
 	active_quick_slot = index
 	var item_id := String(quick_slots[index])
 	if item_id.is_empty():
-		notify("快捷欄 %d 是空的" % [index + 1])
+		notify("快捷列 %d 是空的。" % [index + 1])
 		equipment_changed.emit()
 		return false
 	if not DataRegistry.get_equipment(item_id).is_empty():
 		return equip_item(item_id)
 	var resource := DataRegistry.get_resource(item_id)
 	if not resource.is_empty():
-		notify("快捷欄 %d：%s x%d" % [index + 1, String(resource.get("name", item_id)), int(inventory.get(item_id, 0))])
+		notify("快捷列 %d：%s x%d" % [index + 1, String(resource.get("name", item_id)), int(inventory.get(item_id, 0))])
 		equipment_changed.emit()
 		return true
-	notify("快捷欄 %d 無法使用：%s" % [index + 1, item_id])
+	notify("快捷列 %d 無法使用：%s" % [index + 1, item_id])
 	equipment_changed.emit()
 	return false
 
@@ -166,11 +166,11 @@ func set_quick_slot(index: int, item_id: String) -> bool:
 	if index < 0 or index >= quick_slots.size():
 		return false
 	if not inventory.has(item_id):
-		notify("背包中沒有 %s，無法放入快捷欄" % item_display_name(item_id))
+		notify("背包裡沒有 %s，無法放到快捷列。" % item_display_name(item_id))
 		return false
 	quick_slots[index] = item_id
 	equipment_changed.emit()
-	notify("快捷欄 %d 設為 %s" % [index + 1, item_display_name(item_id)])
+	notify("快捷列 %d 設為 %s" % [index + 1, item_display_name(item_id)])
 	return true
 
 func active_quick_item_id() -> String:
@@ -219,7 +219,7 @@ func take_damage(amount: int) -> void:
 	hp = max(0, hp - reduced)
 	stats_changed.emit()
 	if hp <= 0:
-		notify("R-17 機體損毀，返回村莊維修點重啟")
+		notify("R-17 機體停機，維修機已將你送回村莊維修艙。")
 		hp = MAX_HP
 		call_deferred("_return_to_clinic")
 
@@ -239,15 +239,15 @@ func record_enemy_defeated() -> void:
 	advance_quest_counter("defeat_enemy", 1)
 	if defeated_enemies % 3 == 0:
 		add_item("ammo", 4)
-		notify("近戰清出空間，回收彈藥 x4")
+		notify("近戰清出補給：彈藥 x4")
 
 func start_quest(quest_id: String) -> bool:
 	if completed_quests.has(quest_id):
-		notify("這份委託已經完成")
+		notify("這個委託已經完成。")
 		return false
 	var quest := DataRegistry.get_quest(quest_id)
 	if quest.is_empty():
-		notify("找不到委託：%s" % quest_id)
+		notify("未知的委託：%s" % quest_id)
 		return false
 	active_quest_id = quest_id
 	var route_id := String(quest.get("route", ""))
@@ -289,10 +289,10 @@ func is_active_quest_ready() -> bool:
 
 func complete_active_quest() -> bool:
 	if active_quest_id.is_empty():
-		notify("目前沒有進行中的委託")
+		notify("目前沒有可交付的委託。")
 		return false
 	if not is_active_quest_ready():
-		notify("委託目標尚未完成")
+		notify("委託條件尚未完成。")
 		return false
 	var quest := DataRegistry.get_quest(active_quest_id)
 	for objective in quest.get("objectives", []):
@@ -324,7 +324,7 @@ func active_quest_summary() -> String:
 		elif kind == "defeat":
 			var counter := String(objective.get("counter", "defeat_enemy"))
 			parts.append("擊倒污染體 %d/%d" % [int(quest_progress.get(counter, 0)), amount])
-	return "%s：%s" % [String(quest.get("name", active_quest_id)), "，".join(parts)]
+	return "%s：%s" % [String(quest.get("name", active_quest_id)), "、".join(parts)]
 
 func notify(message: String) -> void:
 	notification_requested.emit(message)

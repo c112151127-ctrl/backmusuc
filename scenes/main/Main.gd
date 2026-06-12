@@ -27,7 +27,7 @@ func _build_title_screen() -> void:
 	root.add_child(backdrop)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(620, 360)
+	panel.custom_minimum_size = Vector2(660, 380)
 	panel.position = Vector2(330, 170)
 	root.add_child(panel)
 
@@ -42,7 +42,7 @@ func _build_title_screen() -> void:
 	stack.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "R-17 機體啟動中。回收資源、清理污染、替村莊打開四條廢土路線。"
+	subtitle.text = "R-17 是村莊重啟的回收機器人。探索四條廢土路線、擊倒污染體、回收資源，讓據點重新運轉。"
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 18)
@@ -60,7 +60,7 @@ func _build_title_screen() -> void:
 	stack.add_child(new_button)
 
 	var help := Label.new()
-	help.text = "WASD 移動｜滑鼠左鍵依裝備攻擊｜E 互動｜Tab 人物裝備｜M 地圖"
+	help.text = "WASD 移動｜滑鼠左鍵依裝備行動｜E 互動｜Tab 人物裝備｜M 地圖"
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help.add_theme_font_size_override("font_size", 14)
 	stack.add_child(help)
@@ -88,25 +88,25 @@ func _show_intro() -> void:
 
 	var panel := PanelContainer.new()
 	panel.position = Vector2(220, 150)
-	panel.custom_minimum_size = Vector2(840, 420)
+	panel.custom_minimum_size = Vector2(860, 430)
 	root.add_child(panel)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 16)
 	panel.add_child(stack)
 
 	var title := Label.new()
-	title.text = "開場：R-17 的重啟"
+	title.text = "開場：R-17 甦醒"
 	title.add_theme_font_size_override("font_size", 30)
 	stack.add_child(title)
 
 	var body := Label.new()
-	body.text = "最後一座回收村莊仍靠廢鐵與晶核維生。污染獸從四個方向逼近，舊工廠的機械核心也再次亮起。\n\n你是 R-17，村莊修復的回收機器人。你的任務是接下公會委託、探索廢土、回收資源，讓村莊能繼續活下去。"
+	body.text = "一場核心污染讓舊工廠、排水區與公路全部失控。村莊只剩下最後一台可修復的回收機器人：R-17。\n\n你要從維修艙甦醒，接下公會委託，從四個出口進入廢土，回收廢鐵、彈藥與晶核。每次回村整備，都會讓下一趟探索更深入。"
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_size_override("font_size", 20)
 	stack.add_child(body)
 
 	var start_button := Button.new()
-	start_button.text = "開始行動"
+	start_button.text = "開始任務"
 	start_button.pressed.connect(_start_new_run_after_intro)
 	stack.add_child(start_button)
 

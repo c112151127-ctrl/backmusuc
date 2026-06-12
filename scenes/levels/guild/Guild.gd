@@ -14,26 +14,28 @@ const MAP_TILES := Vector2i(52, 34)
 const TILE_SIZE := 32
 const WORLD_RECT := Rect2(Vector2(48, 48), Vector2(MAP_TILES.x * TILE_SIZE - 96, MAP_TILES.y * TILE_SIZE - 96))
 
-const COUNTER_TEXTURES := {
-	"contract": "res://assets/sprites/structures/guild_contract_board.png",
-	"reward": "res://assets/sprites/structures/guild_reward_counter.png",
-	"to_wasteland": "res://assets/sprites/structures/guild_wasteland_exit.png",
-	"to_village": "res://assets/sprites/structures/village_return_gate.png"
+const COUNTER_ASSETS := {
+	"contract": "structure_guild_gate",
+	"reward": "structure_save_station",
+	"to_wasteland": "structure_wasteland_gate",
+	"to_village": "structure_village_return_gate"
 }
 
 func _ready() -> void:
 	y_sort_enabled = true
 	GameState.current_scene_id = "guild"
+	set_meta("map_world_size", Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
+	set_meta("map_scene_label", "冒險公會")
 	AudioManager.play_music("guild")
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
 	backdrop.setup("guild", MAP_TILES, 4096)
 	add_child(backdrop)
 	_add_boundaries(Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
 	_add_decor()
-	_add_counter("contract", "委託板：接取下一份任務", Vector2(330, 275), Color8(102, 74, 118))
-	_add_counter("reward", "交付櫃檯：領取獎勵", Vector2(680, 275), Color8(75, 96, 122))
-	_add_counter("to_wasteland", "依委託前往廢土", Vector2(1080, 540), Color8(92, 88, 56))
-	_add_counter("to_village", "返回村莊", Vector2(560, 720), Color8(64, 110, 70))
+	_add_counter("contract", "委託板：接下一個委託", Vector2(330, 275), Color8(102, 74, 118), "委託板")
+	_add_counter("reward", "獎勵櫃台：交付委託", Vector2(680, 275), Color8(75, 96, 122), "獎勵櫃台")
+	_add_counter("to_wasteland", "前往目前廢土路線", Vector2(1080, 540), Color8(92, 88, 56), "廢土出口")
+	_add_counter("to_village", "返回村莊據點", Vector2(560, 720), Color8(64, 110, 70), "回村出口")
 	_spawn_npcs()
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
@@ -42,34 +44,53 @@ func _ready() -> void:
 	if player.has_method("set_world_bounds"):
 		player.set_world_bounds(WORLD_RECT)
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("冒險公會：接委託、交付資源，或依目前委託前往指定廢土路線。")
+	GameState.notify("冒險公會：接委託、確認路線，再前往廢土回收資源。")
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
 	pool.max_projectiles = limit
 	add_child(pool)
 
-func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void:
+func _add_counter(id: String, label: String, pos: Vector2, color: Color, map_label: String) -> void:
+	var node := Node2D.new()
+	node.position = pos
+	node.y_sort_enabled = true
+	node.add_to_group("map_station")
+	node.set_meta("map_label", map_label)
+	node.set_meta("map_marker", "station")
+	add_child(node)
+
 	var sprite := Sprite2D.new()
 	var texture := _counter_texture(id)
 	sprite.texture = texture if texture != null else PIXEL.new().make_texture(Vector2i(200, 104), [color.darkened(0.3), color, color.lightened(0.22)], id.length())
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var texture_size := sprite.texture.get_size()
 	sprite.centered = false
-	sprite.position = pos + Vector2(-texture_size.x * 0.5, -texture_size.y)
-	add_child(sprite)
+	sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
+	node.add_child(sprite)
+	_add_counter_collision(node, texture_size)
 
 	var interactable: Area2D = INTERACTABLE_SCRIPT.new()
 	interactable.interaction_id = id
 	interactable.prompt = label
-	interactable.position = pos
 	interactable.radius = max(texture_size.x, texture_size.y) * 0.38
 	interactable.interacted.connect(_on_interacted)
-	add_child(interactable)
+	node.add_child(interactable)
 
 func _counter_texture(id: String) -> Texture2D:
-	var path := String(COUNTER_TEXTURES.get(id, ""))
-	return ASSET_LOADER.load_png(path) if not path.is_empty() else null
+	var asset_id := String(COUNTER_ASSETS.get(id, ""))
+	return ASSET_LOADER.load_png(DataRegistry.asset_path(asset_id)) if not asset_id.is_empty() else null
+
+func _add_counter_collision(node: Node2D, texture_size: Vector2) -> void:
+	var body := StaticBody2D.new()
+	body.add_to_group("obstacle")
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(max(48.0, texture_size.x * 0.54), max(22.0, texture_size.y * 0.18))
+	var collision := CollisionShape2D.new()
+	collision.shape = shape
+	collision.position = Vector2(0, -shape.size.y * 0.5)
+	body.add_child(collision)
+	node.add_child(body)
 
 func _add_decor() -> void:
 	var props := [
@@ -115,7 +136,7 @@ func _on_interacted(id: String) -> void:
 			GameState.complete_active_quest()
 		"to_wasteland":
 			if GameState.active_quest_id.is_empty():
-				GameState.notify("先接一份委託，公會會替你標記適合的路線。")
+				GameState.notify("建議先接一個委託，公會會幫你標記路線。")
 			GameState.seed = randi_range(1000, 999999)
 			GameState.level += 1
 			SceneRouter.change_to("wasteland", "from_guild")
@@ -130,4 +151,4 @@ func _start_next_contract() -> void:
 		if not GameState.completed_quests.has(quest_id):
 			GameState.start_quest(quest_id)
 			return
-	GameState.notify("目前沒有新的公會委託")
+	GameState.notify("目前沒有新的公會委託。")
