@@ -2,11 +2,14 @@ extends RefCounted
 class_name PixelArtFactory
 
 const PLAYER_FRAME_SIZE := Vector2i(48, 56)
-const ENEMY_FRAME_SIZE := Vector2i(56, 48)
-const ITEM_FRAME_SIZE := Vector2i(56, 44)
+const ENEMY_FRAME_SIZE := Vector2i(96, 72)
+const ITEM_FRAME_SIZE := Vector2i(80, 64)
 const PLAYER_ACTIONS := ["idle", "walk", "shoot", "draw_sword", "slash", "swap_tool", "interact"]
 const ENEMY_TYPES := ["melee", "fast", "ranged", "heavy", "flying", "hybrid", "boss"]
 const ITEM_TYPES := ["scrap", "ammo", "mutant_core", "bio_crystal"]
+const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
+const ENEMY_ATLAS_PATH := "res://assets/sprites/enemies/polluted_enemy_six_types.png"
+const ITEM_ATLAS_PATH := "res://assets/sprites/items/recycler_item_icons.png"
 
 func make_texture(size: Vector2i, palette: Array[Color], pattern := 0) -> ImageTexture:
 	return ImageTexture.create_from_image(make_image(size, palette, pattern))
@@ -25,7 +28,15 @@ func make_image(size: Vector2i, palette: Array[Color], pattern := 0) -> Image:
 			image.set_pixel(x, y, c)
 	return image
 
-func player_texture(direction_index := 0, action_index := 0, frame_index := 0) -> ImageTexture:
+func player_texture(direction_index := 0, action_index := 0, frame_index := 0) -> Texture2D:
+	var atlas := _load_texture(PLAYER_ATLAS_PATH)
+	if atlas != null:
+		return _atlas_frame(atlas, Rect2(
+			(action_index * 3 + frame_index) * PLAYER_FRAME_SIZE.x,
+			direction_index * PLAYER_FRAME_SIZE.y,
+			PLAYER_FRAME_SIZE.x,
+			PLAYER_FRAME_SIZE.y
+		))
 	return ImageTexture.create_from_image(player_image(direction_index, action_index, frame_index))
 
 func player_image(direction_index := 0, action_index := 0, frame_index := 0) -> Image:
@@ -57,7 +68,13 @@ func player_image(direction_index := 0, action_index := 0, frame_index := 0) -> 
 	_draw_player_arms(image, direction_index, action_index, frame_index, origin, direction, palette)
 	return image
 
-func enemy_texture(enemy_type: String) -> ImageTexture:
+func enemy_texture(enemy_type: String) -> Texture2D:
+	var atlas := _load_texture(ENEMY_ATLAS_PATH)
+	if atlas != null:
+		var index := ENEMY_TYPES.find(enemy_type)
+		if index < 0:
+			index = 0
+		return _atlas_frame(atlas, Rect2(index * ENEMY_FRAME_SIZE.x, 0, ENEMY_FRAME_SIZE.x, ENEMY_FRAME_SIZE.y))
 	return ImageTexture.create_from_image(enemy_image(enemy_type))
 
 func enemy_image(enemy_type: String) -> Image:
@@ -66,66 +83,82 @@ func enemy_image(enemy_type: String) -> Image:
 	_enemy_ellipse(image, Vector2i(28, 40), 20, 5, Color(0, 0, 0, 0.38))
 	match enemy_type:
 		"boss":
-			_enemy_ellipse(image, Vector2i(28, 26), 25, 17, Color8(21, 17, 14))
-			_enemy_ellipse(image, Vector2i(28, 25), 22, 15, Color8(84, 50, 36))
-			_enemy_ellipse(image, Vector2i(31, 22), 14, 10, Color8(159, 88, 57))
-			_enemy_ellipse(image, Vector2i(21, 23), 5, 5, Color8(226, 43, 51))
-			_enemy_ellipse(image, Vector2i(35, 22), 6, 6, Color8(122, 205, 55))
-			_enemy_rect(image, 9, 25, 16, 43, Color8(39, 30, 25))
-			_enemy_rect(image, 40, 24, 48, 43, Color8(39, 30, 25))
-			_enemy_line(image, Vector2(13, 17), Vector2(4, 7), Color8(210, 112, 62), 2)
-			_enemy_line(image, Vector2(43, 17), Vector2(53, 7), Color8(210, 112, 62), 2)
-			_enemy_rect(image, 17, 31, 39, 38, Color8(31, 16, 13))
-			_enemy_line(image, Vector2(21, 37), Vector2(18, 45), Color8(135, 216, 66), 2)
-			_enemy_line(image, Vector2(34, 37), Vector2(38, 45), Color8(135, 216, 66), 2)
-			_enemy_rect(image, 22, 9, 34, 12, Color8(238, 154, 72))
+			_enemy_ellipse(image, Vector2i(29, 27), 25, 17, Color8(15, 12, 10))
+			_enemy_ellipse(image, Vector2i(29, 26), 22, 15, Color8(77, 45, 31))
+			_enemy_ellipse(image, Vector2i(18, 25), 8, 8, Color8(142, 62, 43))
+			_enemy_ellipse(image, Vector2i(35, 23), 13, 11, Color8(116, 77, 44))
+			_enemy_ellipse(image, Vector2i(20, 22), 5, 5, Color8(235, 42, 45))
+			_enemy_ellipse(image, Vector2i(36, 20), 5, 5, Color8(132, 230, 52))
+			_enemy_ellipse(image, Vector2i(42, 28), 4, 4, Color8(204, 42, 44))
+			_enemy_rect(image, 12, 31, 42, 38, Color8(27, 15, 11))
+			for x in [9, 16, 40, 47]:
+				_enemy_line(image, Vector2(x, 29), Vector2(x - 5 if x < 28 else x + 5, 44), Color8(37, 28, 22), 3)
+			for x in [15, 23, 32, 42]:
+				_enemy_rect(image, x, 5, x + 4, 16, Color8(55, 45, 35))
+				_enemy_rect(image, x - 1, 4, x + 5, 7, Color8(213, 126, 54))
+			_enemy_line(image, Vector2(14, 37), Vector2(10, 46), Color8(132, 220, 51), 2)
+			_enemy_line(image, Vector2(39, 37), Vector2(43, 46), Color8(132, 220, 51), 2)
+			_enemy_rect(image, 24, 32, 36, 36, Color8(9, 7, 5))
 		"fast":
-			_enemy_ellipse(image, Vector2i(28, 27), 19, 11, Color8(20, 28, 18))
-			_enemy_ellipse(image, Vector2i(30, 24), 15, 8, Color8(85, 153, 45))
-			_enemy_line(image, Vector2(14, 31), Vector2(4, 42), Color8(179, 220, 65), 2)
-			_enemy_line(image, Vector2(42, 31), Vector2(53, 42), Color8(179, 220, 65), 2)
-			_enemy_line(image, Vector2(20, 17), Vector2(13, 9), Color8(190, 214, 83), 2)
-			_enemy_line(image, Vector2(37, 17), Vector2(45, 8), Color8(190, 214, 83), 2)
-			_enemy_rect(image, 27, 15, 33, 18, Color8(231, 255, 92))
+			_enemy_ellipse(image, Vector2i(29, 27), 18, 12, Color8(17, 22, 14))
+			_enemy_ellipse(image, Vector2i(30, 24), 14, 9, Color8(86, 137, 41))
+			_enemy_ellipse(image, Vector2i(20, 24), 7, 7, Color8(92, 54, 37))
+			for leg in [-16, -10, -5, 6, 11, 17]:
+				_enemy_line(image, Vector2(29 + leg * 0.45, 29), Vector2(29 + leg, 43), Color8(152, 209, 61), 2)
+				_enemy_line(image, Vector2(29 + leg * 0.45, 22), Vector2(29 + leg, 9), Color8(130, 166, 58), 2)
+			for x in [22, 29, 36]:
+				_enemy_ellipse(image, Vector2i(x, 21), 2, 2, Color8(223, 48, 46))
+			_enemy_rect(image, 29, 14, 34, 17, Color8(224, 245, 85))
 		"ranged":
-			_enemy_ellipse(image, Vector2i(23, 27), 17, 13, Color8(31, 21, 27))
-			_enemy_ellipse(image, Vector2i(22, 25), 13, 10, Color8(103, 54, 67))
-			_enemy_rect(image, 32, 20, 53, 27, Color8(67, 50, 45))
-			_enemy_rect(image, 43, 22, 55, 24, Color8(235, 197, 79))
-			_enemy_ellipse(image, Vector2i(19, 20), 5, 4, Color8(230, 73, 63))
-			_enemy_line(image, Vector2(12, 35), Vector2(5, 43), Color8(102, 185, 69), 2)
+			_enemy_ellipse(image, Vector2i(22, 27), 16, 13, Color8(20, 15, 20))
+			_enemy_ellipse(image, Vector2i(22, 24), 12, 10, Color8(108, 55, 70))
+			_enemy_ellipse(image, Vector2i(20, 20), 5, 4, Color8(232, 64, 57))
+			_enemy_rect(image, 31, 19, 52, 28, Color8(50, 42, 37))
+			_enemy_rect(image, 38, 21, 55, 25, Color8(93, 73, 48))
+			_enemy_rect(image, 47, 22, 55, 24, Color8(239, 197, 73))
+			_enemy_line(image, Vector2(13, 34), Vector2(5, 44), Color8(93, 185, 70), 2)
+			_enemy_line(image, Vector2(28, 35), Vector2(31, 45), Color8(93, 185, 70), 2)
+			for y in [15, 31]:
+				_enemy_rect(image, 35, y, 42, y + 2, Color8(131, 88, 45))
 		"heavy":
-			_enemy_ellipse(image, Vector2i(28, 26), 23, 16, Color8(28, 23, 20))
-			_enemy_ellipse(image, Vector2i(28, 27), 19, 12, Color8(122, 93, 66))
-			_enemy_rect(image, 5, 18, 14, 41, Color8(48, 40, 34))
-			_enemy_rect(image, 42, 18, 51, 41, Color8(48, 40, 34))
-			_enemy_rect(image, 18, 16, 38, 21, Color8(221, 150, 78))
-			_enemy_rect(image, 20, 31, 36, 36, Color8(36, 19, 17))
-			_enemy_line(image, Vector2(40, 33), Vector2(52, 42), Color8(133, 207, 55), 3)
+			_enemy_ellipse(image, Vector2i(29, 27), 21, 16, Color8(18, 16, 14))
+			_enemy_rect(image, 16, 14, 40, 34, Color8(91, 73, 55))
+			_enemy_rect(image, 19, 17, 37, 22, Color8(201, 136, 70))
+			_enemy_rect(image, 7, 18, 17, 40, Color8(44, 38, 32))
+			_enemy_rect(image, 40, 18, 51, 40, Color8(44, 38, 32))
+			_enemy_rect(image, 20, 31, 38, 37, Color8(31, 16, 13))
+			_enemy_ellipse(image, Vector2i(28, 18), 3, 3, Color8(228, 55, 49))
+			_enemy_line(image, Vector2(43, 33), Vector2(54, 43), Color8(130, 210, 52), 3)
+			_enemy_line(image, Vector2(12, 12), Vector2(6, 6), Color8(217, 138, 65), 2)
+			_enemy_line(image, Vector2(44, 12), Vector2(51, 6), Color8(217, 138, 65), 2)
 		"flying":
-			_enemy_ellipse(image, Vector2i(28, 26), 11, 10, Color8(23, 29, 30))
-			_enemy_ellipse(image, Vector2i(28, 24), 9, 8, Color8(72, 93, 92))
-			_enemy_line(image, Vector2(20, 21), Vector2(2, 10), Color8(154, 188, 170, 195), 4)
-			_enemy_line(image, Vector2(36, 21), Vector2(54, 10), Color8(154, 188, 170, 195), 4)
-			_enemy_line(image, Vector2(20, 28), Vector2(4, 39), Color8(96, 135, 122, 205), 4)
-			_enemy_line(image, Vector2(36, 28), Vector2(52, 39), Color8(96, 135, 122, 205), 4)
-			_enemy_rect(image, 25, 20, 31, 24, Color8(222, 246, 217))
+			_enemy_ellipse(image, Vector2i(28, 26), 10, 11, Color8(18, 22, 23))
+			_enemy_ellipse(image, Vector2i(28, 23), 8, 8, Color8(76, 85, 76))
+			for wing in [-1, 1]:
+				_enemy_line(image, Vector2(23 if wing < 0 else 33, 20), Vector2(4 if wing < 0 else 52, 8), Color8(181, 190, 142, 205), 4)
+				_enemy_line(image, Vector2(23 if wing < 0 else 33, 27), Vector2(6 if wing < 0 else 50, 39), Color8(102, 132, 101, 205), 4)
+				_enemy_line(image, Vector2(26, 24), Vector2(9 if wing < 0 else 47, 14), Color8(48, 43, 33), 1)
+			_enemy_ellipse(image, Vector2i(28, 20), 3, 3, Color8(230, 52, 48))
+			_enemy_line(image, Vector2(27, 33), Vector2(26, 45), Color8(124, 214, 57), 2)
 		"hybrid":
-			_enemy_ellipse(image, Vector2i(26, 27), 18, 14, Color8(27, 24, 32))
-			_enemy_ellipse(image, Vector2i(24, 25), 13, 10, Color8(79, 60, 86))
-			_enemy_rect(image, 34, 17, 44, 36, Color8(68, 78, 79))
-			_enemy_line(image, Vector2(14, 34), Vector2(5, 44), Color8(132, 73, 154), 3)
-			_enemy_line(image, Vector2(37, 25), Vector2(54, 20), Color8(68, 211, 119), 3)
-			_enemy_rect(image, 21, 20, 26, 24, Color8(229, 53, 70))
+			_enemy_ellipse(image, Vector2i(25, 29), 18, 13, Color8(20, 18, 24))
+			_enemy_rect(image, 31, 17, 45, 35, Color8(62, 69, 69))
+			_enemy_rect(image, 34, 20, 42, 27, Color8(94, 104, 101))
+			_enemy_ellipse(image, Vector2i(23, 23), 4, 4, Color8(229, 45, 61))
+			for leg in [-15, -9, 11, 17]:
+				_enemy_line(image, Vector2(28, 32), Vector2(28 + leg, 45), Color8(127, 70, 150), 2)
+			_enemy_line(image, Vector2(42, 26), Vector2(55, 22), Color8(69, 213, 119), 3)
+			_enemy_rect(image, 44, 22, 54, 25, Color8(38, 33, 29))
 		_:
-			_enemy_ellipse(image, Vector2i(28, 29), 21, 13, Color8(25, 20, 17))
-			_enemy_ellipse(image, Vector2i(26, 26), 15, 9, Color8(141, 75, 50))
-			_enemy_line(image, Vector2(14, 34), Vector2(6, 44), Color8(95, 175, 69), 2)
-			_enemy_line(image, Vector2(42, 34), Vector2(51, 44), Color8(95, 175, 69), 2)
-			_enemy_line(image, Vector2(18, 19), Vector2(10, 12), Color8(191, 111, 66), 2)
-			_enemy_line(image, Vector2(35, 19), Vector2(44, 12), Color8(191, 111, 66), 2)
-			_enemy_rect(image, 20, 24, 36, 29, Color8(37, 18, 15))
-			_enemy_rect(image, 22, 21, 27, 24, Color8(225, 65, 58))
+			_enemy_ellipse(image, Vector2i(30, 29), 21, 13, Color8(20, 15, 12))
+			_enemy_ellipse(image, Vector2i(24, 26), 14, 10, Color8(130, 67, 43))
+			_enemy_ellipse(image, Vector2i(40, 30), 9, 8, Color8(70, 92, 45))
+			_enemy_rect(image, 13, 25, 25, 31, Color8(35, 18, 13))
+			_enemy_rect(image, 17, 22, 22, 25, Color8(229, 53, 48))
+			for leg in [-16, -8, 8, 16]:
+				_enemy_line(image, Vector2(30 + leg * 0.35, 34), Vector2(30 + leg, 45), Color8(92, 174, 63), 2)
+			for spike in [12, 19, 35, 44]:
+				_enemy_line(image, Vector2(spike, 19), Vector2(spike - 4 if spike < 28 else spike + 4, 9), Color8(191, 111, 66), 2)
 	_enemy_highlight_noise(image, enemy_type.length() * 31)
 	return image
 
@@ -166,7 +199,13 @@ func _enemy_highlight_noise(image: Image, seed: int) -> void:
 		if c.a > 0.2:
 			image.set_pixel(x, y, c.lightened(rng.randf_range(0.18, 0.38)))
 
-func item_texture(item_id: String) -> ImageTexture:
+func item_texture(item_id: String) -> Texture2D:
+	var atlas := _load_texture(ITEM_ATLAS_PATH)
+	if atlas != null:
+		var index := ITEM_TYPES.find(item_id)
+		if index < 0:
+			index = 0
+		return _atlas_frame(atlas, Rect2(index * ITEM_FRAME_SIZE.x, 0, ITEM_FRAME_SIZE.x, ITEM_FRAME_SIZE.y))
 	return ImageTexture.create_from_image(item_image(item_id))
 
 func item_image(item_id: String) -> Image:
@@ -236,6 +275,25 @@ func _item_line(image: Image, from_point: Vector2, to_point: Vector2, color: Col
 		var t := float(i) / float(steps)
 		var p := from_point.lerp(to_point, t)
 		_item_ellipse(image, Vector2i(int(round(p.x)), int(round(p.y))), width, width, color)
+
+func _load_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var loaded: Texture2D = load(path) as Texture2D
+		if loaded != null:
+			return loaded
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(absolute_path):
+		return null
+	var image := Image.load_from_file(absolute_path)
+	if image == null:
+		return null
+	return ImageTexture.create_from_image(image)
+
+func _atlas_frame(atlas: Texture2D, region: Rect2) -> AtlasTexture:
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = region
+	return texture
 
 func _item_highlight_noise(image: Image, seed: int) -> void:
 	var rng := RandomNumberGenerator.new()

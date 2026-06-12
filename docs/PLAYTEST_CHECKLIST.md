@@ -6,6 +6,7 @@
 
 ```powershell
 node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
+python scripts\tools\extract_reference_sheet_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
@@ -46,7 +47,7 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 3. 靠近鍛造師、補給商、維修機、公會引導 NPC，確認名稱與 `E：交談` 只在靠近時顯示。
 4. 按 `E` 與 NPC 交談，確認底部對話框出現 NPC 名稱、身分與繁體中文對話。
 5. 重複和同一 NPC 交談，確認一次性獎勵不會重複領取。
-6. 按 `I` 開啟人物裝備介面，確認目前左鍵動作、近戰武器、遠程武器、護甲、工具與背包內容可讀。
+6. 按 `Tab` 或 `I` 開啟人物裝備介面，確認目前左鍵動作、近戰武器、遠程武器、護甲、工具與背包內容可讀；快捷裝備列只在面板開啟時出現。
 7. 按 `1` 切到刀類，滑鼠左鍵應觸發近戰揮砍。
 8. 按 `2` 切到槍類，滑鼠左鍵應消耗彈藥並射出投射物；按住左鍵應持續射擊。
 9. 按 `M` 開啟小地圖，確認目前場景節點與村莊、公會、廢土路線可讀。
@@ -54,7 +55,7 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 11. 進入野外，確認地圖明顯比村莊大，有岩石、枯樹、廢車、毒池、資源點、事件點、冒險區域與敵人。
 12. 在野外嘗試走向邊界，確認玩家不會離開可玩區域。
 13. 與野外事件點互動，確認出現事件文字與獎勵。
-14. 確認廢鐵、彈藥、異變核心、汙染晶核掉落物都有厚輪廓、陰影與獨立圖示，不再是棋盤格或純色測試方塊。
+14. 確認廢鐵、彈藥、異變核心、汙染晶核掉落物都來自 `docs/art_direction_reference_v3.png` 的圖二風格，有厚輪廓、陰影與獨立圖示，不再是棋盤格或純色測試方塊。
 15. 擊倒敵人後確認掉落物可撿取，任務擊殺數會更新。
 16. 前往晶化裂隙附近，確認廢土巨像 Boss 存在、尺寸明顯大於普通怪，會造成近身與遠程壓力。
 17. 讓玩家死亡或被投射物擊中後切場景，確認 console 不再出現 `Removing a CollisionObject node during a physics callback`。
@@ -71,9 +72,10 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 - 敵人至少要能從輪廓看出近戰、快速、遠程、重型、飛行、混合型與 Boss 差異。
 - 掉落物 icon 需要能辨識資源類型，且不應像測試色塊。
 - 人物裝備介面需要顯示角色頭像、目前左鍵行為、近戰武器、遠程武器、護甲、工具、背包與主要數值。
+- 任何玩家、敵人、NPC、建築、掉落物、props 若看起來像簡化幾何色塊，視為美術驗收失敗。
 
 ## 已知限制
 
-- 目前素材已朝 `docs/art_direction_reference.png` 的厚輪廓、暗色廢土、鏽蝕金屬、污染綠、核心紅與晶體紫方向修正，但仍不是最終商業級人工精修美術。
+- 目前正式素材已改由 `docs/art_direction_reference_v3.png` 裁切輸出，風格明顯接近圖二；若以正式上市品質為目標，仍需要逐張人工清理邊緣、補足完整 8 方向動畫與製作專用 tileset。
 - 裝備介面目前是資訊檢視與背包列表，尚未支援拖曳換裝。
 - Android 觸控 UI 暫緩，現階段以 PC 鍵鼠體驗為主。

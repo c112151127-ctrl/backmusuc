@@ -4,7 +4,7 @@
 
 本專案是 Godot 4.6.3 製作的 PC 優先像素風偽 3D vertical slice。現在已具備村莊、公會、野外探索、NPC 對話、任務、近戰、射擊、掉落、撿取、裝備、存讀檔、音效、音樂與自動驗證場景。
 
-本輪重點已轉向「不像 MVP、而像完整遊戲的可上市方向」：優先改善美術方向、道路感、掉落物辨識、敵人輪廓、Boss 區域、個人裝備面板與玩家逐幀攻擊動作。
+本輪重點已轉向「不像 MVP、而像完整遊戲的可上市方向」：優先以使用者提供的圖二高細節廢土像素資產板替換舊幾何素材，改善道路感、掉落物辨識、敵人輪廓、Boss 區域、個人裝備面板與玩家逐幀攻擊動作。
 
 ## Vertical Slice 目標
 
@@ -21,7 +21,9 @@
 
 ## 必要修改檔案
 
-- `scripts/utils/PixelArtFactory.gd`：玩家多動作 atlas、敵人 atlas、掉落物 atlas 的核心產生邏輯。
+- `scripts/tools/extract_reference_sheet_assets.py`：從圖二 reference sheet 裁切正式玩家、敵人、掉落物、NPC、建築、props 與 tiles。
+- `scripts/tools/PixelAssetBaker.gd`：保留尺寸驗證與占位回退，但正式 atlas 存在時不得覆蓋圖二素材。
+- `scripts/utils/PixelArtFactory.gd`：優先讀取正式 PNG atlas，只有缺檔時才回退到程式生成占位圖。
 - `scripts/systems/WorldBackdrop.gd`：村莊、公會、野外地表、道路、裂痕、汙染與 2.5D 層次。
 - `scenes/ui/HUD.gd`：人物裝備介面、HUD、教學、小地圖、對話框。
 - `scenes/levels/village/Village.gd`：村莊配置、建築/NPC/出口動線。
@@ -33,7 +35,8 @@
 - `assets/sprites/player/recycler_player_multiaction_8dir.png`：玩家 7 動作 × 8 方向 × 3 frame。
 - `assets/sprites/enemies/polluted_enemy_six_types.png`：六種敵人與 Boss。
 - `assets/sprites/items/recycler_item_icons.png`：四種主要掉落物。
-- `docs/art_direction_reference.png`：本輪使用 imagegen 產生的美術方向參考圖。
+- `docs/art_direction_reference_v3.png`：本輪正式圖二美術來源。
+- `docs/art_extraction_preview_v3.png`：裁切後的素材總覽，供人工 review。
 
 ## 玩家流程
 
@@ -86,10 +89,11 @@ NPC 只在玩家靠近時顯示名稱、職業與 `E：交談`。交談時底部
 
 ## 美術方向
 
-參考圖檔：`docs/art_direction_reference.png`
+參考圖檔：`docs/art_direction_reference_v3.png`
 
 整體方向：
 
+- 圖二是唯一正式風格基準；舊版簡化幾何素材不得再作為正式輸出。
 - 深色廢土背景，避免單調純色地板。
 - 物件有厚輪廓、暗部、鏽蝕橘、污染綠、核心紅、晶體紫與冷色高光。
 - 地圖需要道路、裂痕、廢車、路標、毒池、晶化礦脈與工業設施。
@@ -97,12 +101,22 @@ NPC 只在玩家靠近時顯示名稱、職業與 `E：交談`。交談時底部
 - 掉落物要像獨立戰利品：廢鐵束、彈藥箱、異變核心、汙染晶核。
 - 文字提示必須收斂：NPC 與功能提示只在靠近時顯示，避免覆蓋地圖。
 
+## 圖二裁切管線
+
+1. 將使用者提供的圖二保存為 `docs/art_direction_reference_v3.png`。
+2. 執行 `python scripts\tools\extract_reference_sheet_assets.py`。
+3. 腳本會用預覽背景 flood-fill 去背，再把素材等比例置中到 Godot 尺寸契約。
+4. 輸出玩家、敵人、掉落物、NPC、建築、props、村莊地板、野外地板、道路與毒泥 tile。
+5. 檢查 `docs/art_extraction_preview_v3.png`，確認沒有舊方塊素材、黑底框、裁半隻怪或扁平化。
+6. 再跑 `PixelAssetBaker.tscn`。若正式 atlas 存在且尺寸正確，baker 只保留它們，不覆蓋回占位圖。
+
 ## 驗證清單
 
 提交前執行：
 
 ```powershell
 node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
+python scripts\tools\extract_reference_sheet_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'

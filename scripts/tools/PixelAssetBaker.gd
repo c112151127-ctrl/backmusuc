@@ -23,6 +23,10 @@ func _ensure_asset_dirs() -> void:
 
 func _save_player_sheet(factory: PixelArtFactory) -> void:
 	var frame_size := PixelArtFactory.PLAYER_FRAME_SIZE
+	var output_path := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
+	if _asset_has_size(output_path, Vector2i(frame_size.x * 3 * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8)):
+		print("[ASSET] Kept reference-sheet player atlas")
+		return
 	var sheet := Image.create(frame_size.x * 3 * PixelArtFactory.PLAYER_ACTIONS.size(), frame_size.y * 8, false, Image.FORMAT_RGBA8)
 	sheet.fill(Color(0, 0, 0, 0))
 	for action_index in PixelArtFactory.PLAYER_ACTIONS.size():
@@ -31,25 +35,33 @@ func _save_player_sheet(factory: PixelArtFactory) -> void:
 				var frame := factory.player_image(direction_index, action_index, frame_index)
 				var dest := Vector2i((action_index * 3 + frame_index) * frame_size.x, direction_index * frame_size.y)
 				sheet.blit_rect(frame, Rect2i(Vector2i.ZERO, frame_size), dest)
-	sheet.save_png("res://assets/sprites/player/recycler_player_multiaction_8dir.png")
+	sheet.save_png(output_path)
 
 func _save_enemy_sheet(factory: PixelArtFactory) -> void:
 	var frame_size := PixelArtFactory.ENEMY_FRAME_SIZE
+	var output_path := "res://assets/sprites/enemies/polluted_enemy_six_types.png"
+	if _asset_has_size(output_path, Vector2i(frame_size.x * PixelArtFactory.ENEMY_TYPES.size(), frame_size.y)):
+		print("[ASSET] Kept reference-sheet enemy atlas")
+		return
 	var sheet := Image.create(frame_size.x * PixelArtFactory.ENEMY_TYPES.size(), frame_size.y, false, Image.FORMAT_RGBA8)
 	sheet.fill(Color(0, 0, 0, 0))
 	for i in PixelArtFactory.ENEMY_TYPES.size():
 		var frame := factory.enemy_image(PixelArtFactory.ENEMY_TYPES[i])
 		sheet.blit_rect(frame, Rect2i(Vector2i.ZERO, frame_size), Vector2i(i * frame_size.x, 0))
-	sheet.save_png("res://assets/sprites/enemies/polluted_enemy_six_types.png")
+	sheet.save_png(output_path)
 
 func _save_item_sheet(factory: PixelArtFactory) -> void:
 	var frame_size := PixelArtFactory.ITEM_FRAME_SIZE
+	var output_path := "res://assets/sprites/items/recycler_item_icons.png"
+	if _asset_has_size(output_path, Vector2i(frame_size.x * PixelArtFactory.ITEM_TYPES.size(), frame_size.y)):
+		print("[ASSET] Kept reference-sheet item atlas")
+		return
 	var sheet := Image.create(frame_size.x * PixelArtFactory.ITEM_TYPES.size(), frame_size.y, false, Image.FORMAT_RGBA8)
 	sheet.fill(Color(0, 0, 0, 0))
 	for i in PixelArtFactory.ITEM_TYPES.size():
 		var frame := factory.item_image(PixelArtFactory.ITEM_TYPES[i])
 		sheet.blit_rect(frame, Rect2i(Vector2i.ZERO, frame_size), Vector2i(i * frame_size.x, 0))
-	sheet.save_png("res://assets/sprites/items/recycler_item_icons.png")
+	sheet.save_png(output_path)
 
 func _save_tile_sheet(factory: PixelArtFactory) -> void:
 	var tile_size := Vector2i(32, 32)
@@ -70,3 +82,10 @@ func _save_tile_sheet(factory: PixelArtFactory) -> void:
 		var tile := factory.make_image(tile_size, palette, i)
 		sheet.blit_rect(tile, Rect2i(Vector2i.ZERO, tile_size), Vector2i(i * tile_size.x, 0))
 	sheet.save_png("res://assets/sprites/tiles/recycler_tileset.png")
+
+func _asset_has_size(path: String, expected_size: Vector2i) -> bool:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(absolute_path):
+		return false
+	var image := Image.load_from_file(absolute_path)
+	return image != null and image.get_size() == expected_size and image.get_used_rect().size != Vector2i.ZERO

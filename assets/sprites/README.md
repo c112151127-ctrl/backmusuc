@@ -2,7 +2,9 @@
 
 本資料夾保存目前 PC vertical slice 使用的 PNG 像素素材。這些素材以「可玩、可替換、風格一致」為優先，方向是廢土機械、回收據點、污染野外與 2.5D 俯視像素風。
 
-本輪美術參考：`docs/art_direction_reference.png`。所有後續替換素材應維持厚輪廓、深色廢土底、鏽蝕橘、污染綠、核心紅、晶體紫、冷色高光與明確投影，不應退回純色方塊或棋盤格占位。
+正式美術參考：`docs/art_direction_reference_v3.png`。這張圖二風格資產板是目前唯一正式美術來源；所有後續替換素材應維持厚輪廓、深色廢土底、鏽蝕橘、污染綠、核心紅、晶體紫、冷色高光與明確投影，不應退回純色方塊或棋盤格占位。
+
+目前正式 PNG 由 `scripts/tools/extract_reference_sheet_assets.py` 從圖二資產板裁切產生。`PixelAssetBaker.tscn` 只在正式 atlas 缺失或尺寸不符時才回退產生占位圖，避免驗證流程覆蓋高細節素材。
 
 ## 玩家
 
@@ -30,14 +32,14 @@ NPC 名稱與互動提示只在玩家靠近時顯示，避免地圖文字重疊�
 
 - 檔案：`enemies/polluted_enemy_six_types.png`
 - 規格：七格 atlas，目前供 runtime 載入。
-- 單格：56×48。
+- 單格：96×72。
 - 類型：近戰、快速、遠程、重型、飛行、混合型、Boss。
 - 設計重點：每種敵人必須有不同輪廓，讓玩家一眼看出危險種類，不再用單純色塊或棋盤格替代。
 
 ## 掉落物
 
 - 檔案：`items/recycler_item_icons.png`
-- 規格：4 個資源 icon，每格 56×44。
+- 規格：4 個資源 icon，每格 80×64。
 - 類型：廢鐵、彈藥、異變核心、汙染晶核。
 - 設計重點：每種掉落物在地圖上要能快速辨識，具備陰影、金屬邊、污染光與獨立輪廓，避免玩家把資源看成測試方塊或地圖雜訊。
 
@@ -58,6 +60,8 @@ NPC 名稱與互動提示只在玩家靠近時顯示，避免地圖文字重疊�
 - `tiles/village_ground_2p5d.png`
 - `tiles/guild_ground_2p5d.png`
 - `tiles/wasteland_ground_2p5d.png`
+- `tiles/wasteland_road_2p5d.png`
+- `tiles/toxic_mud_2p5d.png`
 
 地表由 `WorldBackdrop.gd` 與 runtime PNG 搭配使用，加入路徑、裂痕、汙染斑塊與色調差異，避免整張地圖只有單調重複底紋。
 
@@ -69,7 +73,13 @@ NPC 名稱與互動提示只在玩家靠近時顯示，避免地圖文字重疊�
 
 ## 生成流程
 
-可用下列命令重新產生目前 runtime 素材：
+可用下列命令從圖二資產板重新裁切正式 runtime 素材：
+
+```powershell
+python scripts\tools\extract_reference_sheet_assets.py
+```
+
+接著可用下列命令驗證尺寸契約；若正式素材存在，baker 不會覆蓋玩家、敵人與掉落物 atlas：
 
 ```powershell
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'

@@ -5,6 +5,7 @@ const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 
 var stats_label: Label
 var quest_label: Label
+var quick_bar_panel: PanelContainer
 var quick_bar: HBoxContainer
 var inventory_panel: PanelContainer
 var inventory_list: VBoxContainer
@@ -12,6 +13,7 @@ var notice_label: Label
 var notice_timer: Timer
 var minimap_panel: PanelContainer
 var tutorial_panel: PanelContainer
+var controls_hint: Label
 var dialogue_panel: PanelContainer
 var dialogue_speaker: Label
 var dialogue_body: Label
@@ -30,11 +32,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("open_inventory"):
-		inventory_panel.visible = not inventory_panel.visible
+		_set_inventory_visible(not inventory_panel.visible)
 	if Input.is_action_just_pressed("toggle_minimap"):
 		minimap_panel.visible = not minimap_panel.visible
 	if Input.is_action_just_pressed("toggle_help"):
 		tutorial_panel.visible = not tutorial_panel.visible
+
+func _set_inventory_visible(is_visible: bool) -> void:
+	inventory_panel.visible = is_visible
+	quick_bar_panel.visible = is_visible
 
 func _build_hud() -> void:
 	var root := Control.new()
@@ -88,15 +94,16 @@ func _build_inventory_panel(root: Control) -> void:
 	inventory_panel.add_child(inventory_list)
 
 func _add_quick_bar(root: Control) -> void:
-	var panel := PanelContainer.new()
-	panel.name = "QuickBarPanel"
-	panel.position = Vector2(470, 646)
-	panel.custom_minimum_size = Vector2(388, 58)
-	root.add_child(panel)
+	quick_bar_panel = PanelContainer.new()
+	quick_bar_panel.name = "QuickBarPanel"
+	quick_bar_panel.position = Vector2(470, 646)
+	quick_bar_panel.custom_minimum_size = Vector2(388, 58)
+	quick_bar_panel.visible = false
+	root.add_child(quick_bar_panel)
 	quick_bar = HBoxContainer.new()
 	quick_bar.name = "QuickBar"
 	quick_bar.add_theme_constant_override("separation", 6)
-	panel.add_child(quick_bar)
+	quick_bar_panel.add_child(quick_bar)
 
 func _add_minimap(root: Control) -> void:
 	minimap_panel = PanelContainer.new()
@@ -110,7 +117,7 @@ func _add_minimap(root: Control) -> void:
 	map_stack.add_theme_constant_override("separation", 4)
 	minimap_panel.add_child(map_stack)
 	var title := Label.new()
-	title.text = "小地圖  M"
+	title.text = "地圖 M"
 	title.add_theme_font_size_override("font_size", 15)
 	map_stack.add_child(title)
 	var map_view: Control = MINIMAP_VIEW.new()
@@ -127,21 +134,21 @@ func _add_tutorial(root: Control) -> void:
 	var stack := VBoxContainer.new()
 	tutorial_panel.add_child(stack)
 	var title := Label.new()
-	title.text = "廢土回收商：PC 操作"
+	title.text = "廢土回收商 PC 操作"
 	title.add_theme_font_size_override("font_size", 18)
 	stack.add_child(title)
 	var body := Label.new()
-	body.text = "左鍵：依目前快捷裝備行動。刀會砍擊，槍會射擊。\n空白：強制近戰。右鍵 / K：強制射擊。\nE：互動 / 交談。I：人物裝備與背包。\nQ / 1-4：切換快捷欄。M：小地圖。H：教學。"
+	body.text = "WASD 移動\n滑鼠左鍵：依目前裝備揮砍或射擊\n右鍵 / K：固定射擊\nSpace：固定近戰\nE：互動 / 交談\nTab / I：人物裝備\nQ / 1-4：切換快捷裝備\nM：小地圖\nF5 / F9：存檔 / 讀檔"
 	body.add_theme_font_size_override("font_size", 14)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(body)
 
 func _add_controls_hint(root: Control) -> void:
-	var hint := Label.new()
-	hint.text = "左鍵依裝備行動｜空白近戰｜右鍵射擊｜E 互動｜I 裝備｜M 地圖"
-	hint.position = Vector2(420, 614)
-	hint.add_theme_font_size_override("font_size", 14)
-	root.add_child(hint)
+	controls_hint = Label.new()
+	controls_hint.text = "Tab 人物裝備｜H 教學｜M 地圖｜E 互動"
+	controls_hint.position = Vector2(492, 614)
+	controls_hint.add_theme_font_size_override("font_size", 13)
+	root.add_child(controls_hint)
 
 func _add_dialogue_box(root: Control) -> void:
 	dialogue_panel = PanelContainer.new()
@@ -287,14 +294,6 @@ func _refresh_inventory() -> void:
 	for item_id in GameState.inventory.keys():
 		var amount := int(GameState.inventory[item_id])
 		_add_bag_button(bag_grid, String(item_id), amount)
-
-func _add_equipment_row(container: GridContainer, label_text: String, slot: String) -> void:
-	var label := Label.new()
-	label.text = label_text
-	container.add_child(label)
-	var value := Label.new()
-	value.text = GameState.equipped_slot_name(slot)
-	container.add_child(value)
 
 func _add_equipment_card(container: GridContainer, label_text: String, slot: String) -> void:
 	var item_id := String(GameState.equipment.get(slot, ""))

@@ -398,6 +398,7 @@ func _ensure_input_actions() -> void:
 	_register_key("move_right", KEY_D)
 	_register_key("interact", KEY_E)
 	_register_key("open_inventory", KEY_I)
+	_register_key("open_inventory", KEY_TAB)
 	_register_key("save_game", KEY_F5)
 	_register_key("load_game", KEY_F9)
 	_register_key("toggle_minimap", KEY_M)

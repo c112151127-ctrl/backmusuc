@@ -8,12 +8,16 @@ var map_size := Vector2i(60, 40)
 var tile_size := 32
 var world_seed := 9527
 var tile_texture: Texture2D
+var road_texture: Texture2D
+var toxic_texture: Texture2D
 
 func setup(new_mode: String, size_tiles: Vector2i, new_seed: int) -> void:
 	mode = new_mode
 	map_size = size_tiles
 	world_seed = new_seed
 	tile_texture = _load_tile_texture()
+	road_texture = ASSET_LOADER.load_png("res://assets/sprites/tiles/wasteland_road_2p5d.png")
+	toxic_texture = ASSET_LOADER.load_png("res://assets/sprites/tiles/toxic_mud_2p5d.png")
 	queue_redraw()
 
 func _draw() -> void:
@@ -33,8 +37,9 @@ func _draw() -> void:
 				c = c.lerp(Color8(94, 82, 62), road_strength)
 			if mode == "wasteland" and rng.randf() < 0.08:
 				c = c.lerp(stain, 0.55)
-			if tile_texture != null:
-				draw_texture_rect(tile_texture, rect, false)
+			var texture := _texture_for_tile(x, y, road_strength)
+			if texture != null:
+				draw_texture_rect(texture, rect, false)
 				draw_rect(rect, Color(c.r, c.g, c.b, 0.24 + road_strength * 0.2))
 			else:
 				draw_rect(rect, c)
@@ -106,3 +111,12 @@ func _load_tile_texture() -> Texture2D:
 	elif mode == "wasteland":
 		path = "res://assets/sprites/tiles/wasteland_ground_2p5d.png"
 	return ASSET_LOADER.load_png(path)
+
+func _texture_for_tile(x: int, y: int, road_strength: float) -> Texture2D:
+	if mode == "wasteland":
+		if road_strength > 0.0 and road_texture != null:
+			return road_texture
+		var zone := _wasteland_zone_color(x, y)
+		if toxic_texture != null and zone.g > zone.r and zone.g > zone.b and _wasteland_zone_strength(x, y) >= 0.4:
+			return toxic_texture
+	return tile_texture
