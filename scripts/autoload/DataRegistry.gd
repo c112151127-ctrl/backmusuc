@@ -8,6 +8,7 @@ var events: Array = []
 var recipes: Array = []
 var quests: Array = []
 var npcs: Array = []
+var wasteland_routes: Dictionary = {}
 
 func _ready() -> void:
 	load_all()
@@ -19,6 +20,7 @@ func load_all() -> void:
 	recipes = _load_json("res://data/items/recipes.json").get("recipes", [])
 	enemies = _load_json("res://data/enemies/enemies.json").get("enemies", {})
 	map_params = _load_json("res://data/maps/wasteland_params.json")
+	wasteland_routes = _load_json("res://data/maps/wasteland_routes.json").get("routes", {})
 	events = _load_json("res://data/maps/events.json").get("events", [])
 	quests = _load_json("res://data/maps/quests.json").get("quests", [])
 	npcs = _load_json("res://data/maps/npcs.json").get("npcs", [])
@@ -58,6 +60,12 @@ func get_npc(npc_id: String) -> Dictionary:
 		if String(npc.get("id", "")) == npc_id:
 			return npc
 	return {}
+
+func get_wasteland_route(route_id: String) -> Dictionary:
+	return wasteland_routes.get(route_id, {})
+
+func wasteland_route_ids() -> Array:
+	return wasteland_routes.keys()
 
 func npcs_for_scene(scene_id: String) -> Array[Dictionary]:
 	var results: Array[Dictionary] = []

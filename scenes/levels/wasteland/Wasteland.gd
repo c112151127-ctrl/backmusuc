@@ -14,31 +14,41 @@ const PROJECTILE_POOL_SCRIPT := preload("res://scripts/systems/ProjectilePool.gd
 
 var player: Node2D
 var world_size := Vector2(5760, 4480)
+var route_id := "scrap_highway"
+var route_data: Dictionary = {}
+var route_seed := 9527
 var zone_hints: Dictionary = {}
 
 func _ready() -> void:
 	y_sort_enabled = true
 	GameState.current_scene_id = "wasteland"
-	AudioManager.play_music("wasteland")
+	route_id = GameState.current_route_id
+	route_data = DataRegistry.get_wasteland_route(route_id)
+	if route_data.is_empty():
+		route_id = "scrap_highway"
+		route_data = DataRegistry.get_wasteland_route(route_id)
+		GameState.current_route_id = route_id
+	AudioManager.play_music(String(route_data.get("music", "wasteland")))
 	var params := DataRegistry.map_params
 	var tile_size := int(params.get("tile_size", 32))
 	var size_tiles := Vector2i(int(params.get("width_tiles", 180)), int(params.get("height_tiles", 140)))
 	world_size = Vector2(size_tiles.x * tile_size, size_tiles.y * tile_size)
+	route_seed = GameState.seed + int(route_data.get("seed_offset", 0))
 	var backdrop: Node2D = BACKDROP_SCRIPT.new()
-	backdrop.setup("wasteland", size_tiles, GameState.seed)
+	backdrop.setup("wasteland", size_tiles, route_seed, route_id)
 	add_child(backdrop)
 	_add_boundaries(world_size)
 	_add_projectile_pool(int(params.get("projectile_limit", 200)))
 	_spawn_player(Vector2(world_size.x * 0.5, world_size.y - 300))
 	_spawn_exit()
+	_spawn_route_landmarks()
 	_spawn_props()
 	_spawn_resources()
 	_spawn_events()
-	_spawn_zone_landmarks()
 	_spawn_enemies()
 	_spawn_boss()
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("廢土外圍：探索路標、事件、補給箱與污染源；資源足夠後回村強化。")
+	GameState.notify(String(route_data.get("notice", "廢土區域：探索、戰鬥、回收資源，再回村強化。")))
 
 func _spawn_player(default_position: Vector2) -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -74,10 +84,10 @@ func _spawn_exit() -> void:
 
 func _spawn_resources() -> void:
 	var count := int(DataRegistry.map_params.get("resource_nodes", 80))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(180, 180, world_size.x - 360, world_size.y - 620), GameState.seed + 11, 110)
-	var ids: Array[String] = ["scrap", "ammo", "bio_crystal", "mutant_core"]
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(180, 180, world_size.x - 360, world_size.y - 620), route_seed + 11, 110)
+	var ids: Array = route_data.get("resource_mix", ["scrap", "ammo", "bio_crystal", "mutant_core"])
 	for i in range(positions.size()):
-		var id: String = ids[i % ids.size()]
+		var id := String(ids[i % ids.size()])
 		var amount := 1 + (i % 4)
 		if id == "mutant_core":
 			amount = 1
@@ -88,15 +98,48 @@ func _spawn_resources() -> void:
 
 func _spawn_props() -> void:
 	var count := int(DataRegistry.map_params.get("prop_nodes", 160))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 900), GameState.seed + 301, 86)
-	var prop_ids: Array[String] = ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"]
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(count, Rect2(160, 180, world_size.x - 320, world_size.y - 900), route_seed + 301, 86)
+	var prop_ids: Array = route_data.get("prop_mix", ["rust_rock", "dead_tree", "scrap_wall", "toxic_pool", "wreck", "signal_pylon", "road_marker"])
 	for i in range(positions.size()):
-		var id := prop_ids[i % prop_ids.size()]
+		var id := String(prop_ids[i % prop_ids.size()])
 		var blocking := id != "toxic_pool" and id != "road_marker"
 		var size := _prop_size(id, i)
 		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()
 		prop.setup(id, blocking, size)
 		prop.global_position = positions[i]
+		add_child(prop)
+
+func _spawn_route_landmarks() -> void:
+	var landmarks := []
+	match route_id:
+		"scrap_highway":
+			landmarks = [
+				["wreck", Vector2(world_size.x * 0.34, world_size.y * 0.48), true, Vector2i(136, 92)],
+				["road_marker", Vector2(world_size.x * 0.54, world_size.y * 0.38), false, Vector2i(46, 62)],
+				["scrap_barricade", Vector2(world_size.x * 0.68, world_size.y * 0.64), true, Vector2i(126, 78)]
+			]
+		"toxic_marsh":
+			landmarks = [
+				["toxic_pool", Vector2(world_size.x * 0.40, world_size.y * 0.44), false, Vector2i(128, 72)],
+				["signal_pylon", Vector2(world_size.x * 0.58, world_size.y * 0.35), true, Vector2i(62, 132)],
+				["dead_tree", Vector2(world_size.x * 0.70, world_size.y * 0.60), true, Vector2i(78, 124)]
+			]
+		"crystal_scar":
+			landmarks = [
+				["signal_pylon", Vector2(world_size.x * 0.50, world_size.y * 0.18), true, Vector2i(64, 138)],
+				["toxic_pool", Vector2(world_size.x * 0.42, world_size.y * 0.36), false, Vector2i(112, 62)],
+				["rust_rock", Vector2(world_size.x * 0.62, world_size.y * 0.30), true, Vector2i(96, 72)]
+			]
+		"old_factory":
+			landmarks = [
+				["scrap_wall", Vector2(world_size.x * 0.42, world_size.y * 0.42), true, Vector2i(134, 86)],
+				["signal_pylon", Vector2(world_size.x * 0.63, world_size.y * 0.30), true, Vector2i(70, 140)],
+				["scrap_barricade", Vector2(world_size.x * 0.70, world_size.y * 0.56), true, Vector2i(134, 82)]
+			]
+	for item in landmarks:
+		var prop: StaticBody2D = WORLD_PROP_SCRIPT.new()
+		prop.setup(String(item[0]), bool(item[2]), item[3])
+		prop.global_position = item[1]
 		add_child(prop)
 
 func _prop_size(id: String, index: int) -> Vector2i:
@@ -105,10 +148,12 @@ func _prop_size(id: String, index: int) -> Vector2i:
 			return Vector2i(46 + (index % 3) * 8, 88 + (index % 4) * 10)
 		"scrap_wall":
 			return Vector2i(82, 58)
+		"scrap_barricade":
+			return Vector2i(92, 64)
 		"toxic_pool":
-			return Vector2i(72, 42)
+			return Vector2i(88, 52)
 		"wreck":
-			return Vector2i(92, 66)
+			return Vector2i(104, 74)
 		"signal_pylon":
 			return Vector2i(54, 112)
 		"road_marker":
@@ -117,10 +162,10 @@ func _prop_size(id: String, index: int) -> Vector2i:
 			return Vector2i(56 + (index % 2) * 14, 48 + (index % 3) * 8)
 
 func _spawn_events() -> void:
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(int(DataRegistry.map_params.get("event_nodes", 18)), Rect2(240, 260, world_size.x - 480, world_size.y - 800), GameState.seed + 25, 260)
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(int(DataRegistry.map_params.get("event_nodes", 18)), Rect2(240, 260, world_size.x - 480, world_size.y - 800), route_seed + 25, 260)
 	for i in range(positions.size()):
 		var event_data: Dictionary = DataRegistry.events[i % DataRegistry.events.size()]
-		var event_id := String(event_data.get("id", "event_%d" % i))
+		var event_id := "%s:%s" % [route_id, String(event_data.get("id", "event_%d" % i))]
 		var event_name := String(event_data.get("name", "廢土事件"))
 		var node: Area2D = INTERACTABLE_SCRIPT.new()
 		node.interaction_id = "event:" + event_id
@@ -136,61 +181,21 @@ func _spawn_events() -> void:
 		marker.position = positions[i]
 		add_child(marker)
 
-func _spawn_zone_landmarks() -> void:
-	zone_hints = {
-		"zone_scrap_highway": "廢鐵公路：障礙多、彈藥箱較常出現，適合練習走位射擊。",
-		"zone_toxic_marsh": "毒沼邊界：污染斑密集，快速型與飛行型敵人會從側邊逼近。",
-		"zone_crystal_scar": "晶化裂隙：有高價晶核，也藏著廢土巨像。"
-	}
-	var zones: Array[Dictionary] = [
-		{
-			"id": "zone_scrap_highway",
-			"name": "廢鐵公路",
-			"position": Vector2(world_size.x * 0.22, world_size.y * 0.34),
-			"prop": "road_marker",
-			"size": Vector2i(44, 66)
-		},
-		{
-			"id": "zone_toxic_marsh",
-			"name": "毒沼邊界",
-			"position": Vector2(world_size.x * 0.70, world_size.y * 0.36),
-			"prop": "toxic_pool",
-			"size": Vector2i(86, 50)
-		},
-		{
-			"id": "zone_crystal_scar",
-			"name": "晶化裂隙",
-			"position": Vector2(world_size.x * 0.52, world_size.y * 0.16),
-			"prop": "signal_pylon",
-			"size": Vector2i(56, 104)
-		}
-	]
-	for zone in zones:
-		var zone_id := String(zone.get("id", "zone"))
-		var node: Area2D = INTERACTABLE_SCRIPT.new()
-		node.interaction_id = zone_id
-		node.prompt = String(zone.get("name", "冒險區域"))
-		node.position = zone.get("position", Vector2.ZERO)
-		node.interacted.connect(_on_zone_interacted)
-		add_child(node)
-		var marker: StaticBody2D = WORLD_PROP_SCRIPT.new()
-		marker.setup(String(zone.get("prop", "road_marker")), false, zone.get("size", Vector2i(44, 66)))
-		marker.global_position = node.position + Vector2(0, 24)
-		add_child(marker)
-
 func _spawn_enemies() -> void:
-	var enemy_ids := DataRegistry.enemy_ids()
-	if enemy_ids.is_empty():
-		return
 	var combat_enemy_ids: Array[String] = []
-	for raw_id in enemy_ids:
+	var route_mix: Array = route_data.get("enemy_mix", [])
+	for raw_id in route_mix:
 		var id := String(raw_id)
-		if String(DataRegistry.get_enemy(id).get("type", "")) != "boss":
+		var data := DataRegistry.get_enemy(id)
+		if not data.is_empty() and String(data.get("type", "")) != "boss":
 			combat_enemy_ids.append(id)
 	if combat_enemy_ids.is_empty():
-		return
+		for raw_id in DataRegistry.enemy_ids():
+			var id := String(raw_id)
+			if String(DataRegistry.get_enemy(id).get("type", "")) != "boss":
+				combat_enemy_ids.append(id)
 	var limit := int(DataRegistry.map_params.get("enemy_limit", 30))
-	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(limit, Rect2(220, 180, world_size.x - 440, world_size.y - 820), GameState.seed + 91, 170)
+	var positions := LEVEL_GENERATOR_SCRIPT.seeded_positions(limit, Rect2(220, 180, world_size.x - 440, world_size.y - 820), route_seed + 91, 170)
 	for i in range(min(limit, positions.size())):
 		var id := String(combat_enemy_ids[i % combat_enemy_ids.size()])
 		var enemy: CharacterBody2D = ENEMY_SCRIPT.new()
@@ -199,7 +204,7 @@ func _spawn_enemies() -> void:
 		add_child(enemy)
 
 func _spawn_boss() -> void:
-	if not bool(DataRegistry.map_params.get("boss_enabled", true)):
+	if not bool(route_data.get("boss_enabled", false)):
 		return
 	var boss_id := "waste_titan"
 	var boss_data := DataRegistry.get_enemy(boss_id)
@@ -236,18 +241,16 @@ func _add_boundary(pos: Vector2, size: Vector2) -> void:
 func _on_event_interacted(interaction_id: String) -> void:
 	var event_id := interaction_id.replace("event:", "")
 	if GameState.discovered_events.has(event_id):
-		GameState.notify("這個事件已經被回收過。")
+		GameState.notify("這個事件已經處理過")
 		return
 	GameState.discovered_events.append(event_id)
 	for event_data in DataRegistry.events:
-		if String(event_data.get("id", "")) == event_id:
+		if event_id.ends_with(String(event_data.get("id", ""))):
 			var reward: Dictionary = event_data.get("reward", {})
 			for item_id in reward.keys():
 				GameState.add_item(String(item_id), int(reward[item_id]))
 			var event_name := String(event_data.get("name", event_id))
 			var description := String(event_data.get("description", ""))
 			GameState.notify("%s 完成：%s" % [event_name, description])
+			SaveManager.save_game(false)
 			return
-
-func _on_zone_interacted(interaction_id: String) -> void:
-	GameState.notify(String(zone_hints.get(interaction_id, "這裡是尚未標記的冒險區域。")))

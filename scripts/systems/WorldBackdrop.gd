@@ -10,11 +10,13 @@ var world_seed := 9527
 var tile_texture: Texture2D
 var road_texture: Texture2D
 var toxic_texture: Texture2D
+var route_id := ""
 
-func setup(new_mode: String, size_tiles: Vector2i, new_seed: int) -> void:
+func setup(new_mode: String, size_tiles: Vector2i, new_seed: int, new_route_id := "") -> void:
 	mode = new_mode
 	map_size = size_tiles
 	world_seed = new_seed
+	route_id = new_route_id
 	tile_texture = _load_tile_texture()
 	road_texture = ASSET_LOADER.load_png("res://assets/sprites/tiles/wasteland_road_2p5d.png")
 	toxic_texture = ASSET_LOADER.load_png("res://assets/sprites/tiles/toxic_mud_2p5d.png")
@@ -23,8 +25,8 @@ func setup(new_mode: String, size_tiles: Vector2i, new_seed: int) -> void:
 func _draw() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world_seed
-	var base := Color8(43, 39, 32) if mode == "village" else Color8(34, 31, 28)
-	var alt := Color8(61, 54, 43) if mode == "village" else Color8(50, 44, 38)
+	var base := _base_color()
+	var alt := _alt_color()
 	var stain := Color8(42, 97, 67) if mode == "wasteland" else Color8(84, 74, 56)
 	for y in map_size.y:
 		for x in map_size.x:
@@ -77,14 +79,31 @@ func _road_strength(x: int, y: int) -> float:
 		var cross: bool = (x >= 23 and x <= 27) or (y >= 14 and y <= 17)
 		return 0.65 if hall and cross else 0.0
 	if mode == "wasteland":
-		var trail: bool = abs(y - int(map_size.y * 0.72) - int(sin(float(x) * 0.14) * 5.0)) <= 2
-		var branch: bool = abs(x - int(map_size.x * 0.5) - int(sin(float(y) * 0.11) * 4.0)) <= 1 and y > map_size.y * 0.35
-		return 0.42 if trail or branch else 0.0
+		if route_id == "scrap_highway":
+			var highway: bool = abs(y - int(map_size.y * 0.55) - int(sin(float(x) * 0.08) * 3.0)) <= 3
+			var shoulder: bool = abs(y - int(map_size.y * 0.55)) <= 7 and x % 9 == 0
+			return 0.62 if highway else (0.24 if shoulder else 0.0)
+		if route_id == "old_factory":
+			var grid_x: bool = abs(x - int(map_size.x * 0.52)) <= 2
+			var grid_y: bool = abs(y - int(map_size.y * 0.50)) <= 2
+			return 0.56 if grid_x or grid_y else 0.0
+		if route_id == "toxic_marsh":
+			var causeway: bool = abs(x - int(map_size.x * 0.43) - int(sin(float(y) * 0.10) * 5.0)) <= 2
+			return 0.48 if causeway else 0.0
+		var crystal_path: bool = abs(y - int(map_size.y * 0.68) - int(sin(float(x) * 0.18) * 6.0)) <= 2
+		var branch: bool = abs(x - int(map_size.x * 0.5) - int(sin(float(y) * 0.11) * 4.0)) <= 1 and y > map_size.y * 0.30
+		return 0.45 if crystal_path or branch else 0.0
 	return 0.0
 
 func _wasteland_zone_color(x: int, y: int) -> Color:
 	var px: float = float(x) / max(1.0, float(map_size.x))
 	var py: float = float(y) / max(1.0, float(map_size.y))
+	if route_id == "toxic_marsh":
+		return Color8(34, 82, 52)
+	if route_id == "old_factory":
+		return Color8(56, 52, 47)
+	if route_id == "scrap_highway":
+		return Color8(75, 69, 57)
 	if py < 0.27 and px > 0.36 and px < 0.68:
 		return Color8(72, 39, 90)
 	if px < 0.38 and py > 0.22 and py < 0.56:
@@ -94,6 +113,8 @@ func _wasteland_zone_color(x: int, y: int) -> Color:
 	return Color8(39, 45, 38)
 
 func _wasteland_zone_strength(x: int, y: int) -> float:
+	if route_id in ["toxic_marsh", "old_factory", "scrap_highway"]:
+		return 0.36
 	var px: float = float(x) / max(1.0, float(map_size.x))
 	var py: float = float(y) / max(1.0, float(map_size.y))
 	if py < 0.27 and px > 0.36 and px < 0.68:
@@ -103,6 +124,32 @@ func _wasteland_zone_strength(x: int, y: int) -> float:
 	if px > 0.60 and py > 0.24 and py < 0.62:
 		return 0.42
 	return 0.0
+
+func _base_color() -> Color:
+	if mode == "village":
+		return Color8(43, 39, 32)
+	if route_id == "toxic_marsh":
+		return Color8(28, 38, 30)
+	if route_id == "old_factory":
+		return Color8(35, 34, 32)
+	if route_id == "crystal_scar":
+		return Color8(33, 29, 36)
+	if route_id == "scrap_highway":
+		return Color8(38, 34, 29)
+	return Color8(34, 31, 28)
+
+func _alt_color() -> Color:
+	if mode == "village":
+		return Color8(61, 54, 43)
+	if route_id == "toxic_marsh":
+		return Color8(45, 67, 45)
+	if route_id == "old_factory":
+		return Color8(61, 57, 50)
+	if route_id == "crystal_scar":
+		return Color8(55, 43, 68)
+	if route_id == "scrap_highway":
+		return Color8(64, 55, 43)
+	return Color8(50, 44, 38)
 
 func _load_tile_texture() -> Texture2D:
 	var path := "res://assets/sprites/tiles/village_ground_2p5d.png"

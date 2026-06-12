@@ -11,6 +11,10 @@ var color := Color8(110, 126, 116)
 var _player_near := false
 var _name_label: Label
 var _prompt: Label
+var _sprite: Sprite2D
+var _base_sprite_y := 0.0
+var _phase := 0.0
+var _talk_timer := 0.0
 
 func setup(data: Dictionary) -> void:
 	npc_id = String(data.get("id", ""))
@@ -30,38 +34,47 @@ func _ready() -> void:
 	_add_sprite()
 	_add_labels()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_phase += delta * (5.2 if _player_near else 2.4)
+	_talk_timer = max(0.0, _talk_timer - delta)
+	if _sprite != null:
+		_sprite.position.y = _base_sprite_y + sin(_phase) * (2.0 if _player_near else 1.0)
+		_sprite.rotation = sin(_phase * 0.55) * (0.025 if _talk_timer <= 0.0 else 0.055)
+		_sprite.modulate = Color(1.08, 1.08, 1.08) if _talk_timer > 0.0 else Color.WHITE
 	if _player_near and Input.is_action_just_pressed("interact"):
 		AudioManager.play_sfx("interact")
+		_talk_timer = 0.45
 		GameState.talk_to_npc(npc_id)
 
 func _add_collision() -> void:
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
-	shape.radius = 44
+	shape.radius = 48
 	collision.shape = shape
 	add_child(collision)
 
 func _add_sprite() -> void:
-	var sprite := Sprite2D.new()
+	_sprite = Sprite2D.new()
 	var npc_texture := _npc_texture()
-	sprite.texture = npc_texture if npc_texture != null else PIXEL.new().make_texture(Vector2i(56, 72), [color.darkened(0.35), color, color.lightened(0.25)], npc_id.length())
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.centered = false
-	sprite.position = Vector2(-28, -72)
-	add_child(sprite)
+	_sprite.texture = npc_texture if npc_texture != null else PIXEL.new().make_texture(Vector2i(56, 72), [color.darkened(0.35), color, color.lightened(0.25)], npc_id.length())
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.centered = false
+	var texture_size := _sprite.texture.get_size()
+	_sprite.position = Vector2(-texture_size.x * 0.5, -texture_size.y)
+	_base_sprite_y = _sprite.position.y
+	add_child(_sprite)
 
 func _add_labels() -> void:
 	_name_label = Label.new()
 	_name_label.text = "%s｜%s" % [npc_name, role]
-	_name_label.position = Vector2(-58, -104)
+	_name_label.position = Vector2(-72, -104)
 	_name_label.visible = false
 	_name_label.add_theme_font_size_override("font_size", 14)
 	add_child(_name_label)
 
 	_prompt = Label.new()
 	_prompt.text = "E：交談"
-	_prompt.position = Vector2(-32, -124)
+	_prompt.position = Vector2(-36, -128)
 	_prompt.visible = false
 	_prompt.add_theme_font_size_override("font_size", 14)
 	add_child(_prompt)
@@ -81,3 +94,4 @@ func _on_body_exited(body: Node) -> void:
 		_player_near = false
 		_name_label.visible = false
 		_prompt.visible = false
+		GameState.close_dialogue()

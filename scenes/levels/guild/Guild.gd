@@ -30,19 +30,19 @@ func _ready() -> void:
 	add_child(backdrop)
 	_add_boundaries(Vector2(MAP_TILES.x * TILE_SIZE, MAP_TILES.y * TILE_SIZE))
 	_add_decor()
-	_add_counter("contract", "委託看板：選擇清理任務", Vector2(330, 275), Color8(102, 74, 118))
-	_add_counter("reward", "獎勵櫃台：回報委託", Vector2(680, 275), Color8(75, 96, 122))
-	_add_counter("to_wasteland", "公會出口：前往廢土", Vector2(1080, 540), Color8(92, 88, 56))
-	_add_counter("to_village", "返回村莊據點", Vector2(560, 720), Color8(64, 110, 70))
+	_add_counter("contract", "委託板：接取下一份任務", Vector2(330, 275), Color8(102, 74, 118))
+	_add_counter("reward", "交付櫃檯：領取獎勵", Vector2(680, 275), Color8(75, 96, 122))
+	_add_counter("to_wasteland", "依委託前往廢土", Vector2(1080, 540), Color8(92, 88, 56))
+	_add_counter("to_village", "返回村莊", Vector2(560, 720), Color8(64, 110, 70))
 	_spawn_npcs()
 	_add_projectile_pool(200)
 	var player := PLAYER_SCENE.instantiate()
-	player.global_position = Vector2(660, 470)
+	player.global_position = Vector2(660, 470) if GameState.active_spawn_point != "saved" else GameState.player_position
 	add_child(player)
 	if player.has_method("set_world_bounds"):
 		player.set_world_bounds(WORLD_RECT)
 	add_child(HUD_SCENE.instantiate())
-	GameState.notify("冒險公會：靠近看板接委託，完成後回櫃台領獎。")
+	GameState.notify("冒險公會：接委託、交付資源，或依目前委託前往指定廢土路線。")
 
 func _add_projectile_pool(limit: int) -> void:
 	var pool: Node = PROJECTILE_POOL_SCRIPT.new()
@@ -69,9 +69,7 @@ func _add_counter(id: String, label: String, pos: Vector2, color: Color) -> void
 
 func _counter_texture(id: String) -> Texture2D:
 	var path := String(COUNTER_TEXTURES.get(id, ""))
-	if not path.is_empty():
-		return ASSET_LOADER.load_png(path)
-	return null
+	return ASSET_LOADER.load_png(path) if not path.is_empty() else null
 
 func _add_decor() -> void:
 	var props := [
@@ -116,9 +114,10 @@ func _on_interacted(id: String) -> void:
 		"reward":
 			GameState.complete_active_quest()
 		"to_wasteland":
+			if GameState.active_quest_id.is_empty():
+				GameState.notify("先接一份委託，公會會替你標記適合的路線。")
 			GameState.seed = randi_range(1000, 999999)
 			GameState.level += 1
-			GameState.notify("公會核發新探索路線，seed：%d" % GameState.seed)
 			SceneRouter.change_to("wasteland", "from_guild")
 		"to_village":
 			SceneRouter.change_to("village", "from_guild")
@@ -131,4 +130,4 @@ func _start_next_contract() -> void:
 		if not GameState.completed_quests.has(quest_id):
 			GameState.start_quest(quest_id)
 			return
-	GameState.notify("目前沒有新的公會委託。")
+	GameState.notify("目前沒有新的公會委託")

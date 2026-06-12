@@ -1,12 +1,13 @@
 {
   "enemies": {
     "scrap_biter": {
-      "name": "腐柵掠食者",
+      "name": "腐爛掠食者",
       "type": "melee",
       "attack_pattern": "chase_and_bite",
       "hp": 28,
       "speed": 82,
       "damage": 9,
+      "routes": ["scrap_highway", "toxic_marsh"],
       "drop_table": { "scrap": 3, "ammo": 1 }
     },
     "toxic_runner": {
@@ -16,6 +17,7 @@
       "hp": 18,
       "speed": 128,
       "damage": 7,
+      "routes": ["toxic_marsh", "crystal_scar"],
       "drop_table": { "scrap": 2, "ammo": 2 }
     },
     "spore_gunner": {
@@ -25,6 +27,7 @@
       "hp": 22,
       "speed": 62,
       "damage": 6,
+      "routes": ["crystal_scar", "toxic_marsh"],
       "drop_table": { "ammo": 4, "bio_crystal": 1 }
     },
     "rust_brute": {
@@ -34,6 +37,7 @@
       "hp": 72,
       "speed": 46,
       "damage": 16,
+      "routes": ["scrap_highway", "old_factory"],
       "drop_table": { "scrap": 8, "mutant_core": 1 }
     },
     "rot_wing": {
@@ -43,15 +47,17 @@
       "hp": 20,
       "speed": 112,
       "damage": 8,
+      "routes": ["crystal_scar", "toxic_marsh"],
       "drop_table": { "scrap": 2, "bio_crystal": 1 }
     },
     "mech_husk": {
-      "name": "汙染機械體",
+      "name": "污染機械體",
       "type": "hybrid",
       "attack_pattern": "mixed_melee_projectile",
       "hp": 46,
       "speed": 72,
       "damage": 12,
+      "routes": ["old_factory", "scrap_highway"],
       "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 }
     },
     "waste_titan": {
@@ -61,6 +67,7 @@
       "hp": 220,
       "speed": 44,
       "damage": 22,
+      "routes": ["crystal_scar", "old_factory"],
       "drop_table": { "scrap": 18, "ammo": 8, "bio_crystal": 3, "mutant_core": 2 }
     }
   }

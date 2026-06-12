@@ -1,37 +1,38 @@
-# SRS 對照表
+# SRS Traceability 對照表
 
-| SRS / 設計需求 | 目前實作與驗證 |
+| SRS / 設計需求 | 目前實作對應 |
 | --- | --- |
-| Godot 4.x 單機 2D Roguelike vertical slice | `project.godot` 使用 Godot 4.6.3。已具備村莊、公會、野外、戰鬥、掉落、任務、合成、存讀檔與自動測試。 |
-| 像素風偽 3D / 2.5D | `WorldBackdrop.gd`、Y ordering、PNG 建築、NPC、障礙物、道路、裂痕、汙染斑與地表層次提供俯視 2.5D 感。 |
-| 村莊據點 | `Village.gd` 配置鍛造、合成、補給、改裝、存檔、拆解、出口與 NPC。互動提示改為靠近才顯示，降低畫面混亂。 |
-| 冒險公會 | `Guild.gd` 提供任務接取、獎勵交付、出城入口與公會 NPC。 |
-| 野外探索 | `Wasteland.gd` 使用大型地圖、seed、資源點、事件點、冒險區域、敵人、Boss、障礙物與邊界，支援可重複探索。 |
-| 地圖邊界 | 村莊、公會、野外皆建立 StaticBody2D 邊界，`Player.gd` 也會同步限制玩家位置與相機範圍。 |
-| PC 鍵鼠操作 | `GameState._ensure_input_actions()` 設定 WASD、左鍵主要攻擊、右鍵遠程、Space 近戰、E 互動、I 裝備、M 小地圖、H 教學、F5/F9 存讀檔。 |
-| 左鍵依裝備決定動作 | `GameState.active_attack_mode()` 會依目前快捷裝備判斷 melee 或 ranged；`Player.gd` 用此結果讓左鍵揮砍或射擊。 |
-| 人物裝備介面 | `HUD.gd` 的 `InventoryPanel` / `equipment_panel` 顯示角色頭像、目前左鍵動作、近戰武器、遠程武器、護甲、工具、加成、任務、背包與資源數值。 |
-| 教學指引 | HUD 底部顯示基本鍵位，`H` 可開關完整教學提示；NPC 對話也會引導補給、接任務、出村、存檔與探索。 |
-| 對話框 | `GameState.dialogue_requested` 與 `HUD.gd` 的 `DialoguePanel` 顯示 NPC 名稱、身分與對話內容。 |
-| NPC 一次性互動獎勵 | `data/maps/npcs.json` 設定獎勵；`GameState.talked_npcs` 防止重複領取。自動測試驗證鍛造師首次交談給彈藥。 |
-| NPC 靠近才顯示 | `DialogueNpc.gd` 只在玩家進入互動範圍時顯示名稱、身分與交談提示。 |
-| 玩家多角度像素圖 | `assets/sprites/player/recycler_player_multiaction_8dir.png` 為 7 動作 × 8 方向 × 3 frame atlas。 |
-| 玩家動作狀態 | `Player.gd` 支援 `IDLE`、`WALK`、`SHOOT`、`DRAW_SWORD`、`SLASH`、`SWAP_TOOL`、`INTERACT`、`HIT`、`DEAD`。 |
-| 近戰 / 遠程戰鬥 | 近戰依面向判定前方敵人；遠程消耗彈藥並透過 projectile pool 生成投射物。 |
-| 敵人類型 | `data/enemies/enemies.json` 定義六種普通敵人與一名 Boss；`assets/sprites/enemies/polluted_enemy_six_types.png` 已改由圖二高細節 reference sheet 裁切，具備污染生物、機械與 Boss 輪廓差異。 |
-| Boss 戰 | `waste_titan` 作為廢土巨像 Boss 生成於晶化裂隙區，具備高血量、近身踩踏範圍、遠程污染彈與保證掉落。 |
-| 敵人上限與投射物池 | `Wasteland.gd` 生成 30 名普通敵人與 1 名 Boss；`ProjectilePool.gd` 控制投射物池，維持壓力場景可測。 |
-| 資源、裝備、配方 | `equipment.json`、`recipes.json`、`InventorySystem.gd` 與 `GameState.gd` 支援資源堆疊、合成與裝備顯示。掉落物使用 `recycler_item_icons.png`，由圖二裁切出廢鐵束、彈藥箱、異變核心與汙染晶核圖示，不再使用棋盤格。 |
-| 安全切場景 | `SceneRouter.gd` 使用 deferred scene change，避免 physics callback 內直接切場景造成 CollisionObject 移除錯誤。 |
-| 存讀檔與 checksum | `SaveManager.gd` 使用 `user://save_game.json`，包含 Base64 payload 與 SHA-256 checksum。 |
-| 視覺素材 | `RuntimeAssetLoader.gd` 載入 PNG/WAV；`docs/art_direction_reference_v3.png` 保存使用者指定圖二正式素材板；`scripts/tools/extract_reference_sheet_assets.py` 裁切正式玩家、敵人、掉落物、NPC、建築、props 與 tiles；`PixelAssetBaker.tscn` 在正式 atlas 存在時不覆蓋。 |
-| 音效與音樂 | `AudioManager.gd` 載入村莊、公會、野外音樂與攻擊、射擊、命中、死亡、互動、撿取音效。 |
-| 自動驗證 | `ValidationRunner.tscn` 驗證資料、輸入、NPC、HUD、裝備與左鍵攻擊模式；`AutomatedPlaytestRunner.tscn` 驗證可玩流程。 |
-| 視覺 Review | `VisualReviewRunner.tscn` 輸出村莊、公會、野外、野外道路、野外 Boss 區與人物裝備面板截圖，供人工確認畫面是否過亂、缺少道路感或重疊。 |
+| Godot 4.x 2D Roguelike vertical slice | `project.godot` 使用 Godot 4.6.3，主流程包含村莊、公會、廢土探索、戰鬥、掉落、任務、裝備與存檔。 |
+| 像素風偽 3D / 2.5D | `WorldBackdrop.gd`、Y-sort、建築 / props PNG、道路與地形色調提供 2.5D 層次。 |
+| 主角是回收機器人 | `assets/sprites/player/recycler_player_multiaction_8dir.png` 以 R-17 機器人為玩家 atlas，`HUD.gd` 人物面板顯示 R-17。 |
+| 玩家多方向與多動作 | `Player.gd` 使用 `AnimatedSprite2D`，支援 idle、walk、shoot、draw_sword、slash、swap_tool、interact 等動作與 8 方向。 |
+| PC 操作 | `GameState._ensure_input_actions()` 註冊 WASD、滑鼠左鍵、右鍵、Space、E、Tab/I、M、H、F5/F9、Q、1-4。 |
+| 左鍵依裝備行動 | `GameState.active_attack_mode()` 與 `Player._primary_attack_pressed()` 會依快捷欄目前裝備決定近戰或射擊。 |
+| 村莊據點 | `Village.gd` 包含鍛造、合成、商店、改裝、拆解、存檔、公會入口與四方向廢土出口。 |
+| 冒險公會 | `Guild.gd` 提供委託板、獎勵交付、前往廢土與返回村莊。 |
+| 多張廢土地圖 | `data/maps/wasteland_routes.json` 定義四條路線，`Wasteland.gd` 依 route id 生成不同敵人、資源、地標與 Boss 狀態。 |
+| 明顯道路與障礙物 | `WorldBackdrop.gd` 依路線生成不同道路配置；`Wasteland.gd` 生成車骸、毒池、牆、路障、枯樹、訊號塔等。 |
+| NPC 指引 | `data/maps/npcs.json` 提供繁中 NPC 對話；`DialogueNpc.gd` 靠近才顯示提示，離開自動關閉對話。 |
+| NPC 一次性獎勵 | `GameState.talk_to_npc()` 用 `talked_npcs` 記錄首次交談，避免重複領獎，並寫入存檔。 |
+| 對話框 | `HUD.gd` 建立正式對話面板，顯示 NPC 名稱、職業、文字與操作提示。 |
+| 人物裝備面板 | `HUD.gd` 的 `InventoryPanel` 顯示 R-17、目前左鍵行動、近戰、遠程、護甲、工具、背包與屬性加成。 |
+| 裝備與背包 | `equipment.json`、`recipes.json`、`InventorySystem.gd`、`GameState.gd` 支援撿取、堆疊、穿戴、快捷欄與配方。 |
+| 武器多樣性 | 裝備資料包含鏽蝕回收刀、火花切割斧、重型拆解槌、管線釘槍、線圈步槍、酸蝕噴射器、護甲與工具。 |
+| 近戰 / 遠程戰鬥循環 | 近戰可清敵並回收彈藥，遠程消耗彈藥處理距離威脅，`ProjectilePool.gd` 控制投射物上限。 |
+| 敵人類型 | `enemies.json` 定義近戰、快速、遠程、重型、飛行、混合型與 Boss。 |
+| 敵人動態與受擊回饋 | `Enemy.gd` 加入呼吸、翻面、受擊震動、血條、傷害數字、污染液 / 火花效果與死亡淡出。 |
+| Boss | `waste_titan` 作為 Boss，Boss 路線會生成，受擊與死亡有明顯回饋。 |
+| 掉落物美術 | `Pickup.gd` 使用高細節 item atlas，掉落物有漂浮動畫與繁中撿取提示。 |
+| 任務系統 | `quests.json` 包含四份路線委託，涵蓋擊殺、收集、回村交付與裝備獎勵。 |
+| 存檔 / 讀檔 | `SaveManager.gd` 使用 `user://save_game.json`，Base64 payload + SHA-256 checksum，支援 `has_save()`、`load_or_new()`。 |
+| 關閉後繼續進度 | `Main.gd` 啟動時顯示繼續 / 新遊戲選單，存檔包含場景、路線、位置、背包、裝備、NPC、任務與 intro 狀態。 |
+| 場景切換安全 | `SceneRouter.gd` 使用 deferred scene change，避免 physics callback 直接移除 CollisionObject。 |
+| 開場故事導入 | `Main.gd` 新遊戲顯示 R-17 背景故事與操作導入。 |
+| 自動驗證 | `ValidationRunner.tscn`、`AutomatedPlaytestRunner.tscn`、`VisualReviewRunner.tscn` 驗證資料、場景、戰鬥、UI 與視覺截圖。 |
 
-## 剩餘差距
+## 仍待補強
 
-- 目前已達可玩 vertical slice，且主要素材已改成圖二高細節廢土像素風；若以正式上市品質為目標，仍需專職美術逐張清理裁切邊緣、補足完整 8 方向角色動畫與製作更完整的 tileset。
-- 裝備介面尚未完成正式 RPG 拖曳換裝操作，但已提供角色頭像、裝備卡、背包與主要數值。
-- 野外已加入大型地圖、障礙、事件、冒險區域、Boss 與資源，但還需要更多非戰鬥玩法與場景變化。
-- 對話框已可用，但尚未加入選項分支、任務接受確認與逐字動畫。
+- 目前 NPC / 敵人以高細節單張 PNG 加上程式動態為主，後續應補完整逐格動畫 atlas。
+- 地形已分路線色調與道路，但仍可補更多手繪 tileset 變化。
+- 音樂與音效已有入口，但正式商業版仍需更多分場景 BGM 與打擊音效。
+- 路線事件已保存 discovered events，但一般資源節點與敵人重生仍需更細緻的持久化設計。

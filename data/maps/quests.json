@@ -2,23 +2,47 @@
   "quests": [
     {
       "id": "clear_scrap_route",
-      "name": "清理廢鐵通道",
-      "description": "公會需要回收商清出通往廢鐵堆的路線。",
+      "name": "清理廢鐵公路",
+      "description": "南方公路被污染獸占據。擊倒污染體並帶回足夠廢鐵，替村莊打通補給線。",
+      "route": "scrap_highway",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
         { "type": "collect", "item": "scrap", "amount": 12 }
       ],
-      "reward": { "ammo": 12, "mutant_core": 1 }
+      "reward": { "ammo": 12, "mutant_core": 1, "breaker_hammer": 1 }
     },
     {
       "id": "toxic_sample",
-      "name": "回收汙染樣本",
-      "description": "改裝站需要汙染晶核測試新的過濾核心。",
+      "name": "採集毒沼樣本",
+      "description": "西方排水區出現高濃度污染晶核。採回樣本，讓改裝站分析毒霧來源。",
+      "route": "toxic_marsh",
       "objectives": [
         { "type": "collect", "item": "bio_crystal", "amount": 2 },
         { "type": "defeat", "counter": "defeat_enemy", "amount": 3 }
       ],
       "reward": { "scrap": 24, "coil_launcher": 1 }
+    },
+    {
+      "id": "crystal_scar_recon",
+      "name": "偵察紫晶裂隙",
+      "description": "北方裂隙正在擴張。進入紫晶帶，擊退遠程污染體並回報晶核讀數。",
+      "route": "crystal_scar",
+      "objectives": [
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 6 },
+        { "type": "collect", "item": "bio_crystal", "amount": 3 }
+      ],
+      "reward": { "scrap": 18, "crystal_guard": 1 }
+    },
+    {
+      "id": "old_factory_core",
+      "name": "舊工廠核心回收",
+      "description": "東方舊工廠仍有自律機械巡邏。擊敗精英機械並帶回核心，解鎖更高階改裝。",
+      "route": "old_factory",
+      "objectives": [
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 8 },
+        { "type": "collect", "item": "mutant_core", "amount": 2 }
+      ],
+      "reward": { "ammo": 18, "industrial_exoshell": 1, "acid_sprayer": 1 }
     }
   ]
 }

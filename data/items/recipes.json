@@ -9,17 +9,31 @@
     },
     {
       "id": "spark_cutter",
-      "name": "火花切割刀",
+      "name": "火花切割斧",
       "station": "craft",
       "cost": { "scrap": 20, "bio_crystal": 1 },
       "result": { "spark_cutter": 1 }
     },
     {
+      "id": "breaker_hammer",
+      "name": "重型拆解槌",
+      "station": "craft",
+      "cost": { "scrap": 32, "mutant_core": 1 },
+      "result": { "breaker_hammer": 1 }
+    },
+    {
       "id": "coil_launcher",
-      "name": "線圈發射器",
+      "name": "線圈步槍",
       "station": "mod",
       "cost": { "scrap": 28, "mutant_core": 2 },
       "result": { "coil_launcher": 1 }
+    },
+    {
+      "id": "acid_sprayer",
+      "name": "酸蝕噴射器",
+      "station": "mod",
+      "cost": { "scrap": 24, "bio_crystal": 2 },
+      "result": { "acid_sprayer": 1 }
     },
     {
       "id": "shop_ammo",
@@ -34,6 +48,13 @@
       "station": "recycle",
       "cost": { "mutant_core": 1 },
       "result": { "scrap": 14, "bio_crystal": 1 }
+    },
+    {
+      "id": "magnet_breaker",
+      "name": "磁吸拆解器",
+      "station": "mod",
+      "cost": { "scrap": 18, "bio_crystal": 1 },
+      "result": { "magnet_breaker": 1 }
     }
   ]
 }

@@ -27,7 +27,6 @@ func _ready() -> void:
 		"world_prop": 60,
 		"obstacle": 40,
 		"projectile_pool": 1,
-		"boss": 1,
 		"player": 1
 	})
 	await _check_scene("guild", GUILD_SCENE, {
@@ -41,6 +40,7 @@ func _ready() -> void:
 	_check_npc_dialogue_loop()
 	await _check_playable_core_loop()
 	await _check_wasteland_prop_contract()
+	await _check_wasteland_route_contract()
 	await _check_enemy_projectile_damage()
 	await _check_pc_controls()
 	await _check_player_animation_contract()
@@ -55,6 +55,7 @@ func _check_data_registry() -> void:
 	_expect(DataRegistry.recipes.size() >= 5, "recipe data has forge craft shop and mod loops")
 	_expect(DataRegistry.quests.size() >= 2, "quest data has guild contracts")
 	_expect(DataRegistry.npcs.size() >= 6, "npc data has village and guild dialogue characters")
+	_expect(DataRegistry.wasteland_routes.size() >= 4, "wasteland has four route definitions")
 	_expect(int(DataRegistry.map_params.get("width_tiles", 0)) >= 100, "wasteland width is at least 100 tiles")
 	_expect(int(DataRegistry.map_params.get("height_tiles", 0)) >= 80, "wasteland height is at least 80 tiles")
 	_expect(int(DataRegistry.map_params.get("prop_nodes", 0)) >= 60, "wasteland has enough pseudo-3D props configured")
@@ -260,6 +261,24 @@ func _check_wasteland_prop_contract() -> void:
 		_expect(_has_collision_shape(obstacle), "blocking obstacle has collision")
 	instance.queue_free()
 	await get_tree().process_frame
+
+func _check_wasteland_route_contract() -> void:
+	for route_id in ["scrap_highway", "toxic_marsh", "crystal_scar", "old_factory"]:
+		GameState.reset_new_run(false)
+		GameState.current_scene_id = "wasteland"
+		GameState.set_current_route(route_id)
+		var instance := WASTELAND_SCENE.instantiate()
+		add_child(instance)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var route := DataRegistry.get_wasteland_route(route_id)
+		_expect(not route.is_empty(), "route data exists: " + route_id)
+		_expect(get_tree().get_nodes_in_group("enemy").size() >= 30, "route has enemy pressure: " + route_id)
+		_expect(get_tree().get_nodes_in_group("pickup").size() >= 42, "route has resources: " + route_id)
+		if bool(route.get("boss_enabled", false)):
+			_expect(get_tree().get_nodes_in_group("boss").size() >= 1, "boss route spawns boss: " + route_id)
+		instance.queue_free()
+		await get_tree().process_frame
 
 func _check_enemy_projectile_damage() -> void:
 	GameState.reset_new_run(false)

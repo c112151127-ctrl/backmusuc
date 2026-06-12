@@ -7,12 +7,40 @@
       "cooldown": 0.32,
       "stats": { "attack": 8, "defense": 0, "speed": 0 }
     },
+    "spark_cutter": {
+      "name": "火花切割斧",
+      "slot": "weapon",
+      "attack_mode": "melee",
+      "cooldown": 0.42,
+      "stats": { "attack": 15, "defense": 0, "speed": -2 }
+    },
+    "breaker_hammer": {
+      "name": "重型拆解槌",
+      "slot": "weapon",
+      "attack_mode": "melee",
+      "cooldown": 0.62,
+      "stats": { "attack": 24, "defense": 2, "speed": -8 }
+    },
     "pipe_rifle": {
       "name": "管線釘槍",
       "slot": "ranged",
       "attack_mode": "ranged",
       "cooldown": 0.22,
       "stats": { "attack": 6, "defense": 0, "speed": 0 }
+    },
+    "coil_launcher": {
+      "name": "線圈步槍",
+      "slot": "ranged",
+      "attack_mode": "ranged",
+      "cooldown": 0.55,
+      "stats": { "attack": 18, "defense": 0, "speed": -6 }
+    },
+    "acid_sprayer": {
+      "name": "酸蝕噴射器",
+      "slot": "ranged",
+      "attack_mode": "ranged",
+      "cooldown": 0.36,
+      "stats": { "attack": 12, "defense": 0, "speed": -1 }
     },
     "patched_armor": {
       "name": "補丁護甲",
@@ -21,6 +49,20 @@
       "cooldown": 0.0,
       "stats": { "attack": 0, "defense": 3, "speed": -4 }
     },
+    "crystal_guard": {
+      "name": "晶核護盾",
+      "slot": "armor",
+      "attack_mode": "passive",
+      "cooldown": 0.0,
+      "stats": { "attack": 0, "defense": 7, "speed": -3 }
+    },
+    "industrial_exoshell": {
+      "name": "工業外骨架",
+      "slot": "armor",
+      "attack_mode": "passive",
+      "cooldown": 0.0,
+      "stats": { "attack": 3, "defense": 10, "speed": -8 }
+    },
     "recycler_glove": {
       "name": "回收商手套",
       "slot": "tool",
@@ -28,25 +70,18 @@
       "cooldown": 0.0,
       "stats": { "attack": 1, "defense": 0, "speed": 8 }
     },
-    "spark_cutter": {
-      "name": "火花切割刀",
-      "slot": "weapon",
-      "attack_mode": "melee",
-      "cooldown": 0.42,
-      "stats": { "attack": 14, "defense": 0, "speed": -2 }
-    },
-    "coil_launcher": {
-      "name": "線圈發射器",
-      "slot": "ranged",
-      "attack_mode": "ranged",
-      "cooldown": 0.55,
-      "stats": { "attack": 18, "defense": 0, "speed": -6 }
+    "magnet_breaker": {
+      "name": "磁吸拆解器",
+      "slot": "tool",
+      "attack_mode": "tool",
+      "cooldown": 0.0,
+      "stats": { "attack": 4, "defense": 1, "speed": 5 }
     }
   },
   "resources": {
     "scrap": { "name": "廢鐵", "stack": 999 },
     "ammo": { "name": "彈藥", "stack": 200 },
     "mutant_core": { "name": "異變核心", "stack": 99 },
-    "bio_crystal": { "name": "汙染晶核", "stack": 99 }
+    "bio_crystal": { "name": "污染晶核", "stack": 99 }
   }
 }

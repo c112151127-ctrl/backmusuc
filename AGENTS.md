@@ -2,7 +2,7 @@
 
 ## 專案目標
 
-本專案是 Godot 4.6.3 製作的像素風偽 3D 單機 Roguelike vertical slice。核心目標是讓玩家能在村莊整備、前往冒險公會接委託、進入野外探索與戰鬥、撿取資源、切換裝備、回村強化並存讀檔。
+本專案是 Godot 4.6.3 製作的像素風偽 3D 單機 Roguelike vertical slice。核心目標是讓玩家能在村莊整備、前往冒險公會接委託、進入四個不同廢土區探索與戰鬥、撿取資源、切換裝備、回村強化並存讀檔。
 
 ## 語言政策
 
@@ -12,21 +12,26 @@
 ## 必讀檔案
 
 - `project.godot`
+- `AI_HANDOFF.md`
+- `WORKFLOW.md`
 - `docs/IMPLEMENTATION_PLAN.md`
 - `docs/PLAYTEST_CHECKLIST.md`
 - `docs/SRS_TRACEABILITY.md`
-- `docs/EXPORT_READINESS.md`
 - `data/maps/npcs.json`
 - `data/maps/quests.json`
+- `data/maps/wasteland_routes.json`
 - `data/items/equipment.json`
 - `data/items/recipes.json`
 - `data/enemies/enemies.json`
+- `scenes/main/Main.gd`
 - `scenes/player/Player.gd`
+- `scenes/ui/HUD.gd`
 - `scenes/levels/village/Village.gd`
 - `scenes/levels/guild/Guild.gd`
 - `scenes/levels/wasteland/Wasteland.gd`
 - `scripts/tests/VerticalSliceVerifier.gd`
 - `scripts/tests/AutomatedPlaytestRunner.gd`
+- `scripts/tests/VisualReviewRunner.gd`
 
 ## 開發流程
 
@@ -56,22 +61,24 @@ Godot console 固定使用：
 若修改 JSON，至少執行：
 
 ```powershell
-node -e "JSON.parse(require('fs').readFileSync('data/maps/npcs.json','utf8')); console.log('JSON OK')"
+node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
 ```
 
-若修改像素素材生成或玩家動作 atlas，先執行：
+若修改玩家動作 atlas，先執行：
 
 ```powershell
+python scripts\tools\build_robot_player_atlas.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 ```
 
 ## Git 流程
 
 - 每次完成可驗證更新後都要 commit。
-- commit message 使用英文，例如 `Document handoff and expand player actions`。
+- commit message 使用英文。
 - 不提交 `.env`、token、credentials、cache、匯出成品或 build artifacts。
 - 不 force push。
-- 安全設定 remote：
+
+安全設定 remote：
 
 ```powershell
 if (git remote get-url origin 2>$null) { git remote set-url origin https://github.com/yuchan27/Game.git } else { git remote add origin https://github.com/yuchan27/Game.git }
@@ -94,11 +101,7 @@ git push -u origin HEAD
 
 - Godot 執行檔路徑。
 - `project.godot` 的 autoload 結構。
-- `ValidationRunner.tscn` 與 `AutomatedPlaytestRunner.tscn` 的驗證用途。
+- `ValidationRunner.tscn`、`AutomatedPlaytestRunner.tscn`、`VisualReviewRunner.tscn` 的驗證用途。
 - 存檔格式的 Base64/checksum 安全設計。
-- 村莊、公會、野外三場景的核心流程。
+- 村莊、公會、廢土三場景的核心流程。
 - 繁體中文玩家可見文字政策。
-
-## 從最新 Codex 工作繼續
-
-先讀 `AI_HANDOFF.md` 與 `docs/IMPLEMENTATION_PLAN.md`，再跑驗證命令確認目前狀態。若驗證失敗，優先修復會破壞 playable vertical slice 的問題，再擴充內容。

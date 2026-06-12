@@ -3,11 +3,16 @@ class_name WastelandEnemy
 
 const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const PICKUP_SCRIPT := preload("res://scripts/components/Pickup.gd")
+const DAMAGE_POPUP_SCRIPT := preload("res://scripts/components/DamagePopup.gd")
+const HEALTH_BAR_SCRIPT := preload("res://scripts/components/EnemyHealthBar.gd")
+const HIT_EFFECT_SCRIPT := preload("res://scripts/components/HitEffect.gd")
 const ENEMY_ATLAS_PATH := "res://assets/sprites/enemies/polluted_enemy_six_types.png"
 
 var enemy_id := "scrap_biter"
+var enemy_name := "污染體"
 var enemy_type := "melee"
 var hp := 24
+var max_hp := 24
 var speed := 70.0
 var damage := 8
 var drop_table: Dictionary = {}
@@ -22,11 +27,18 @@ var ranged_range := 0.0
 var ranged_attack_cooldown := 1.4
 var can_fire_projectiles := false
 var is_dead := false
+var _phase := 0.0
+var _sprite: Sprite2D
+var _health_bar: Node2D
+var _base_sprite_pos := Vector2.ZERO
+var _base_scale := Vector2.ONE
 
 func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 	enemy_id = id
+	enemy_name = String(data.get("name", id))
 	enemy_type = String(data.get("type", "melee"))
 	hp = int(data.get("hp", 24))
+	max_hp = hp
 	speed = float(data.get("speed", 70.0))
 	damage = int(data.get("damage", 8))
 	drop_table = data.get("drop_table", {})
@@ -42,13 +54,20 @@ func _ready() -> void:
 	shape.radius = 32 if enemy_type == "boss" else 18
 	collision.shape = shape
 	add_child(collision)
-	var sprite := Sprite2D.new()
-	sprite.texture = _enemy_texture(enemy_type)
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite = Sprite2D.new()
+	_sprite.texture = _enemy_texture(enemy_type)
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	if enemy_type == "boss":
-		sprite.scale = Vector2(1.9, 1.9)
-		sprite.position.y = -14
-	add_child(sprite)
+		_sprite.scale = Vector2(1.9, 1.9)
+		_sprite.position.y = -14
+	_base_sprite_pos = _sprite.position
+	_base_scale = _sprite.scale
+	add_child(_sprite)
+	_health_bar = HEALTH_BAR_SCRIPT.new()
+	_health_bar.setup(116.0 if enemy_type == "boss" else 54.0)
+	_health_bar.position = Vector2(0, -90 if enemy_type == "boss" else -54)
+	_health_bar.visible = false
+	add_child(_health_bar)
 
 func _enemy_texture(type_id: String) -> Texture2D:
 	var atlas: Texture2D = _load_atlas_texture(ENEMY_ATLAS_PATH)
@@ -75,11 +94,19 @@ func _load_atlas_texture(path: String) -> Texture2D:
 	return null
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
+	_phase += delta * _animation_speed()
+	if _sprite != null:
+		_sprite.position = _base_sprite_pos + Vector2(0, sin(_phase) * (3.5 if enemy_type == "flying" else 1.6))
+		_sprite.scale = _base_scale * (1.0 + sin(_phase * 0.7) * 0.025)
 	if target == null or not is_instance_valid(target):
 		return
 	var offset := target.global_position - global_position
 	var distance := offset.length()
 	var desired := _desired_direction(offset, distance)
+	if _sprite != null and abs(offset.x) > 4.0:
+		_sprite.flip_h = offset.x < 0.0
 	velocity = desired * _current_speed()
 	move_and_slide()
 	attack_cooldown = max(0.0, attack_cooldown - delta)
@@ -97,23 +124,47 @@ func take_damage(amount: int, melee := false) -> void:
 		return
 	hp -= amount
 	AudioManager.play_sfx("hit")
-	modulate = Color(1.0, 0.55, 0.45)
-	await get_tree().create_timer(0.06).timeout
-	modulate = Color.WHITE
+	_show_damage_feedback(amount, melee)
+	if _health_bar != null:
+		_health_bar.show_value(hp, max_hp)
 	if hp <= 0:
 		_die(melee)
+
+func _show_damage_feedback(amount: int, melee: bool) -> void:
+	var popup: Label = DAMAGE_POPUP_SCRIPT.new()
+	popup.setup(amount, melee)
+	popup.global_position = global_position + Vector2(randf_range(-12, 12), -44)
+	get_tree().current_scene.add_child(popup)
+	var effect: Node2D = HIT_EFFECT_SCRIPT.new()
+	var effect_kind := "spark" if enemy_type in ["hybrid", "boss"] else "pollution"
+	effect.setup(effect_kind)
+	effect.global_position = global_position + Vector2(0, -16)
+	get_tree().current_scene.add_child(effect)
+	if _sprite != null:
+		_sprite.modulate = Color(1.0, 0.55, 0.45)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(_sprite, "position", _base_sprite_pos + Vector2(randf_range(-8, 8), -4), 0.04)
+		tween.tween_property(_sprite, "modulate", Color.WHITE, 0.12)
 
 func _die(melee: bool) -> void:
 	if is_dead:
 		return
 	is_dead = true
 	AudioManager.play_sfx("death")
-	if melee or enemy_type == "boss":
-		GameState.record_enemy_defeated()
+	GameState.record_enemy_defeated()
 	if enemy_type == "boss":
-		GameState.notify("Boss 已擊倒：廢土巨像的核心暴露了")
+		GameState.notify("Boss 廢土巨像倒下，污染核心開始崩解")
+	for child in get_children():
+		if child is CollisionShape2D:
+			child.set_deferred("disabled", true)
+	set_physics_process(false)
 	call_deferred("_spawn_drops", global_position)
-	call_deferred("queue_free")
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "scale", scale * 1.12, 0.22)
+	tween.tween_property(self, "modulate:a", 0.0, 0.22)
+	tween.finished.connect(queue_free)
 
 func _spawn_drops(drop_position: Vector2) -> void:
 	for item_id in drop_table.keys():
@@ -191,6 +242,17 @@ func _current_speed() -> float:
 	if enemy_type == "boss":
 		return speed * 0.72
 	return speed
+
+func _animation_speed() -> float:
+	match enemy_type:
+		"fast":
+			return 8.0
+		"flying":
+			return 9.0
+		"boss":
+			return 3.4
+		_:
+			return 4.8
 
 func _contact_cooldown() -> float:
 	match enemy_type:

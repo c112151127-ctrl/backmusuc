@@ -1,142 +1,78 @@
-# 廢土回收商實作計畫
+# 廢土回收商 Vertical Slice v2 實作計畫
 
 ## 目前狀態
 
-本專案是 Godot 4.6.3 製作的 PC 優先像素風偽 3D vertical slice。現在已具備村莊、公會、野外探索、NPC 對話、任務、近戰、射擊、掉落、撿取、裝備、存讀檔、音效、音樂與自動驗證場景。
+本專案是 Godot 4.6.3 的 PC 版像素偽 3D vertical slice。已具備村莊、公會、廢土、玩家狀態機、裝備、背包、任務、敵人、掉落物、存檔與驗證 runner。
 
-本輪重點已轉向「不像 MVP、而像完整遊戲的可上市方向」：優先以使用者提供的圖二高細節廢土像素資產板替換舊幾何素材，改善道路感、掉落物辨識、敵人輪廓、Boss 區域、個人裝備面板與玩家逐幀攻擊動作。
+本輪 v2 的重點是把原本偏靜態的畫面與流程升級成更像正式遊戲的版本：R-17 機器人主角、NPC / 怪物動態、對話框與人物面板重設計、四方向廢土路線、戰鬥傷害回饋、啟動選單與可持續存檔。
 
 ## Vertical Slice 目標
 
-玩家進入遊戲後應能完成下列流程：
-
-1. 在村莊看見清楚的功能建築、道路與 NPC。
-2. 透過教學提示理解 WASD、滑鼠左鍵、右鍵、E、I、M、H、F5、F9 的用途。
-3. 靠近 NPC 才看到交談提示，使用對話框取得引導或一次性獎勵。
-4. 開啟人物裝備介面，確認目前左鍵會依裝備變成揮刀或射擊。
-5. 到公會接任務後前往廢土。
-6. 在大型野外地圖沿著明顯道路、毒沼、晶化裂隙探索。
-7. 擊敗不同輪廓敵人與 Boss，撿取有明確圖示的廢鐵、彈藥、異變核心、汙染晶核。
-8. 回村強化、補給、存檔，形成「整備 → 出村 → 戰鬥 → 回收 → 強化」循環。
-
-## 必要修改檔案
-
-- `scripts/tools/extract_reference_sheet_assets.py`：從圖二 reference sheet 裁切正式玩家、敵人、掉落物、NPC、建築、props 與 tiles。
-- `scripts/tools/PixelAssetBaker.gd`：保留尺寸驗證與占位回退，但正式 atlas 存在時不得覆蓋圖二素材。
-- `scripts/utils/PixelArtFactory.gd`：優先讀取正式 PNG atlas，只有缺檔時才回退到程式生成占位圖。
-- `scripts/systems/WorldBackdrop.gd`：村莊、公會、野外地表、道路、裂痕、汙染與 2.5D 層次。
-- `scenes/ui/HUD.gd`：人物裝備介面、HUD、教學、小地圖、對話框。
-- `scenes/levels/village/Village.gd`：村莊配置、建築/NPC/出口動線。
-- `scenes/levels/guild/Guild.gd`：公會任務與出口動線。
-- `scenes/levels/wasteland/Wasteland.gd`：大型野外、障礙、事件、資源、敵人、Boss 與邊界。
-- `scripts/components/Pickup.gd`：掉落物圖示、撿取提示、物件比例。
-- `scripts/tests/VerticalSliceVerifier.gd`：素材尺寸與核心流程驗證。
-- `scripts/tests/VisualReviewRunner.gd`：產出村莊、公會、野外、道路、Boss、人物面板截圖供人工 review。
-- `assets/sprites/player/recycler_player_multiaction_8dir.png`：玩家 7 動作 × 8 方向 × 3 frame。
-- `assets/sprites/enemies/polluted_enemy_six_types.png`：六種敵人與 Boss。
-- `assets/sprites/items/recycler_item_icons.png`：四種主要掉落物。
-- `docs/art_direction_reference_v3.png`：本輪正式圖二美術來源。
-- `docs/art_extraction_preview_v3.png`：裁切後的素材總覽，供人工 review。
+玩家從標題畫面進入遊戲後，可以看到 R-17 的背景故事，進入村莊據點，與 NPC 交談取得教學，前往公會接委託，從村莊四個出口進入不同廢土區，戰鬥、撿取資源、看到敵人血量與傷害，回村強化、存檔，重新開啟遊戲後可繼續進度。
 
 ## 玩家流程
 
-- 村莊：補給、合成、鍛造、改裝、拆解、存檔、前往公會或廢土。
-- 公會：接取委託、查看獎勵、前往野外。
-- 野外：沿道路探索，辨識毒沼與晶化裂隙，擊殺敵人、打 Boss、撿資源。
-- 回村：使用資源補給與強化，再次出發。
+1. 啟動遊戲，若有存檔可選「繼續遊戲」，否則選「新遊戲」。
+2. 新遊戲播放 R-17 重啟故事，可按「開始行動」進入村莊。
+3. 在村莊靠近 NPC 才顯示互動提示，按 `E` 開對話，離開 NPC 對話自動關閉。
+4. 用 `Tab / I` 開人物裝備面板，確認目前左鍵行動、武器、護甲、工具、背包。
+5. 從公會接委託，或從村莊北 / 南 / 西 / 東四個出口選路線。
+6. 廢土區戰鬥時，左鍵依目前裝備決定近戰或射擊；敵人受擊顯示傷害數字、血條與污染液 / 火花效果。
+7. 撿取廢鐵、彈藥、異變核心、污染晶核，回村鍛造、合成、改裝、交易或存檔。
+8. 完成委託後回公會交付，取得新裝備或資源。
 
 ## NPC 指引流程
 
-NPC 只在玩家靠近時顯示名稱、職業與 `E：交談`。交談時底部對話框顯示 NPC 名稱、身分與繁體中文對話。
+村莊 NPC 負責把玩家導向主要操作：
 
-主要 NPC 分工：
+- 鍛造老陳：說明近戰 / 遠程與左鍵依裝備行動。
+- 補給商阿洛：說明背包、裝備、快捷欄。
+- 維修機 R-17：說明存檔、維修與機體損毀回村。
+- 倖存者小隊長：說明四方向廢土區。
 
-- 鍛造老陳：提醒先補彈、再接任務，首次給彈藥。
-- 補給商阿洛：引導購買彈藥與資源補給。
-- 維修機 R-17：引導存檔與機械修復。
-- 倖存者小隊長：引導公會委託與野外風險。
-- 公會接待員：引導接取「清理廢鐵通道」。
-- 路線偵察員：提示道路、毒沼與晶化裂隙方向。
+公會 NPC 負責把玩家導向委託與路線選擇：
+
+- 公會櫃檯艾琳：說明接委託與交付獎勵。
+- 路線偵察員卡特：說明不同路線的危險與資源。
 
 ## 互動與獎勵驗證
 
-- `GameState.talked_npcs` 記錄已交談 NPC，防止一次性獎勵重複領取。
-- `data/maps/npcs.json` 保留 NPC 對話、身分、位置與 reward。
-- `ValidationRunner.tscn` 驗證 NPC 資料、輸入、HUD、裝備與左鍵攻擊模式。
-- `AutomatedPlaytestRunner.tscn` 驗證可從村莊前往公會、接任務、進野外、戰鬥、撿取與回村。
+- NPC 第一次交談會依 `data/maps/npcs.json` 發放一次性獎勵。
+- `GameState.talked_npcs` 會寫入存檔，重複交談不重複發獎。
+- 場景切換、接任務、完成任務、製作配方與存檔點互動會自動存檔。
+- 對話框會在計時、按 `Esc` 或離開 NPC 範圍時關閉。
 
-## 像素多角度角色規格
+## 美術與動畫規格
 
-玩家素材檔案：`assets/sprites/player/recycler_player_multiaction_8dir.png`
+- 主角為 R-17 回收機器人，不再使用人類背包角色。
+- 玩家 atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`。
+- 尺寸契約：7 個動作 x 8 方向 x 3 frame，單 frame `48x56`，總尺寸 `1008x448`。
+- 必要動作：idle、walk、shoot、draw_sword、slash、swap_tool、interact。
+- NPC 以高細節 PNG 為基礎，加入 idle / talk 動態。
+- 敵人以高細節 PNG atlas 為基礎，加入呼吸、追擊翻面、攻擊節奏、受擊震動、死亡淡出。
 
-- 規格：7 動作 × 8 方向 × 3 frame。
-- 單格：48×56。
-- 方向：下、右下、右、右上、上、左上、左、左下。
-- 角色特徵：機械面罩、青色護目鏡、回收背包、肩甲、工具掛點、刀與管線釘槍。
-- 動作需要逐幀有重心變化，不能只是平移或靜態換圖。
+## 四個廢土路線
 
-## 玩家動作狀態規格
+- 北：紫晶裂隙，遠程與飛行敵人多，Boss 啟用。
+- 南：廢鐵公路，破裂柏油、車骸、彈藥箱與近戰敵人。
+- 西：毒沼排水區，毒池、管線、快速敵人與污染晶核。
+- 東：舊工廠外圍，工業障礙物、機械敵人與 Boss 啟用。
 
-- `idle`：呼吸與站姿微動，保留面向。
-- `walking`：腳步與身體上下起伏，8 方向移動。
-- `shooting`：依滑鼠方向舉槍，三幀包含預備、槍口火光、後座回彈。
-- `drawing sword`：切到刀或按近戰時先拔刀，手臂與刀柄有出鞘感。
-- `slashing`：三幀包含蓄力、斬擊弧、收刀；左鍵裝備刀時觸發。
-- `switching tools / weapons`：按 `Q` 或 `1-4` 時短暫切工具，HUD 快捷欄同步高亮。
-- `interacting`：靠近 NPC 或功能站按 `E`，角色面向目標並顯示對話框或功能結果。
-- `hit`：受擊短暫閃爍與擊退。
-- `dead`：血量歸零時顯示死亡提示並安全切回村莊。
-
-## 美術方向
-
-參考圖檔：`docs/art_direction_reference_v3.png`
-
-整體方向：
-
-- 圖二是唯一正式風格基準；舊版簡化幾何素材不得再作為正式輸出。
-- 深色廢土背景，避免單調純色地板。
-- 物件有厚輪廓、暗部、鏽蝕橘、污染綠、核心紅、晶體紫與冷色高光。
-- 地圖需要道路、裂痕、廢車、路標、毒池、晶化礦脈與工業設施。
-- 敵人不能只是色塊，要從輪廓能辨識近戰、快速、遠程、重型、飛行、混合型與 Boss。
-- 掉落物要像獨立戰利品：廢鐵束、彈藥箱、異變核心、汙染晶核。
-- 文字提示必須收斂：NPC 與功能提示只在靠近時顯示，避免覆蓋地圖。
-
-## 圖二裁切管線
-
-1. 將使用者提供的圖二保存為 `docs/art_direction_reference_v3.png`。
-2. 執行 `python scripts\tools\extract_reference_sheet_assets.py`。
-3. 腳本會用預覽背景 flood-fill 去背，再把素材等比例置中到 Godot 尺寸契約。
-4. 輸出玩家、敵人、掉落物、NPC、建築、props、村莊地板、野外地板、道路與毒泥 tile。
-5. 檢查 `docs/art_extraction_preview_v3.png`，確認沒有舊方塊素材、黑底框、裁半隻怪或扁平化。
-6. 再跑 `PixelAssetBaker.tscn`。若正式 atlas 存在且尺寸正確，baker 只保留它們，不覆蓋回占位圖。
+路線資料由 `data/maps/wasteland_routes.json` 管理，Godot 場景仍共用 `Wasteland.tscn`，避免維護四份重複場景。
 
 ## 驗證清單
 
-提交前執行：
-
-```powershell
-node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
-python scripts\tools\extract_reference_sheet_assets.py
-& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
-& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
-& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
-& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
-& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/VisualReviewRunner.tscn'
-```
-
-Visual review 需人工確認：
-
-- 村莊功能建築不重疊，NPC 提示只在靠近時出現。
-- 人物裝備介面清楚顯示角色、裝備、數值、背包與目前左鍵動作。
-- 野外道路清楚，能辨識廢鐵公路、毒沼與晶化裂隙。
-- 掉落物、敵人、Boss 不再像測試色塊。
-- 角色和建築/障礙物的前後層次合理。
+- JSON 全部可解析。
+- Godot headless 可載入專案。
+- `ValidationRunner.tscn` 通過。
+- `AutomatedPlaytestRunner.tscn` 通過。
+- `VisualReviewRunner.tscn` 能輸出村莊、公會、廢土、Boss、人物面板截圖。
+- Computer Use 若可用，開啟 Godot 實機 review；若被 Windows 權限或使用者取消阻擋，記錄 blocker。
 
 ## 剩餘 TODO
 
-- 將所有程式生成素材逐步替換為人工精修 PNG tileset、角色、建築、敵人與 UI icon。
-- 裝備介面增加拖曳換裝、角色紙娃娃、裝備比較與套裝效果。
-- 野外增加更多非戰鬥玩法，例如解謎、資源採集小遊戲、隨機商人、受困倖存者與環境危害。
-- 對話系統加入選項分支、任務確認、逐字動畫與重要 NPC 立繪。
-- 增加更多冒險地圖：廢鐵公路、毒沼邊界、晶化礦坑、舊工廠。
-- 音效與音樂仍需正式製作或採購授權素材，現階段為可驗證占位版本。
+- 補完整逐格 NPC / 怪物動畫 atlas。
+- 補更細緻的地板 tileset 與建築碰撞形狀。
+- 補正式音樂與更多戰鬥音效。
+- 擴充 Boss 技能與路線事件持久化。
+- Android 觸控 UI 延後處理，v2 先完成 PC 版。

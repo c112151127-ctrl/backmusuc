@@ -23,6 +23,7 @@ static func craft_recipe(recipe_id: String) -> bool:
 	for item_id in result.keys():
 		GameState.add_item(String(item_id), int(result[item_id]))
 	GameState.notify("製作完成：%s" % String(recipe.get("name", recipe_id)))
+	SaveManager.save_game(false)
 	return true
 
 static func shop_buy_ammo() -> bool:

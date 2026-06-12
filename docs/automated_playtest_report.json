@@ -109,16 +109,16 @@
 			"has_spark_cutter": true,
 			"inventory_open": true,
 			"position": {
-				"x": 824.399658203125,
-				"y": 560.0
+				"x": 1312.39965820313,
+				"y": 920.0
 			},
 			"talked_npcs": [
 				"forge_master"
 			]
 		},
 		"wasteland": {
-			"ammo_after_ranged": 18,
-			"enemy_count": 31,
+			"ammo_after_ranged": 17,
+			"enemy_count": 30,
 			"position": {
 				"x": 720.0,
 				"y": 720.0

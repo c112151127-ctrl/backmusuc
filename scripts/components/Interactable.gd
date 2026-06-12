@@ -24,7 +24,7 @@ func _ready() -> void:
 
 	_label = Label.new()
 	_label.text = "E：" + prompt
-	_label.position = Vector2(-44, -54)
+	_label.position = Vector2(-50, -58)
 	_label.visible = false
 	_label.add_theme_font_size_override("font_size", 14)
 	add_child(_label)

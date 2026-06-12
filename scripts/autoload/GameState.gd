@@ -6,12 +6,14 @@ signal equipment_changed
 signal scene_changed(scene_id: String)
 signal notification_requested(message: String)
 signal dialogue_requested(speaker: String, role: String, message: String)
+signal dialogue_closed
 
 const MAX_HP := 120
 const MAX_EP := 60
 
 var current_scene_id := "village"
 var active_spawn_point := "default"
+var current_route_id := "scrap_highway"
 var seed := 9527
 var level := 1
 var hp := MAX_HP
@@ -27,6 +29,8 @@ var talked_npcs: Array[String] = []
 var active_quest_id := ""
 var completed_quests: Array[String] = []
 var quest_progress: Dictionary = {}
+var route_states: Dictionary = {}
+var intro_seen := false
 var inventory: Dictionary = {}
 var quick_slots: Array[String] = ["rust_blade", "pipe_rifle", "recycler_glove", "ammo"]
 var active_quick_slot := 0
@@ -44,6 +48,7 @@ func _ready() -> void:
 func reset_new_run(emit_changes := true) -> void:
 	current_scene_id = "village"
 	active_spawn_point = "default"
+	current_route_id = "scrap_highway"
 	seed = 9527
 	level = 1
 	hp = MAX_HP
@@ -52,12 +57,15 @@ func reset_new_run(emit_changes := true) -> void:
 	scrap = 40
 	cores = 2
 	crystals = 0
+	player_position = Vector2.ZERO
 	defeated_enemies = 0
 	discovered_events.clear()
 	talked_npcs.clear()
 	active_quest_id = ""
 	completed_quests.clear()
 	quest_progress.clear()
+	route_states.clear()
+	intro_seen = false
 	active_quick_slot = 0
 	inventory = {
 		"scrap": scrap,
@@ -83,6 +91,18 @@ func set_scene(scene_id: String, spawn_point := "default") -> void:
 	active_spawn_point = spawn_point
 	scene_changed.emit(scene_id)
 
+func set_current_route(route_id: String) -> void:
+	if DataRegistry.get_wasteland_route(route_id).is_empty():
+		notify("找不到廢土路線：%s" % route_id)
+		return
+	current_route_id = route_id
+	var route := DataRegistry.get_wasteland_route(route_id)
+	notify("已選擇路線：%s" % String(route.get("name", route_id)))
+	stats_changed.emit()
+
+func mark_intro_seen() -> void:
+	intro_seen = true
+
 func add_item(item_id: String, amount := 1) -> void:
 	inventory[item_id] = int(inventory.get(item_id, 0)) + amount
 	_sync_resource_counters()
@@ -105,7 +125,7 @@ func can_equip(item_id: String) -> bool:
 
 func equip_item(item_id: String) -> bool:
 	if not can_equip(item_id):
-		notify("背包中沒有可裝備的項目：%s" % item_id)
+		notify("背包中沒有可裝備物品：%s" % item_id)
 		return false
 	var item := DataRegistry.get_equipment(item_id)
 	var slot := String(item.get("slot", "tool"))
@@ -122,7 +142,7 @@ func use_quick_slot(index: int) -> bool:
 	active_quick_slot = index
 	var item_id := String(quick_slots[index])
 	if item_id.is_empty():
-		notify("快捷欄 %d 尚未設定" % [index + 1])
+		notify("快捷欄 %d 是空的" % [index + 1])
 		equipment_changed.emit()
 		return false
 	if not DataRegistry.get_equipment(item_id).is_empty():
@@ -132,7 +152,7 @@ func use_quick_slot(index: int) -> bool:
 		notify("快捷欄 %d：%s x%d" % [index + 1, String(resource.get("name", item_id)), int(inventory.get(item_id, 0))])
 		equipment_changed.emit()
 		return true
-	notify("快捷欄 %d 找不到項目：%s" % [index + 1, item_id])
+	notify("快捷欄 %d 無法使用：%s" % [index + 1, item_id])
 	equipment_changed.emit()
 	return false
 
@@ -146,7 +166,7 @@ func set_quick_slot(index: int, item_id: String) -> bool:
 	if index < 0 or index >= quick_slots.size():
 		return false
 	if not inventory.has(item_id):
-		notify("背包沒有 %s，無法放入快捷欄" % item_id)
+		notify("背包中沒有 %s，無法放入快捷欄" % item_display_name(item_id))
 		return false
 	quick_slots[index] = item_id
 	equipment_changed.emit()
@@ -199,9 +219,12 @@ func take_damage(amount: int) -> void:
 	hp = max(0, hp - reduced)
 	stats_changed.emit()
 	if hp <= 0:
-		notify("機體損毀，返回村莊維修")
+		notify("R-17 機體損毀，返回村莊維修點重啟")
 		hp = MAX_HP
-		SceneRouter.change_to("village", "clinic")
+		call_deferred("_return_to_clinic")
+
+func _return_to_clinic() -> void:
+	SceneRouter.change_to("village", "clinic")
 
 func heal_full() -> void:
 	hp = MAX_HP
@@ -216,23 +239,27 @@ func record_enemy_defeated() -> void:
 	advance_quest_counter("defeat_enemy", 1)
 	if defeated_enemies % 3 == 0:
 		add_item("ammo", 4)
-		notify("近戰回收成功，獲得彈藥 x4")
+		notify("近戰清出空間，回收彈藥 x4")
 
 func start_quest(quest_id: String) -> bool:
 	if completed_quests.has(quest_id):
-		notify("這份委託已完成")
+		notify("這份委託已經完成")
 		return false
 	var quest := DataRegistry.get_quest(quest_id)
 	if quest.is_empty():
 		notify("找不到委託：%s" % quest_id)
 		return false
 	active_quest_id = quest_id
+	var route_id := String(quest.get("route", ""))
+	if not route_id.is_empty():
+		current_route_id = route_id
 	for objective in quest.get("objectives", []):
 		if String(objective.get("type", "")) == "defeat":
 			var counter := String(objective.get("counter", "defeat_enemy"))
 			quest_progress[counter] = int(quest_progress.get(counter, 0))
-	notify("已接取委託：%s" % String(quest.get("name", quest_id)))
+	notify("已接下委託：%s" % String(quest.get("name", quest_id)))
 	_emit_all()
+	SaveManager.save_game(false)
 	return true
 
 func advance_quest_counter(counter_id: String, amount := 1) -> void:
@@ -262,7 +289,7 @@ func is_active_quest_ready() -> bool:
 
 func complete_active_quest() -> bool:
 	if active_quest_id.is_empty():
-		notify("尚未接取委託")
+		notify("目前沒有進行中的委託")
 		return false
 	if not is_active_quest_ready():
 		notify("委託目標尚未完成")
@@ -278,6 +305,7 @@ func complete_active_quest() -> bool:
 	notify("委託完成：%s" % String(quest.get("name", active_quest_id)))
 	active_quest_id = ""
 	_emit_all()
+	SaveManager.save_game(false)
 	return true
 
 func active_quest_summary() -> String:
@@ -301,6 +329,9 @@ func active_quest_summary() -> String:
 func notify(message: String) -> void:
 	notification_requested.emit(message)
 
+func close_dialogue() -> void:
+	dialogue_closed.emit()
+
 func talk_to_npc(npc_id: String) -> bool:
 	var npc := DataRegistry.get_npc(npc_id)
 	if npc.is_empty():
@@ -320,7 +351,7 @@ func talk_to_npc(npc_id: String) -> bool:
 
 func get_save_data() -> Dictionary:
 	return {
-		"version": 1,
+		"version": 2,
 		"player": {
 			"health": hp,
 			"energy": ep,
@@ -331,14 +362,17 @@ func get_save_data() -> Dictionary:
 		"equipment": equipment,
 		"scene": current_scene_id,
 		"spawn_point": active_spawn_point,
+		"route": current_route_id,
 		"seed": seed,
 		"level": level,
+		"intro_seen": intro_seen,
 		"defeated_enemies": defeated_enemies,
 		"discovered_events": discovered_events,
 		"talked_npcs": talked_npcs,
 		"active_quest_id": active_quest_id,
 		"completed_quests": completed_quests,
 		"quest_progress": quest_progress,
+		"route_states": route_states,
 		"quick_slots": quick_slots,
 		"active_quick_slot": active_quick_slot
 	}
@@ -354,14 +388,17 @@ func load_save_data(data: Dictionary) -> bool:
 	equipment = data.get("equipment", equipment)
 	current_scene_id = String(data.get("scene", "village"))
 	active_spawn_point = String(data.get("spawn_point", "default"))
+	current_route_id = String(data.get("route", "scrap_highway"))
 	seed = int(data.get("seed", 9527))
 	level = int(data.get("level", 1))
+	intro_seen = bool(data.get("intro_seen", false))
 	defeated_enemies = int(data.get("defeated_enemies", 0))
 	discovered_events.assign(data.get("discovered_events", []))
 	talked_npcs.assign(data.get("talked_npcs", []))
 	active_quest_id = String(data.get("active_quest_id", ""))
 	completed_quests.assign(data.get("completed_quests", []))
 	quest_progress = data.get("quest_progress", {})
+	route_states = data.get("route_states", {})
 	quick_slots.assign(data.get("quick_slots", ["rust_blade", "pipe_rifle", "recycler_glove", "ammo"]))
 	active_quick_slot = int(data.get("active_quick_slot", 0))
 	_sync_resource_counters()

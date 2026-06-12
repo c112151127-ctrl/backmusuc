@@ -18,6 +18,8 @@ func _ready() -> void:
 	print("[VISUAL] Visual review screenshots started")
 	for scene_id in REVIEW_TARGETS.keys():
 		await _capture_scene(String(scene_id), REVIEW_TARGETS[scene_id])
+	for route_id in ["scrap_highway", "toxic_marsh", "crystal_scar", "old_factory"]:
+		await _capture_wasteland_route(route_id)
 	print("[VISUAL] Visual review screenshots complete")
 	get_tree().quit(0)
 
@@ -32,8 +34,7 @@ func _capture_scene(scene_id: String, packed_scene: PackedScene) -> void:
 	add_child(_active_scene)
 	for _i in range(8):
 		await get_tree().process_frame
-	var image := get_viewport().get_texture().get_image()
-	_save_image(image, "visual_review_%s" % scene_id)
+	_save_viewport_image("visual_review_%s" % scene_id)
 	if scene_id == "village":
 		await _capture_inventory_panel()
 	if scene_id == "wasteland":
@@ -48,8 +49,7 @@ func _capture_inventory_panel() -> void:
 	panel.visible = true
 	for _i in range(8):
 		await get_tree().process_frame
-	var image := get_viewport().get_texture().get_image()
-	_save_image(image, "visual_review_inventory_panel")
+	_save_viewport_image("visual_review_inventory_panel")
 
 func _capture_wasteland_road_area() -> void:
 	var players := get_tree().get_nodes_in_group("player")
@@ -60,8 +60,7 @@ func _capture_wasteland_road_area() -> void:
 	GameState.player_position = player.global_position
 	for _i in range(12):
 		await get_tree().process_frame
-	var image := get_viewport().get_texture().get_image()
-	_save_image(image, "visual_review_wasteland_road")
+	_save_viewport_image("visual_review_wasteland_road")
 
 func _capture_wasteland_boss_area() -> void:
 	var bosses := get_tree().get_nodes_in_group("boss")
@@ -74,8 +73,35 @@ func _capture_wasteland_boss_area() -> void:
 	GameState.player_position = player.global_position
 	for _i in range(12):
 		await get_tree().process_frame
-	var image := get_viewport().get_texture().get_image()
-	_save_image(image, "visual_review_wasteland_boss")
+	_save_viewport_image("visual_review_wasteland_boss")
+
+func _capture_wasteland_route(route_id: String) -> void:
+	if _active_scene != null:
+		_active_scene.queue_free()
+		await get_tree().process_frame
+	GameState.reset_new_run(false)
+	GameState.current_scene_id = "wasteland"
+	GameState.set_current_route(route_id)
+	GameState.seed = 424242
+	_active_scene = WASTELAND_SCENE.instantiate()
+	add_child(_active_scene)
+	for _i in range(10):
+		await get_tree().process_frame
+	_save_viewport_image("visual_review_route_%s" % route_id)
+
+func _save_viewport_image(name: String) -> void:
+	if DisplayServer.get_name().to_lower().contains("headless"):
+		print("[VISUAL] Skipped " + name + " because headless mode has no rendered viewport image")
+		return
+	var viewport_texture: Texture2D = get_viewport().get_texture()
+	if viewport_texture == null:
+		print("[VISUAL] Skipped " + name + " because the current renderer has no viewport texture")
+		return
+	var image: Image = viewport_texture.get_image()
+	if image == null:
+		print("[VISUAL] Skipped " + name + " because the viewport image is unavailable")
+		return
+	_save_image(image, name)
 
 func _save_image(image: Image, name: String) -> void:
 	var path := ProjectSettings.globalize_path("res://docs/%s.png" % name)

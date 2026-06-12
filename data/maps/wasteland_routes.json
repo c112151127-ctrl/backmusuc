@@ -1,0 +1,52 @@
+{
+  "routes": {
+    "scrap_highway": {
+      "name": "南方廢鐵公路",
+      "direction": "south",
+      "seed_offset": 1100,
+      "music": "wasteland",
+      "tile_theme": "road",
+      "notice": "南方廢鐵公路：破裂柏油、車骸與彈藥箱較多，近戰污染體會從路障間衝出。",
+      "enemy_mix": ["scrap_biter", "rust_brute", "mech_husk"],
+      "prop_mix": ["wreck", "road_marker", "scrap_barricade", "scrap_wall", "rust_rock"],
+      "resource_mix": ["scrap", "ammo", "scrap", "mutant_core"],
+      "boss_enabled": false
+    },
+    "toxic_marsh": {
+      "name": "西方毒沼排水區",
+      "direction": "west",
+      "seed_offset": 2200,
+      "music": "wasteland",
+      "tile_theme": "toxic",
+      "notice": "西方毒沼排水區：毒池會切斷路線，快速爬行獸和孢囊敵人會包夾 R-17。",
+      "enemy_mix": ["toxic_runner", "spore_gunner", "rot_wing", "scrap_biter"],
+      "prop_mix": ["toxic_pool", "signal_pylon", "dead_tree", "scrap_wall", "rust_rock"],
+      "resource_mix": ["bio_crystal", "scrap", "ammo", "bio_crystal"],
+      "boss_enabled": false
+    },
+    "crystal_scar": {
+      "name": "北方紫晶裂隙",
+      "direction": "north",
+      "seed_offset": 3300,
+      "music": "wasteland",
+      "tile_theme": "crystal",
+      "notice": "北方紫晶裂隙：遠程污染體聚集在紫晶周圍，廢土巨像可能在裂隙深處甦醒。",
+      "enemy_mix": ["spore_gunner", "rot_wing", "toxic_runner", "waste_titan"],
+      "prop_mix": ["signal_pylon", "toxic_pool", "dead_tree", "rust_rock", "scrap_wall"],
+      "resource_mix": ["bio_crystal", "mutant_core", "ammo", "bio_crystal"],
+      "boss_enabled": true
+    },
+    "old_factory": {
+      "name": "東方舊工廠外圍",
+      "direction": "east",
+      "seed_offset": 4400,
+      "music": "wasteland",
+      "tile_theme": "factory",
+      "notice": "東方舊工廠外圍：工業障礙物密集，污染機械體會混合近戰與遠程攻擊。",
+      "enemy_mix": ["mech_husk", "rust_brute", "spore_gunner", "waste_titan"],
+      "prop_mix": ["scrap_wall", "scrap_barricade", "signal_pylon", "wreck", "road_marker"],
+      "resource_mix": ["scrap", "ammo", "mutant_core", "scrap"],
+      "boss_enabled": true
+    }
+  }
+}

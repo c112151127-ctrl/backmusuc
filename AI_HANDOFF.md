@@ -1,64 +1,100 @@
-# AI 交接文件
+# AI Handoff
 
-## 專案狀態
+## Project Goal
 
-目前專案位於 `C:\Code\Game\first-game`，使用 Godot 4.6.3。主分支工作目前在 `wip/codex-3d-game-progress`，Godot console 路徑固定為：
+`C:\Code\Game\first-game` is a Godot 4.6.3 PC-first pixel-art pseudo-3D game. The vertical slice goal is: village preparation, guild contracts, four-route wasteland exploration, combat, resource pickup, equipment switching, save/load, and return-to-village progression.
+
+## Current Status
+
+Latest Codex work upgrades the project to Vertical Slice v2:
+
+- Player is now R-17 recycler robot.
+- NPCs animate through procedural idle/talk motion and close dialogue when the player leaves.
+- Enemies show movement animation, damage numbers, health bars, hit effects, and death fade.
+- Village is a crossroad hub with four wasteland route exits.
+- Wasteland uses `data/maps/wasteland_routes.json` for route-specific enemy mixes, props, resources, road style, and Boss enablement.
+- HUD has redesigned dialogue, bottom controls, quickbar, minimap, tutorial, and character equipment panel.
+- Save system has `has_save()`, `load_or_new()`, checksum-protected payload, route state, intro state, NPC state, quest state, inventory, equipment, and quick slots.
+
+## Language Policy
+
+- Technical planning, command reasoning, commit messages, and implementation notes: English.
+- Player-facing UI, NPC dialogue, quest text, playtest checklist, SRS traceability, and user-facing documentation: Traditional Chinese.
+
+## Important Files
+
+- `project.godot`
+- `scenes/main/Main.gd`
+- `scenes/player/Player.gd`
+- `scenes/ui/HUD.gd`
+- `scenes/levels/village/Village.gd`
+- `scenes/levels/guild/Guild.gd`
+- `scenes/levels/wasteland/Wasteland.gd`
+- `scripts/autoload/GameState.gd`
+- `scripts/autoload/SaveManager.gd`
+- `scripts/autoload/SceneRouter.gd`
+- `scripts/components/DialogueNpc.gd`
+- `scripts/components/Enemy.gd`
+- `data/maps/wasteland_routes.json`
+- `data/maps/npcs.json`
+- `data/maps/quests.json`
+- `data/items/equipment.json`
+- `docs/IMPLEMENTATION_PLAN.md`
+- `docs/PLAYTEST_CHECKLIST.md`
+- `docs/SRS_TRACEABILITY.md`
+
+## Development Workflow
+
+Planning alone is not completion. For implementation tasks, the AI must inspect, plan, execute, validate, fix obvious issues, commit, and report results.
+
+Before edits:
 
 ```powershell
-C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe
+git status --short
+git branch --show-current
+git log --oneline --decorate -10
+git show --stat HEAD
 ```
 
-本次交接前的基準提交為 `81676c9 Add dialogue NPC guidance`。後續接手者應以 `git log --oneline --decorate -10` 重新確認最新提交。
+Prefer small, testable Godot changes. Do not rebuild the project or replace the autoload architecture unless explicitly asked.
 
-## 目前 playable vertical slice
-
-- 村莊：鍛造、合成、商店、改裝、拆解、存檔、前往野外、前往公會。
-- 公會：接取委託、交付獎勵、前往野外、返回村莊。
-- 野外：100x80 tile 程序場景、Y-Sort 地標、障礙、資源、事件、30 名敵人、200 投射物上限。
-- 玩家：WASD、滑鼠近戰/射擊、`Q` 與 `1`-`4` 快捷欄、背包、存讀檔。
-- Android 操作：HUD 內建方向 D-pad 與觸控動作按鈕，仍需 Android 工具鏈補齊後做實機驗證。
-- NPC：村莊與公會 NPC 由 `data/maps/npcs.json` 生成，第一次交談給一次性導引獎勵，重複交談不重複給獎。
-
-## 本次工作重點
-
-本次 Codex 工作應完成交接文件、實作計畫、SRS traceability、playtest checklist，並把玩家多角度像素素材規格與可驗證動作狀態補齊。玩家動作合約應至少包含：
-
-- idle / 待機
-- walk / 行走
-- shoot / 射擊
-- draw_sword / 拔刀
-- slash / 斬擊
-- swap_tool / 切換工具或武器
-- interact / 互動
-
-## 驗證命令
+## Validation Workflow
 
 ```powershell
-node -e "JSON.parse(require('fs').readFileSync('data/maps/npcs.json','utf8')); console.log('JSON OK')"
+node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
+python scripts\tools\build_robot_player_atlas.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
 ```
 
-## 不能任意更動的內容
+Use `VisualReviewRunner.tscn` or Computer Use for visual review when possible.
 
-- 不重建專案，不改 Godot 主版本。
-- 不移除 autoload：`GameState`、`DataRegistry`、`SaveManager`、`SceneRouter`。
-- 不移除 `ValidationRunner`、`AutomatedPlaytestRunner`、`PixelAssetBaker`。
-- 不破壞 `user://save_game.json` 的 Base64 payload + SHA-256 checksum 設計。
-- 不把玩家可見文字改成簡體中文或英文。
-- 不提交匯出成品、cache、secrets 或 token。
+## Git Workflow
 
-## 完成任務定義
+- Commit every verified implementation stage.
+- Commit messages must be English.
+- Do not commit `.env`, secrets, tokens, caches, or build artifacts.
+- Do not force push.
 
-Planning alone is not completion. For implementation tasks, the AI must inspect, plan, execute, validate, fix obvious issues, commit, and report results.
-
-完成一個實作任務至少要包含：讀取現況、更新檔案、跑合理驗證、修復明顯錯誤、commit、嘗試 push。若 push 因 GitHub 驗證失敗，保留本地 commit 並回報完整錯誤。
-
-## 安全推送
+Safe remote setup:
 
 ```powershell
 if (git remote get-url origin 2>$null) { git remote set-url origin https://github.com/yuchan27/Game.git } else { git remote add origin https://github.com/yuchan27/Game.git }
 git push -u origin HEAD
 ```
+
+## Do Not Change Without Explicit Approval
+
+- Godot executable path.
+- Godot version.
+- `project.godot` autoload structure.
+- `ValidationRunner.tscn`, `AutomatedPlaytestRunner.tscn`, and `VisualReviewRunner.tscn` purposes.
+- Save checksum/Base64 design.
+- Village / guild / wasteland core loop.
+- Traditional Chinese player-facing language policy.
+
+## Safety Rule
+
+Do not bulk delete files or directories. Never use `del /s`, `rd /s`, `rmdir /s`, `Remove-Item -Recurse`, or `rm -rf`. If deletion is needed, delete one explicit file path at a time.
