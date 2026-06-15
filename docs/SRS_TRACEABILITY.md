@@ -4,9 +4,9 @@
 | --- | --- |
 | Godot 4.x 2D Roguelike vertical slice | `project.godot` 使用 Godot 4.6.3，流程包含標題、村莊、公會、四方向廢土、戰鬥、掉落、任務、裝備、地圖與存檔。 |
 | 像素風偽 3D / 2.5D | `WorldBackdrop.gd`、Y-sort、建築 / props PNG、底部碰撞與道路地形色彩提供偽 3D 層次。 |
-| 主角為回收機器人 | `recycler_player_multiaction_8dir.png` 由正式生成管線建立原創 R-17，不再使用人類角色疊機器人外殼。 |
+| 主角為回收機器人 | `recycler_player_multiaction_8dir.png` 由 `docs/art_direction_reference_r17_full_body.png` 建立全身原創 R-17，不再使用人類角色疊機器人外殼。 |
 | 主角 8 方向 | `Player.gd` 與 player atlas 使用 8 方向 row：下、右下、右、右上、上、左上、左、左下。 |
-| 主角多動作 | Atlas 支援 `idle`、`walk`、`shoot`、`draw_sword`、`slash`、`swap_tool`、`interact`、`hit`、`dead`，總尺寸 `1296x448`。 |
+| 主角多動作 | Atlas 支援 `idle`、`walk`、`shoot`、`draw_sword`、`slash`、`swap_tool`、`interact`、`hit`、`dead`，單格 `112x128`、每動作 4 幀、總尺寸 `4032x1024`。 |
 | PC 操作 | `GameState._ensure_input_actions()` 設定 WASD、滑鼠左鍵、右鍵、空白鍵、Tab/I、H、M、F5/F9、1-4、Q。 |
 | 左鍵依裝備決定動作 | `GameState.active_attack_mode()` 與 `Player._primary_attack_pressed()` 依目前快捷裝備切換近戰或射擊。 |
 | 滑鼠瞄準射擊 | `Player._aim_direction()` 讀取滑鼠方向，遠程武器播放射擊動畫並建立 projectile。 |

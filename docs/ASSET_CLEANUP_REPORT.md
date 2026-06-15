@@ -2,10 +2,11 @@
 
 ## 本輪正式來源
 
-- `docs/art_direction_reference_r17_v4.png`：R-17 高細節回收機器人正式參考來源。
+- `docs/art_direction_reference_r17_full_body.png`：R-17 高細節完整身體回收機器人正式參考來源。
 - `data/art/player_animation_manifest.json`：玩家 atlas 的格尺寸、動作、方向與幀數契約。
 - `data/art/visual_assets.json`：正式場景、NPC、敵人、Boss、道具、掉落物、UI 圖示與地圖標記來源。
-- `assets/sprites/player/recycler_player_multiaction_8dir.png`：Godot 目前實際讀取的 R-17 多動作八方向 atlas。
+- `assets/sprites/player/recycler_player_multiaction_8dir.png`：Godot 目前實際讀取的 R-17 完整身體多動作八方向 atlas。
+- `docs/player_full_body_idle_preview.png`、`docs/player_full_body_first_frame_x4.png`：本輪保留的主角全身檢查圖，用於確認不是半身裁切或人類疊圖。
 - `assets/sprites/items/recycler_item_icons.png` 與 `assets/sprites/items/*.png`：裝備列、背包、掉落物使用的正式圖示。
 - `assets/audio/*.wav`：目前 HUD、攻擊、受傷、轉場、升級與選單使用的音效。
 

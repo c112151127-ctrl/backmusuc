@@ -4,15 +4,15 @@
       "type": "player",
       "path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
       "size": [
-        80,
-        96
+        112,
+        128
       ],
       "map_marker": "player",
       "asset_id": "player_r17",
       "usage_id": "player_r17",
       "unique_required": true,
       "minimap_marker": "player",
-      "source_ref": "res://docs/art_direction_reference_r17_v4.png",
+      "source_ref": "res://docs/art_direction_reference_r17_full_body.png",
       "animation_manifest": "res://data/art/player_animation_manifest.json"
     },
     "npc_forge_master": {

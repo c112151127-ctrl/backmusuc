@@ -1,7 +1,7 @@
 extends RefCounted
 class_name PixelArtFactory
 
-const PLAYER_FRAME_SIZE := Vector2i(80, 96)
+const PLAYER_FRAME_SIZE := Vector2i(112, 128)
 const PLAYER_FRAMES_PER_ACTION := 4
 const ENEMY_FRAME_SIZE := Vector2i(96, 72)
 const ITEM_FRAME_SIZE := Vector2i(88, 72)

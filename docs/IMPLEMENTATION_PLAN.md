@@ -25,10 +25,9 @@
 - `data/maps/events.json`
 - `data/maps/wasteland_routes.json`
 - `data/enemies/enemies.json`
-- `scripts/tools/generate_formal_visual_assets.py`
+- `scripts/tools/build_release_candidate_assets.py`
+- `scripts/tools/build_robot_player_atlas.py`（相容入口，會呼叫正式 release-candidate atlas 管線）
 - `scripts/tools/verify_visual_assets.py`
-- `scripts/tools/build_robot_player_atlas.py`
-- `scripts/tools/generate_ground_tiles.py`
 - `scripts/ui/WorldMapView.gd`
 - `scripts/ui/MiniMapView.gd`
 - `scenes/ui/HUD.gd`
@@ -73,8 +72,9 @@ NPC 對話透過 `GameState.talk_to_npc()` 記錄 `talked_npcs`。第一次對�
 - 造型方向：白灰陶瓷外殼、青色感測眼、圓潤身軀、長臂、荒野刮痕、回收工具掛件。
 - 限制：只能參考「圓潤、自然磨損、友善仿生機器人」方向，不直接複製任何電影角色。
 - Atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`
-- 單格尺寸：`48x56`
-- 排列：9 動作 x 8 方向 x 3 frame，總尺寸 `1296x448`
+- 單格尺寸：`112x128`
+- 排列：9 動作 x 8 方向 x 4 frame，總尺寸 `4032x1024`
+- 正式參考圖：`docs/art_direction_reference_r17_full_body.png`
 - 方向 row：下、右下、右、右上、上、左上、左、左下。
 
 ## 玩家動作狀態

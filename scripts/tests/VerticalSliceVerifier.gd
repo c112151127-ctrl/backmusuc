@@ -90,7 +90,7 @@ func _check_enemy_behavior_contract() -> void:
 		enemy.free()
 
 func _check_baked_assets() -> void:
-	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(2880, 768), "baked R-17 player atlas exists at 9 actions x 8 directions x 4 frames")
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(4032, 1024), "baked full-body R-17 player atlas exists at 9 actions x 8 directions x 4 frames")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(672, 72), "baked enemy atlas has 6 enemy types plus boss")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(352, 72), "baked high-detail item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")

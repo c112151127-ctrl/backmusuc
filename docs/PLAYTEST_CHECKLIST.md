@@ -4,9 +4,8 @@
 
 ```powershell
 node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/art/visual_assets.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('JSON OK', f); }"
-python scripts\tools\generate_formal_visual_assets.py
+python scripts\tools\build_release_candidate_assets.py
 python scripts\tools\verify_visual_assets.py
-python scripts\tools\generate_ground_tiles.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
@@ -25,7 +24,8 @@ python scripts\tools\generate_ground_tiles.py
 
 - `A` 往左、`D` 往右，左右視角不能反。
 - `W` 往上、`S` 往下，八方向動畫能依移動方向切換。
-- 主角應為原創 R-17 回收機器人，不可出現人類頭髮、背包角色或人類與機器人重疊。
+- 主角應使用 `docs/art_direction_reference_r17_full_body.png` 來源建立的全身 R-17 回收機器人，不可出現人類頭髮、背包角色、半身裁切或人類與機器人重疊。
+- `assets/sprites/player/recycler_player_multiaction_8dir.png` 應為 `4032x1024`，單格 `112x128`，每個待機方向都要看得到頭、身體、手臂與腿部。
 - 受擊與死亡會有可見閃光、震動或回村維修提示。
 
 ## 戰鬥與裝備

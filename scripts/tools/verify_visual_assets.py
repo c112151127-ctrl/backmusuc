@@ -133,16 +133,25 @@ def verify_player_manifest(failures: list[str]) -> None:
     directions = int(manifest.get("directions", 0))
     frames = int(manifest.get("frames_per_action", 0))
     actions = manifest.get("actions", [])
-    if frame_size != [80, 96]:
-        fail("R-17 player manifest frame_size must be [80, 96]", failures)
+    if frame_size != [112, 128]:
+        fail("R-17 player manifest frame_size must be [112, 128]", failures)
     if directions != 8 or frames != 4 or len(actions) != 9:
         fail("R-17 player manifest must define 9 actions, 8 directions, 4 frames", failures)
 
     atlas_path = resolve(str(manifest.get("atlas_path", "")))
     if atlas_path.exists():
         image = Image.open(atlas_path).convert("RGBA")
-        if image.size != (2880, 768):
-            fail(f"R-17 atlas size must be 2880x768, got {image.size}", failures)
+        expected_size = (112 * 4 * 9, 128 * 8)
+        if image.size != expected_size:
+            fail(f"R-17 atlas size must be {expected_size[0]}x{expected_size[1]}, got {image.size}", failures)
+        for direction in range(8):
+            frame = image.crop((0, direction * 128, 112, (direction + 1) * 128))
+            bbox = frame.getbbox()
+            if bbox is None:
+                fail(f"R-17 idle frame for direction {direction} is blank", failures)
+                continue
+            if bbox[3] - bbox[1] < 104:
+                fail(f"R-17 idle frame for direction {direction} is not full-body enough: bbox={bbox}", failures)
 
 
 def verify_no_mojibake(failures: list[str]) -> None:

@@ -1,12 +1,12 @@
 {
   "frame_size": [
-    80,
-    96
+    112,
+    128
   ],
   "directions": 8,
   "frames_per_action": 4,
   "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
-  "reference_path": "res://docs/art_direction_reference_r17_v4.png",
+  "reference_path": "res://docs/art_direction_reference_r17_full_body.png",
   "actions": [
     {
       "id": "idle",

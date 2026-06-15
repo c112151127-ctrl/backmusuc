@@ -292,7 +292,7 @@ def make_preview(images: Iterable[tuple[str, Image.Image]]) -> None:
 
 def validate_outputs() -> None:
     expected = {
-        SPRITES / "player" / "recycler_player_multiaction_8dir.png": (1008, 448),
+        SPRITES / "player" / "recycler_player_multiaction_8dir.png": (4032, 1024),
         SPRITES / "enemies" / "polluted_enemy_six_types.png": (672, 72),
         SPRITES / "items" / "recycler_item_icons.png": (320, 64),
         SPRITES / "tiles" / "village_ground_2p5d.png": (32, 32),

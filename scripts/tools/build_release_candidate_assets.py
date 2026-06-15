@@ -13,12 +13,17 @@ ROOT = Path(__file__).resolve().parents[2]
 SPRITES = ROOT / "assets" / "sprites"
 DOCS = ROOT / "docs"
 REFERENCE_SOURCE = Path(
-    r"C:\Users\wuwu6\.codex\generated_images\019e9e33-9677-73b2-8b87-c6acad59966e\ig_0754933d1d3f43ca016a2c1881a16881919ef893001a05800f.png"
+    r"C:\Users\wuwu6\AppData\Local\Temp\codex-clipboard-23e1c8dd-9b16-4a6a-a8a0-fe0a591e045d.png"
 )
-REFERENCE_COPY = DOCS / "art_direction_reference_r17_v4.png"
+REFERENCE_FALLBACKS = [
+    Path(r"C:\Users\wuwu6\.codex\generated_images\019e9e33-9677-73b2-8b87-c6acad59966e\ig_0754933d1d3f43ca016a2c1881a16881919ef893001a05800f.png"),
+    DOCS / "art_direction_reference_r17_full_body.png",
+    DOCS / "art_direction_reference_r17_v4.png",
+]
+REFERENCE_COPY = DOCS / "art_direction_reference_r17_full_body.png"
 
-FRAME_W = 80
-FRAME_H = 96
+FRAME_W = 112
+FRAME_H = 128
 FRAMES_PER_ACTION = 4
 DIRECTIONS = 8
 ACTIONS = [
@@ -35,14 +40,14 @@ ACTIONS = [
 
 
 BASE_BOXES = {
-    0: (800, 50, 873, 111),   # right
-    1: (585, 50, 661, 114),   # down-right
-    2: (111, 34, 185, 114),   # down/front
-    3: (423, 50, 498, 120),   # down-left
-    4: (274, 26, 350, 120),   # left
-    5: (422, 122, 507, 190),  # up-left
-    6: (267, 119, 350, 196),  # up/back
-    7: (582, 120, 663, 193),  # up-right
+    0: (940, 18, 1072, 250),   # right
+    1: (764, 18, 914, 250),    # down-right
+    2: (38, 18, 198, 250),     # down/front
+    3: (366, 18, 520, 250),    # down-left
+    4: (210, 18, 364, 250),    # left
+    5: (186, 286, 318, 484),   # up-left
+    6: (515, 18, 706, 250),    # up/back
+    7: (880, 286, 1000, 484),  # up-right
 }
 
 
@@ -51,9 +56,11 @@ def ensure(path: Path) -> None:
 
 
 def load_reference() -> Image.Image:
-    source = REFERENCE_SOURCE if REFERENCE_SOURCE.exists() else REFERENCE_COPY
-    if not source.exists():
-        raise FileNotFoundError(f"Missing R-17 reference image: {source}")
+    source = REFERENCE_SOURCE if REFERENCE_SOURCE.exists() else None
+    if source is None:
+        source = next((candidate for candidate in REFERENCE_FALLBACKS if candidate.exists()), None)
+    if source is None or not source.exists():
+        raise FileNotFoundError("Missing full-body R-17 reference image")
     ensure(REFERENCE_COPY)
     if source.resolve() != REFERENCE_COPY.resolve():
         shutil.copyfile(source, REFERENCE_COPY)
@@ -96,10 +103,10 @@ def direction_vector(direction: int) -> tuple[float, float]:
 def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -> Image.Image:
     canvas = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(canvas, "RGBA")
-    draw.ellipse((17, 82, 63, 93), fill=(0, 0, 0, 92))
+    draw.ellipse((FRAME_W * 0.18, FRAME_H - 19, FRAME_W * 0.82, FRAME_H - 5), fill=(0, 0, 0, 92))
 
     body = sprite.copy()
-    target_h = 72 if action not in {"dead", "slash"} else 68
+    target_h = 110 if action not in {"dead", "slash"} else 104
     scale = min(1.0, target_h / max(1, body.height))
     body = body.resize((max(1, int(body.width * scale)), max(1, int(body.height * scale))), Image.Resampling.LANCZOS)
     bob = 0
@@ -109,11 +116,11 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
         body = ImageEnhance.Color(body).enhance(0.45)
         body = ImageEnhance.Brightness(body).enhance(1.22)
     x = (FRAME_W - body.width) // 2
-    y = FRAME_H - body.height - 9 + bob
+    y = FRAME_H - body.height - 8 + bob
     if action == "dead":
         body = body.rotate(-72 if direction in [0, 1, 7] else 72, expand=True, resample=Image.Resampling.BICUBIC)
         x = (FRAME_W - body.width) // 2
-        y = FRAME_H - body.height - 12
+        y = FRAME_H - body.height - 10
     canvas.alpha_composite(body, (x, y))
     _draw_action_overlay(canvas, action, direction, frame)
     return canvas
@@ -122,7 +129,7 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
 def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
     draw = ImageDraw.Draw(canvas, "RGBA")
     dx, dy = direction_vector(direction)
-    cx, cy = 40, 54
+    cx, cy = FRAME_W * 0.5, FRAME_H * 0.58
     if action == "shoot":
         recoil = [0, -4, -2, 1][frame]
         start = (cx + dx * 10 + recoil * dx, cy + dy * 6 + recoil * dy)
@@ -313,7 +320,7 @@ def write_manifest() -> None:
         "directions": DIRECTIONS,
         "frames_per_action": FRAMES_PER_ACTION,
         "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
-        "reference_path": "res://docs/art_direction_reference_r17_v4.png",
+        "reference_path": "res://docs/art_direction_reference_r17_full_body.png",
         "actions": [
             {"id": action, "frames": FRAMES_PER_ACTION, "loop": action in {"idle", "walk"}, "fps": 8 if action in {"idle", "walk"} else 14}
             for action in ACTIONS

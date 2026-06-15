@@ -8,7 +8,7 @@
 
 Latest Codex work upgrades the project to Vertical Slice v2:
 
-- Player is now R-17 recycler robot.
+- Player is now the full-body R-17 recycler robot built from `docs/art_direction_reference_r17_full_body.png`.
 - NPCs animate through procedural idle/talk motion and close dialogue when the player leaves.
 - Enemies show movement animation, damage numbers, health bars, hit effects, and death fade.
 - Village is a crossroad hub with four wasteland route exits.
@@ -62,7 +62,8 @@ Prefer small, testable Godot changes. Do not rebuild the project or replace the 
 
 ```powershell
 node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
-python scripts\tools\build_robot_player_atlas.py
+python scripts\tools\build_release_candidate_assets.py
+python scripts\tools\verify_visual_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'

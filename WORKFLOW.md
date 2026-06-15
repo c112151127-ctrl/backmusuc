@@ -42,6 +42,13 @@ node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/ma
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
 ```
 
+After player art, equipment icon, NPC, prop, or map art changes:
+
+```powershell
+python scripts\tools\build_release_candidate_assets.py
+python scripts\tools\verify_visual_assets.py
+```
+
 Run visual review after visual/UI changes:
 
 ```powershell
