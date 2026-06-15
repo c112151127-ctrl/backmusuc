@@ -6,7 +6,19 @@
   "directions": 8,
   "frames_per_action": 4,
   "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
+  "split_frame_dir": "res://assets/sprites/player/frames",
+  "action_sheet_dir": "res://assets/sprites/player/actions",
   "reference_path": "res://docs/art_direction_reference_r17_full_body.png",
+  "direction_order": [
+    "right",
+    "down_right",
+    "down",
+    "down_left",
+    "left",
+    "up_left",
+    "up",
+    "up_right"
+  ],
   "actions": [
     {
       "id": "idle",

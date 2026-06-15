@@ -137,6 +137,36 @@ def verify_player_manifest(failures: list[str]) -> None:
         fail("R-17 player manifest frame_size must be [112, 128]", failures)
     if directions != 8 or frames != 4 or len(actions) != 9:
         fail("R-17 player manifest must define 9 actions, 8 directions, 4 frames", failures)
+    split_frame_dir = str(manifest.get("split_frame_dir", ""))
+    action_sheet_dir = str(manifest.get("action_sheet_dir", ""))
+    if not split_frame_dir:
+        fail("R-17 player manifest must declare split_frame_dir", failures)
+    if not action_sheet_dir:
+        fail("R-17 player manifest must declare action_sheet_dir", failures)
+
+    action_ids = [str(action.get("id", "")) for action in actions if isinstance(action, dict)]
+    for action_id in action_ids:
+        sheet_path = resolve(f"{action_sheet_dir}/{action_id}.png")
+        if not sheet_path.exists():
+            fail(f"R-17 action sheet missing: {action_id}", failures)
+        else:
+            sheet = Image.open(sheet_path).convert("RGBA")
+            if sheet.size != (112 * 4, 128 * 8):
+                fail(f"R-17 action sheet has wrong size for {action_id}: {sheet.size}", failures)
+        for direction in range(8):
+            for frame in range(4):
+                frame_path = resolve(f"{split_frame_dir}/{action_id}/dir_{direction}/frame_{frame}.png")
+                if not frame_path.exists():
+                    fail(f"R-17 split frame missing: {action_id} dir {direction} frame {frame}", failures)
+                    continue
+                frame_image = Image.open(frame_path).convert("RGBA")
+                if frame_image.size != (112, 128):
+                    fail(f"R-17 split frame has wrong size: {frame_path.relative_to(ROOT)} {frame_image.size}", failures)
+                bbox = frame_image.getbbox()
+                if bbox is None:
+                    fail(f"R-17 split frame is blank: {frame_path.relative_to(ROOT)}", failures)
+                elif action_id in {"idle", "walk"} and (bbox[0] <= 0 or bbox[2] >= 112 or bbox[1] <= 0 or bbox[3] >= 128):
+                    fail(f"R-17 locomotion frame touches edge and may be clipped: {frame_path.relative_to(ROOT)} bbox={bbox}", failures)
 
     atlas_path = resolve(str(manifest.get("atlas_path", "")))
     if atlas_path.exists():
@@ -163,6 +193,14 @@ def verify_player_manifest(failures: list[str]) -> None:
         shoot_left = image.crop((shoot_action_x + 2 * 112, 4 * 128, shoot_action_x + 3 * 112, 5 * 128))
         if ImageChops.difference(ImageOps.mirror(shoot_right), shoot_left).getbbox() is not None:
             fail("R-17 left shoot frame must mirror the right shoot frame so gunfire follows A/D direction", failures)
+
+    split_right = resolve(f"{split_frame_dir}/idle/dir_0/frame_0.png")
+    split_left = resolve(f"{split_frame_dir}/idle/dir_4/frame_0.png")
+    if split_right.exists() and split_left.exists():
+        idle_right = Image.open(split_right).convert("RGBA")
+        idle_left = Image.open(split_left).convert("RGBA")
+        if ImageChops.difference(ImageOps.mirror(idle_right), idle_left).getbbox() is not None:
+            fail("R-17 split left idle frame must mirror split right idle frame")
 
 
 def verify_no_mojibake(failures: list[str]) -> None:

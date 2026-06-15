@@ -26,6 +26,8 @@ FRAME_W = 112
 FRAME_H = 128
 FRAMES_PER_ACTION = 4
 DIRECTIONS = 8
+PLAYER_FRAME_DIR = SPRITES / "player" / "frames"
+PLAYER_ACTION_DIR = SPRITES / "player" / "actions"
 ACTIONS = [
     "idle",
     "walk",
@@ -51,6 +53,20 @@ MIRROR_FROM = {
     3: 1,  # down-left mirrors down-right
     4: 0,  # left mirrors right
     7: 5,  # up-right mirrors up-left
+}
+
+WEAPON_MODULE_BOXES = {
+    "spark_cutter": (1250, 126, 1340, 200),
+    "pipe_rifle": (1105, 218, 1226, 279),
+    "coil_launcher": (1220, 218, 1350, 278),
+    "acid_sprayer": (1365, 222, 1489, 286),
+    "recycler_glove": (1410, 124, 1505, 186),
+    "magnet_breaker": (1138, 135, 1225, 196),
+}
+
+RESOURCE_MODULE_BOXES = {
+    "ammo_crate": (1088, 892, 1165, 975),
+    "scrap_bundle": (1290, 893, 1358, 975),
 }
 
 
@@ -109,7 +125,7 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
     draw.ellipse((FRAME_W * 0.18, FRAME_H - 19, FRAME_W * 0.82, FRAME_H - 5), fill=(0, 0, 0, 92))
 
     body = sprite.copy()
-    target_h = 110 if action not in {"dead", "slash"} else 104
+    target_h = 102 if action not in {"dead", "slash"} else 98
     scale = min(1.0, target_h / max(1, body.height))
     body = body.resize((max(1, int(body.width * scale)), max(1, int(body.height * scale))), Image.Resampling.LANCZOS)
     bob = 0
@@ -119,7 +135,7 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
         body = ImageEnhance.Color(body).enhance(0.45)
         body = ImageEnhance.Brightness(body).enhance(1.22)
     x = (FRAME_W - body.width) // 2
-    y = FRAME_H - body.height - 8 + bob
+    y = FRAME_H - body.height - 11 + bob
     if action == "dead":
         body = body.rotate(-72 if direction in [0, 1, 7] else 72, expand=True, resample=Image.Resampling.BICUBIC)
         x = (FRAME_W - body.width) // 2
@@ -132,33 +148,38 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
 def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
     draw = ImageDraw.Draw(canvas, "RGBA")
     dx, dy = direction_vector(direction)
-    cx, cy = FRAME_W * 0.5, FRAME_H * 0.58
+    cx, cy = FRAME_W * 0.5, FRAME_H * 0.60
+    hand = (cx + dx * 17 - dy * 4, cy + dy * 10 + dx * 2)
+    wrist = (cx + dx * 7 - dy * 3, cy + dy * 5 + dx * 1)
     if action == "shoot":
         recoil = [0, -4, -2, 1][frame]
-        start = (cx + dx * 10 + recoil * dx, cy + dy * 6 + recoil * dy)
-        end = (cx + dx * 34 + recoil * dx, cy + dy * 23 + recoil * dy)
-        draw.line((start, end), fill=(26, 23, 20, 255), width=7)
-        draw.line((start, end), fill=(208, 143, 70, 255), width=3)
-        draw.line((start[0] - dy * 5, start[1] + dx * 5, end[0] - dy * 5, end[1] + dx * 5), fill=(73, 229, 241, 210), width=2)
+        stock = (wrist[0] - dx * 9 + recoil * dx, wrist[1] - dy * 6 + recoil * dy)
+        end = (hand[0] + dx * 28 + recoil * dx, hand[1] + dy * 20 + recoil * dy)
+        draw.line((wrist, hand), fill=(42, 229, 238, 185), width=6)
+        draw.line((stock, end), fill=(26, 23, 20, 255), width=8)
+        draw.line((stock, end), fill=(186, 139, 86, 255), width=4)
+        draw.line((hand[0] - dy * 4, hand[1] + dx * 4, end[0] - dy * 4, end[1] + dx * 4), fill=(73, 229, 241, 210), width=2)
         if frame in [1, 2]:
             muzzle = (end[0] + dx * 5, end[1] + dy * 5)
             draw.ellipse((muzzle[0] - 6, muzzle[1] - 6, muzzle[0] + 6, muzzle[1] + 6), fill=(255, 205, 70, 230))
             draw.line((muzzle[0], muzzle[1], muzzle[0] + dx * 18, muzzle[1] + dy * 18), fill=(58, 239, 250, 210), width=3)
     elif action == "draw_sword":
-        grip = (cx - dx * 8, cy + 18)
-        tip = (cx + dx * (14 + frame * 6), cy + dy * (8 + frame * 5))
+        grip = (wrist[0], wrist[1] + 7)
+        tip = (hand[0] + dx * (12 + frame * 5), hand[1] + dy * (10 + frame * 4))
+        draw.line((wrist, grip), fill=(42, 229, 238, 185), width=5)
         draw.line((grip, tip), fill=(245, 239, 210, 255), width=3)
         draw.line((grip[0] - dy * 5, grip[1] + dx * 5, grip[0] + dy * 5, grip[1] - dx * 5), fill=(205, 112, 45, 255), width=3)
     elif action == "slash":
-        radius = 22 + frame * 7
-        center = (cx + dx * 13, cy + dy * 10)
+        radius = 19 + frame * 6
+        center = (hand[0] + dx * 7, hand[1] + dy * 5)
         bbox = (center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius)
         start = direction * 45 - 74
         end = direction * 45 + 74
         draw.arc(bbox, start, end, fill=(255, 180, 54, 250), width=6)
         draw.arc((bbox[0] + 7, bbox[1] + 7, bbox[2] - 7, bbox[3] - 7), start + 10, end - 10, fill=(47, 229, 240, 220), width=3)
-        sword_tip = (cx + dx * (24 + frame * 5), cy + dy * (14 + frame * 4))
-        draw.line(((cx, cy + 5), sword_tip), fill=(242, 236, 210, 250), width=3)
+        draw.line((wrist, hand), fill=(42, 229, 238, 185), width=5)
+        sword_tip = (hand[0] + dx * (24 + frame * 4), hand[1] + dy * (16 + frame * 3))
+        draw.line((hand, sword_tip), fill=(242, 236, 210, 250), width=3)
     elif action == "swap_tool":
         pulse = 12 + frame * 5
         draw.ellipse((cx - pulse, cy - pulse, cx + pulse, cy + pulse), outline=(48, 232, 243, 160), width=3)
@@ -178,6 +199,22 @@ def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame
             draw.ellipse((off - 2, 72 - 2, off + 2, 72 + 2), fill=(44, 230, 238, 190))
 
 
+def save_player_split_frame(action: str, direction: int, frame: int, image: Image.Image) -> None:
+    out = PLAYER_FRAME_DIR / action / f"dir_{direction}" / f"frame_{frame}.png"
+    ensure(out)
+    image.save(out)
+
+
+def save_player_action_sheet(action: str, frames: dict[tuple[int, int], Image.Image]) -> None:
+    sheet = Image.new("RGBA", (FRAME_W * FRAMES_PER_ACTION, FRAME_H * DIRECTIONS), (0, 0, 0, 0))
+    for direction in range(DIRECTIONS):
+        for frame in range(FRAMES_PER_ACTION):
+            sheet.alpha_composite(frames[(direction, frame)], (frame * FRAME_W, direction * FRAME_H))
+    out = PLAYER_ACTION_DIR / f"{action}.png"
+    ensure(out)
+    sheet.save(out)
+
+
 def build_player_atlas() -> None:
     ref = load_reference()
     base_sprites = {idx: crop_foreground(ref, box) for idx, box in SOURCE_BOXES.items()}
@@ -193,10 +230,41 @@ def build_player_atlas() -> None:
         for direction in range(DIRECTIONS):
             for frame in range(FRAMES_PER_ACTION):
                 frame_image = generated_frames[(direction, frame)]
+                save_player_split_frame(action, direction, frame, frame_image)
                 sheet.alpha_composite(frame_image, ((action_index * FRAMES_PER_ACTION + frame) * FRAME_W, direction * FRAME_H))
+        save_player_action_sheet(action, generated_frames)
     out = SPRITES / "player" / "recycler_player_multiaction_8dir.png"
     ensure(out)
     sheet.save(out)
+
+
+def build_player_split_diagnostic() -> None:
+    labels = [
+        ("idle", 0, 0),
+        ("idle", 4, 0),
+        ("walk", 0, 1),
+        ("walk", 4, 1),
+        ("shoot", 0, 2),
+        ("shoot", 4, 2),
+        ("slash", 0, 2),
+        ("slash", 4, 2),
+        ("hit", 2, 1),
+        ("dead", 2, 2),
+    ]
+    scale = 2
+    tile_w = FRAME_W * scale
+    tile_h = FRAME_H * scale + 28
+    preview = Image.new("RGBA", (tile_w * len(labels), tile_h), (16, 18, 20, 255))
+    draw = ImageDraw.Draw(preview, "RGBA")
+    for index, (action, direction, frame) in enumerate(labels):
+        path = PLAYER_FRAME_DIR / action / f"dir_{direction}" / f"frame_{frame}.png"
+        image = Image.open(path).convert("RGBA").resize((FRAME_W * scale, FRAME_H * scale), Image.Resampling.NEAREST)
+        x = index * tile_w
+        preview.alpha_composite(image, (x, 0))
+        draw.text((x + 8, FRAME_H * scale + 5), f"{action} d{direction} f{frame}", fill=(230, 230, 220, 255))
+    out = DOCS / "player_split_frame_diagnostic.png"
+    ensure(out)
+    preview.save(out)
 
 
 def icon_canvas() -> tuple[Image.Image, ImageDraw.ImageDraw]:
@@ -204,6 +272,30 @@ def icon_canvas() -> tuple[Image.Image, ImageDraw.ImageDraw]:
     d = ImageDraw.Draw(img, "RGBA")
     d.ellipse((12, 54, 76, 68), fill=(0, 0, 0, 88))
     return img, d
+
+
+def fit_reference_asset(ref: Image.Image, box: tuple[int, int, int, int], canvas_size: tuple[int, int], fill: float = 0.82) -> Image.Image:
+    subject = crop_foreground(ref, box)
+    bbox = subject.getbbox()
+    out = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(out, "RGBA")
+    d.ellipse((canvas_size[0] * 0.12, canvas_size[1] * 0.78, canvas_size[0] * 0.88, canvas_size[1] * 0.95), fill=(0, 0, 0, 88))
+    if bbox is None:
+        return out
+    subject = subject.crop(bbox)
+    scale = min(canvas_size[0] * fill / max(1, subject.width), canvas_size[1] * fill / max(1, subject.height))
+    resized = subject.resize((max(1, int(subject.width * scale)), max(1, int(subject.height * scale))), Image.Resampling.LANCZOS)
+    x = (canvas_size[0] - resized.width) // 2
+    y = int(canvas_size[1] * 0.50 - resized.height * 0.52)
+    y = max(0, min(canvas_size[1] - resized.height, y))
+    out.alpha_composite(resized, (x, y))
+    return out
+
+
+def save_reference_icon(ref: Image.Image, name: str, box: tuple[int, int, int, int]) -> None:
+    out = SPRITES / "items" / f"{name}.png"
+    ensure(out)
+    fit_reference_asset(ref, box, (88, 72), 0.88).save(out)
 
 
 def save_icon(name: str, kind: str, accent: tuple[int, int, int]) -> None:
@@ -261,6 +353,7 @@ def save_icon(name: str, kind: str, accent: tuple[int, int, int]) -> None:
 
 
 def build_item_icons() -> None:
+    ref = load_reference()
     specs = {
         "scrap_bundle": ("resource", (176, 99, 48)),
         "ammo_crate": ("resource", (92, 118, 65)),
@@ -279,7 +372,11 @@ def build_item_icons() -> None:
         "magnet_breaker": ("tool", (124, 188, 228)),
     }
     for name, (kind, accent) in specs.items():
-        save_icon(name, kind, accent)
+        source_box = WEAPON_MODULE_BOXES.get(name, RESOURCE_MODULE_BOXES.get(name))
+        if source_box is not None:
+            save_reference_icon(ref, name, source_box)
+        else:
+            save_icon(name, kind, accent)
     atlas = Image.new("RGBA", (88 * 4, 72), (0, 0, 0, 0))
     for i, name in enumerate(["scrap_bundle", "ammo_crate", "mutant_core", "bio_crystal"]):
         atlas.alpha_composite(Image.open(SPRITES / "items" / f"{name}.png").convert("RGBA"), (i * 88, 0))
@@ -287,6 +384,7 @@ def build_item_icons() -> None:
 
 
 def build_weapon_overlays() -> None:
+    ref = load_reference()
     specs = {
         "rust_blade": ("blade", (198, 112, 52)),
         "spark_cutter": ("blade", (55, 224, 238)),
@@ -300,6 +398,10 @@ def build_weapon_overlays() -> None:
     out_dir = SPRITES / "player" / "weapons"
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, (kind, accent) in specs.items():
+        source_box = WEAPON_MODULE_BOXES.get(name)
+        if source_box is not None:
+            fit_reference_asset(ref, source_box, (96, 64), 0.92).save(out_dir / f"{name}_overlay.png")
+            continue
         img = Image.new("RGBA", (96, 64), (0, 0, 0, 0))
         d = ImageDraw.Draw(img, "RGBA")
         if kind == "blade":
@@ -329,7 +431,10 @@ def write_manifest() -> None:
         "directions": DIRECTIONS,
         "frames_per_action": FRAMES_PER_ACTION,
         "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
+        "split_frame_dir": "res://assets/sprites/player/frames",
+        "action_sheet_dir": "res://assets/sprites/player/actions",
         "reference_path": "res://docs/art_direction_reference_r17_full_body.png",
+        "direction_order": ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"],
         "actions": [
             {"id": action, "frames": FRAMES_PER_ACTION, "loop": action in {"idle", "walk"}, "fps": 8 if action in {"idle", "walk"} else 14}
             for action in ACTIONS
@@ -443,6 +548,7 @@ def build_audio() -> None:
 
 def main() -> None:
     build_player_atlas()
+    build_player_split_diagnostic()
     build_item_icons()
     build_weapon_overlays()
     build_audio()

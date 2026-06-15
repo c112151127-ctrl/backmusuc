@@ -5,6 +5,7 @@ const PROJECTILE_SCRIPT := preload("res://scripts/components/Projectile.gd")
 const ATTACK_FLASH_SCRIPT := preload("res://scripts/components/AttackFlash.gd")
 const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
 const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
+const PLAYER_FRAME_DIR := "res://assets/sprites/player/frames"
 
 @export var move_speed: float = 180.0
 
@@ -210,11 +211,18 @@ func _build_sprite_frames() -> void:
 			frames.set_animation_speed(animation_name, 8.0 if action_name in ["idle", "walk"] else 14.0)
 			frames.set_animation_loop(animation_name, action_name in ["idle", "walk"])
 			for frame_index in range(PixelArtFactory.PLAYER_FRAMES_PER_ACTION):
-				if atlas != null:
+				var split_frame := _split_frame_texture(action_name, direction_index, frame_index)
+				if split_frame != null:
+					frames.add_frame(animation_name, split_frame)
+				elif atlas != null:
 					frames.add_frame(animation_name, _atlas_frame(atlas, action_index, direction_index, frame_index))
 				else:
 					frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, action_index, frame_index))
 	sprite.sprite_frames = frames
+
+func _split_frame_texture(action_name: String, direction_index: int, frame_index: int) -> Texture2D:
+	var path := "%s/%s/dir_%d/frame_%d.png" % [PLAYER_FRAME_DIR, action_name, direction_index, frame_index]
+	return ASSET_LOADER.load_png(path)
 
 func _atlas_frame(atlas: Texture2D, action_index: int, direction_index: int, frame_index: int) -> AtlasTexture:
 	var frame_size := PixelArtFactory.PLAYER_FRAME_SIZE

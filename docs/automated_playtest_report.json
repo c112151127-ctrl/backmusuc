@@ -109,7 +109,7 @@
 			"has_spark_cutter": true,
 			"inventory_open": true,
 			"position": {
-				"x": 1312.39965820313,
+				"x": 1321.599609375,
 				"y": 920.0
 			},
 			"talked_npcs": [
@@ -120,7 +120,7 @@
 			"ammo_after_ranged": 17,
 			"enemy_count": 30,
 			"position": {
-				"x": 717.003540039063,
+				"x": 720.0,
 				"y": 720.0
 			},
 			"projectiles": 1

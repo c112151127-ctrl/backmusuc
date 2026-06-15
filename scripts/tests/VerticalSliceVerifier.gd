@@ -91,6 +91,9 @@ func _check_enemy_behavior_contract() -> void:
 
 func _check_baked_assets() -> void:
 	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(4032, 1024), "baked full-body R-17 player atlas exists at 9 actions x 8 directions x 4 frames")
+	_expect_png_size("res://assets/sprites/player/frames/walk/dir_0/frame_0.png", Vector2i(112, 128), "R-17 split walk frame exists for right direction")
+	_expect_png_size("res://assets/sprites/player/frames/shoot/dir_4/frame_2.png", Vector2i(112, 128), "R-17 split shoot frame exists for left direction")
+	_expect_png_size("res://assets/sprites/player/actions/walk.png", Vector2i(448, 1024), "R-17 per-action walk sheet exists for review")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(672, 72), "baked enemy atlas has 6 enemy types plus boss")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(352, 72), "baked high-detail item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
@@ -400,7 +403,8 @@ func _check_player_animation_contract() -> void:
 					if frame_set.has_animation(animation_name):
 						_expect(frame_set.get_frame_count(animation_name) >= 3, "player animation has frames: " + animation_name)
 			var first_frame := frame_set.get_frame_texture("idle_0", 0)
-			_expect(first_frame is AtlasTexture, "player animation frames use baked PNG atlas when available")
+			_expect(first_frame is Texture2D, "player animation frames load as textures")
+			_expect(not (first_frame is AtlasTexture), "player animation uses split PNG frames before atlas fallback")
 	instance.queue_free()
 	await get_tree().process_frame
 

@@ -8,7 +8,8 @@
       "speed": 82,
       "damage": 9,
       "routes": ["scrap_highway", "toxic_marsh"],
-      "drop_table": { "scrap": 3, "ammo": 1 }
+      "drop_table": { "scrap": 3, "ammo": 1 },
+      "rare_drop_table": { "rust_blade": { "amount": 1, "chance": 5 } }
     },
     "toxic_runner": {
       "name": "毒脊爬行獸",
@@ -18,7 +19,8 @@
       "speed": 128,
       "damage": 7,
       "routes": ["toxic_marsh", "crystal_scar"],
-      "drop_table": { "scrap": 2, "ammo": 2 }
+      "drop_table": { "scrap": 2, "ammo": 2 },
+      "rare_drop_table": { "recycler_glove": { "amount": 1, "chance": 6 } }
     },
     "spore_gunner": {
       "name": "孢囊爆裂者",
@@ -28,7 +30,8 @@
       "speed": 62,
       "damage": 6,
       "routes": ["crystal_scar", "toxic_marsh"],
-      "drop_table": { "ammo": 4, "bio_crystal": 1 }
+      "drop_table": { "ammo": 4, "bio_crystal": 1 },
+      "rare_drop_table": { "pipe_rifle": { "amount": 1, "chance": 7 } }
     },
     "rust_brute": {
       "name": "巨噬腐肉獸",
@@ -38,7 +41,8 @@
       "speed": 46,
       "damage": 16,
       "routes": ["scrap_highway", "old_factory"],
-      "drop_table": { "scrap": 8, "mutant_core": 1 }
+      "drop_table": { "scrap": 8, "mutant_core": 1 },
+      "rare_drop_table": { "breaker_hammer": { "amount": 1, "chance": 8 } }
     },
     "rot_wing": {
       "name": "腐化飛行體",
@@ -48,7 +52,8 @@
       "speed": 112,
       "damage": 8,
       "routes": ["crystal_scar", "toxic_marsh"],
-      "drop_table": { "scrap": 2, "bio_crystal": 1 }
+      "drop_table": { "scrap": 2, "bio_crystal": 1 },
+      "rare_drop_table": { "acid_sprayer": { "amount": 1, "chance": 6 } }
     },
     "mech_husk": {
       "name": "污染機械體",
@@ -58,7 +63,8 @@
       "speed": 72,
       "damage": 12,
       "routes": ["old_factory", "scrap_highway"],
-      "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 }
+      "drop_table": { "scrap": 5, "ammo": 3, "mutant_core": 1 },
+      "rare_drop_table": { "coil_launcher": { "amount": 1, "chance": 8 } }
     },
     "waste_titan": {
       "name": "廢土吞噬核心",
@@ -68,7 +74,11 @@
       "speed": 44,
       "damage": 22,
       "routes": ["crystal_scar", "old_factory"],
-      "drop_table": { "scrap": 18, "ammo": 8, "bio_crystal": 3, "mutant_core": 2 }
+      "drop_table": { "scrap": 18, "ammo": 8, "bio_crystal": 3, "mutant_core": 2 },
+      "rare_drop_table": {
+        "industrial_exoshell": { "amount": 1, "chance": 100 },
+        "coil_launcher": { "amount": 1, "chance": 35 }
+      }
     }
   }
 }

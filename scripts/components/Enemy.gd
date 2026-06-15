@@ -16,6 +16,7 @@ var max_hp := 24
 var speed := 70.0
 var damage := 8
 var drop_table: Dictionary = {}
+var rare_drop_table: Dictionary = {}
 var target: Node2D
 var attack_cooldown := 0.0
 var ranged_cooldown := 0.0
@@ -42,6 +43,7 @@ func setup(id: String, data: Dictionary, player_ref: Node2D) -> void:
 	speed = float(data.get("speed", 70.0))
 	damage = int(data.get("damage", 8))
 	drop_table = data.get("drop_table", {})
+	rare_drop_table = data.get("rare_drop_table", {})
 	target = player_ref
 	_configure_behavior()
 
@@ -151,11 +153,32 @@ func _die(_melee: bool) -> void:
 func _spawn_drops(drop_position: Vector2) -> void:
 	for item_id in drop_table.keys():
 		var chance := 100 if enemy_type == "boss" else 55
-		if randi() % 100 < chance:
-			var pickup: Area2D = PICKUP_SCRIPT.new()
-			pickup.setup(String(item_id), int(drop_table[item_id]))
-			pickup.global_position = drop_position + Vector2(randf_range(-28, 28), randf_range(-22, 22))
-			get_tree().current_scene.add_child(pickup)
+		_try_spawn_drop(String(item_id), drop_table[item_id], chance, drop_position)
+	for item_id in rare_drop_table.keys():
+		var spec = rare_drop_table[item_id]
+		var amount := 1
+		var chance := 100 if enemy_type == "boss" else 8
+		if typeof(spec) == TYPE_DICTIONARY:
+			amount = int(spec.get("amount", 1))
+			chance = int(spec.get("chance", chance))
+		else:
+			amount = int(spec)
+		_try_spawn_drop(String(item_id), amount, chance, drop_position)
+
+func _try_spawn_drop(item_id: String, amount_value, chance: int, drop_position: Vector2) -> void:
+	var amount := int(amount_value)
+	if amount <= 0:
+		return
+	var bounded_chance := clampi(chance, 0, 100)
+	if randi() % 100 >= bounded_chance:
+		return
+	_spawn_pickup(item_id, amount, drop_position)
+
+func _spawn_pickup(item_id: String, amount: int, drop_position: Vector2) -> void:
+	var pickup: Area2D = PICKUP_SCRIPT.new()
+	pickup.setup(item_id, amount)
+	pickup.global_position = drop_position + Vector2(randf_range(-28, 28), randf_range(-22, 22))
+	get_tree().current_scene.add_child(pickup)
 
 func _enemy_texture(type_id: String) -> Texture2D:
 	var atlas := _load_atlas_texture(ENEMY_ATLAS_PATH)

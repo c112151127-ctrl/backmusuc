@@ -1,98 +1,68 @@
 # 廢土回收商
 
-Godot 4.6.3 製作的 PC 優先像素風偽 3D vertical slice。遊戲目標是讓玩家操作 R-17 回收機器人，在村莊整備、接取委託、前往四個廢土區探索戰鬥、撿取資源、切換裝備、升級維修並存讀檔。
+Godot 4.6.3 製作的像素風偽 3D 單機 Roguelike vertical slice。玩家操作 R-17 回收機器人，在村莊整備、接取委託、進入四個廢土路線探索戰鬥、撿取資源與裝備、回村升級並存讀檔。
 
-目前狀態是可驗證的 release-candidate 試玩切片，不是完整商店版所有內容。後續協作者要以「保留可玩流程、逐步提高美術與音效精度」為準，不要重建專案或改 Godot 版本。
+## 目前狀態
 
-## 目前完成內容
+- 主角 R-17 以 `docs/art_direction_reference_r17_full_body.png` 作為正式美術參考。
+- Godot runtime 優先載入拆分後的獨立 PNG 幀：`assets/sprites/player/frames/<action>/dir_<n>/frame_<n>.png`。
+- `assets/sprites/player/recycler_player_multiaction_8dir.png` 仍保留為相容用 atlas 與預覽用途，不再是唯一動畫來源。
+- 動作包含 idle、walk、shoot、draw_sword、slash、swap_tool、interact、hit、dead。
+- 武器 icon / overlay 會優先從 R-17 高細節參考圖裁切，不再使用簡化積木風格作為正式輸出。
+- 敵人除資源掉落外，已加入稀有武器與裝備掉落表。
+- PC 版優先，手機觸控 UI 暫緩。
 
-- 主角改為全身 R-17 回收機器人，正式來源為 `docs/art_direction_reference_r17_full_body.png`。
-- 玩家 atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`，尺寸 `4032x1024`，單格 `112x128`，9 動作、8 方向、每動作 4 幀。
-- 玩家動作包含待機、走路、射擊、拔刀、揮砍、切換工具、互動、受擊與死亡。
-- 左鍵會依目前裝備決定近戰或射擊；近戰 / 射擊動作來自 R-17 atlas 內的身體姿勢，搭配貼身揮砍弧光、槍口光、後座與音效。
-- 新遊戲開場包含較長的世界觀導入、專用背景音樂與繁中旁白音檔 `assets/audio/voice_intro_story.wav`。
-- 村莊、公會與四方向廢土路線可切換；廢土路線包含不同地形、地標、敵人、Boss、掉落與回村出口。
-- NPC 有靠近提示、對話框、頭像、一次性互動與離開範圍自動關閉。
-- UI 包含 HUD、快捷列、人物裝備面板、教學、暫停選單、小地圖與全屏地圖。
-- 戰鬥包含敵人血條、傷害數字、受擊震動、污染液 / 火花效果、死亡淡出與掉落物提示。
-- 存檔使用 `user://save_game.json`，含 Base64 payload 與 checksum。
-- 自動驗證入口包含 JSON 驗證、素材驗證、Godot headless、PixelAssetBaker、ValidationRunner、AutomatedPlaytestRunner 與 VisualReviewRunner。
-
-## 如何遊玩
-
-使用 Godot console 啟動：
+## 遊玩方式
 
 ```powershell
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --path 'C:\Code\Game\first-game'
 ```
 
-建議用 Godot 編輯器開啟 `C:\Code\Game\first-game`，主場景已由 `project.godot` 指定。
+或用 Godot 開啟 `C:\Code\Game\first-game\project.godot` 後執行主場景。
 
 ## 操作
 
 - `WASD`：移動。
-- 滑鼠：瞄準。
-- 滑鼠左鍵：依目前左手裝備執行近戰或射擊。
-- `E`：互動 / 推進對話。
-- `Tab` 或 `I`：人物裝備面板。
-- `M`：小地圖 / 全屏地圖。
+- 滑鼠左鍵：依目前裝備行動，近戰武器揮砍，遠程武器射擊。
+- `1-4`：切換快捷裝備。
+- `Tab` / `I`：人物裝備面板。
+- `E`：互動 / 對話。
+- `M`：小地圖 / 全螢幕地圖。
 - `H`：教學。
-- `1-4`：快捷裝備。
-- `Esc`：暫停選單、關閉面板或退出對話。
+- `Esc`：暫停選單。
 
-## 主要資料夾
+## 重要檔案
 
-- `scenes/main`：主入口與流程。
-- `scenes/player`：玩家場景。
-- `scenes/levels/village`：村莊樞紐。
-- `scenes/levels/guild`：冒險公會。
-- `scenes/levels/wasteland`：四方向廢土路線。
-- `scenes/tests`：Godot 驗證場景。
-- `scripts/autoload`：GameState、SaveManager、SceneRouter、AudioManager。
-- `scripts/components`：NPC、敵人、掉落物、世界物件、特效。
-- `scripts/tools`：素材生成與驗證工具。
-- `scripts/ui`：地圖 UI。
-- `data/art`：正式素材 manifest 與玩家動畫 manifest。
-- `data/maps`：NPC、任務、事件、廢土路線資料。
-- `data/items`：裝備與合成資料。
-- `data/enemies`：敵人資料。
-- `assets/sprites`：正式遊戲 sprite。
-- `assets/audio`：音效。
-- `docs`：設計、驗證截圖、SRS 對照與交接文件。
+- `scenes/player/Player.gd`：玩家控制、攻擊、動畫載入。
+- `scripts/tools/build_release_candidate_assets.py`：正式 R-17、美術、音效與 manifest 生成器。
+- `data/art/player_animation_manifest.json`：玩家動畫規格。
+- `data/art/visual_assets.json`：正式美術 manifest。
+- `data/items/equipment.json`：裝備資料、icon、武器 overlay、音效與攻擊特效。
+- `data/enemies/enemies.json`：敵人資料、資源掉落與稀有裝備掉落。
+- `docs/player_split_frame_diagnostic.png`：玩家拆分幀檢查圖。
+- `docs/PLAYTEST_CHECKLIST.md`：人工測試清單。
+- `docs/SRS_TRACEABILITY.md`：SRS 對照。
 
-## 正式美術管線
-
-正式主角來源：
-
-- `docs/art_direction_reference_r17_full_body.png`
-
-正式 atlas：
-
-- `assets/sprites/player/recycler_player_multiaction_8dir.png`
-
-快速檢查圖：
-
-- `docs/player_full_body_idle_preview.png`
-- `docs/player_full_body_first_frame_x4.png`
-- `docs/player_direction_diagnostic.png`
-- `docs/player_combat_pose_diagnostic.png`
-
-產生與驗證：
+## 重新生成美術與音效
 
 ```powershell
 python scripts\tools\build_release_candidate_assets.py
 python scripts\tools\verify_visual_assets.py
 ```
 
-舊的 `generate_formal_visual_assets.py` 是早期 48x56 占位生成法，不應作為正式輸出。`build_robot_player_atlas.py` 已改成相容入口，會呼叫新的 release-candidate R-17 atlas 管線。
+生成器會輸出：
+
+- 拆分幀：`assets/sprites/player/frames/`
+- 動作檢查 sheet：`assets/sprites/player/actions/`
+- 相容 atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`
+- 裝備 icon：`assets/sprites/items/`
+- 武器 overlay：`assets/sprites/player/weapons/`
+- 診斷圖：`docs/player_split_frame_diagnostic.png`
 
 ## 驗證
 
-建議提交前至少跑：
-
 ```powershell
 node -e "for (const f of ['data/maps/npcs.json','data/maps/events.json','data/maps/quests.json','data/maps/wasteland_routes.json','data/items/equipment.json','data/items/recipes.json','data/enemies/enemies.json','data/maps/wasteland_params.json','data/art/visual_assets.json','data/art/player_animation_manifest.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); } console.log('JSON OK')"
-python scripts\tools\build_release_candidate_assets.py
 python scripts\tools\verify_visual_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --quit
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
@@ -100,26 +70,18 @@ python scripts\tools\verify_visual_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
 ```
 
-視覺變更後再跑：
+視覺截圖：
 
 ```powershell
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/VisualReviewRunner.tscn'
 ```
 
-輸出截圖會放在 `docs/visual_review_*.png`。
+截圖會輸出到 `docs/visual_review_*.png`。
 
-## 協作注意事項
+## 協作規則
 
-- 玩家可見文字、NPC 對話、任務、測試清單與交付文件使用繁體中文。
-- 技術規劃、commit message 與內部實作註記可使用英文。
-- 不要批量刪除檔案或資料夾。若需清理素材，只能一次刪除一個明確檔案路徑。
-- 不要改 Godot 執行檔路徑、Godot 版本、autoload 結構或三個驗證 runner 的用途。
-- 不要把舊版簡化幾何素材重新烘回正式圖。
-- 新增正式美術時要同步更新 `data/art/visual_assets.json`。
-- 新增裝備時要同步更新 `data/items/equipment.json` 與對應 icon / world drop / sfx 欄位。
-
-## 已知風險
-
-- 目前是可驗證試玩切片，不是完整商業 3A 成品。
-- 部分角色、敵人與 NPC 動態仍靠 atlas、Tween、shader 或 overlay 補強，之後可再由人工逐格動畫精修。
-- Godot 結束時曾出現 ObjectDB leaked warning，目前未阻塞 playable flow，但後續正式版應繼續追蹤。
+- 不要批量刪除檔案或資料夾。
+- 每次可驗證更新後都要 commit。
+- 玩家可見文字與文件使用繁體中文。
+- 技術實作與 commit message 使用英文。
+- 不改 Godot 版本、不重建專案、不移除既有驗證 runner。
