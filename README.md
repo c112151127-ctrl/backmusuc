@@ -9,7 +9,8 @@ Godot 4.6.3 製作的 PC 優先像素風偽 3D vertical slice。遊戲目標是�
 - 主角改為全身 R-17 回收機器人，正式來源為 `docs/art_direction_reference_r17_full_body.png`。
 - 玩家 atlas：`assets/sprites/player/recycler_player_multiaction_8dir.png`，尺寸 `4032x1024`，單格 `112x128`，9 動作、8 方向、每動作 4 幀。
 - 玩家動作包含待機、走路、射擊、拔刀、揮砍、切換工具、互動、受擊與死亡。
-- 左鍵會依目前裝備決定近戰或射擊，並搭配武器 overlay、揮砍弧光、槍口火光與音效。
+- 左鍵會依目前裝備決定近戰或射擊；近戰 / 射擊動作來自 R-17 atlas 內的身體姿勢，搭配貼身揮砍弧光、槍口光、後座與音效。
+- 新遊戲開場包含較長的世界觀導入、專用背景音樂與繁中旁白音檔 `assets/audio/voice_intro_story.wav`。
 - 村莊、公會與四方向廢土路線可切換；廢土路線包含不同地形、地標、敵人、Boss、掉落與回村出口。
 - NPC 有靠近提示、對話框、頭像、一次性互動與離開範圍自動關閉。
 - UI 包含 HUD、快捷列、人物裝備面板、教學、暫停選單、小地圖與全屏地圖。
@@ -73,6 +74,8 @@ Godot 4.6.3 製作的 PC 優先像素風偽 3D vertical slice。遊戲目標是�
 
 - `docs/player_full_body_idle_preview.png`
 - `docs/player_full_body_first_frame_x4.png`
+- `docs/player_direction_diagnostic.png`
+- `docs/player_combat_pose_diagnostic.png`
 
 產生與驗證：
 

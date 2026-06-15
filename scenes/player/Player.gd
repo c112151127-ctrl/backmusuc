@@ -142,9 +142,10 @@ func _melee_attack(use_mouse_aim := false) -> void:
 	GameState.request_feedback("attack", shake)
 	var damage := 12 + GameState.get_stat_bonus("attack")
 	var reach := 86.0 if weapon_id == "breaker_hammer" else 74.0
+	var attack_origin := _attack_anchor_global()
 	for enemy in get_tree().get_nodes_in_group("enemy"):
-		if enemy is Node2D and global_position.distance_to(enemy.global_position) <= reach:
-			var facing: Vector2 = (enemy.global_position - global_position).normalized()
+		if enemy is Node2D and attack_origin.distance_to(enemy.global_position) <= reach:
+			var facing: Vector2 = (enemy.global_position - attack_origin).normalized()
 			if last_direction.dot(facing) > -0.05 and enemy.has_method("take_damage"):
 				enemy.take_damage(damage, true)
 
@@ -169,7 +170,7 @@ func _ranged_attack() -> void:
 	GameState.request_feedback("attack", shake)
 	ranged_timer = float(ranged.get("cooldown", 0.25))
 	var projectile_damage := 10 + GameState.get_stat_bonus("attack")
-	var projectile_start := global_position + last_direction * 34.0 + Vector2(0, -18)
+	var projectile_start := _attack_anchor_global() + last_direction * 40.0
 	var pools := get_tree().get_nodes_in_group("projectile_pool")
 	if not pools.is_empty() and pools[0].has_method("fire_projectile"):
 		if not pools[0].fire_projectile(projectile_start, last_direction, projectile_damage):
@@ -278,8 +279,11 @@ func _is_action_state_locked() -> bool:
 func _spawn_attack_flash(effect_id: String, strength: float) -> void:
 	var flash: Node2D = ATTACK_FLASH_SCRIPT.new()
 	flash.setup(effect_id, last_direction, strength)
-	flash.global_position = global_position + last_direction * 42.0 + Vector2(0, -20)
+	flash.global_position = _attack_anchor_global() + last_direction * 8.0
 	get_tree().current_scene.add_child(flash)
+
+func _attack_anchor_global() -> Vector2:
+	return global_position + Vector2(0, -62)
 
 func _update_weapon_overlay() -> void:
 	if weapon_sprite == null:
@@ -290,14 +294,14 @@ func _update_weapon_overlay() -> void:
 	if asset_id != current_weapon_asset_id:
 		current_weapon_asset_id = asset_id
 		weapon_sprite.texture = ASSET_LOADER.load_png(DataRegistry.asset_path(asset_id)) if not asset_id.is_empty() else null
-	var visible_state := state in [PlayerState.SHOOT, PlayerState.DRAW_SWORD, PlayerState.SLASH, PlayerState.SWAP_TOOL, PlayerState.INTERACT]
+	var visible_state := state in [PlayerState.SWAP_TOOL, PlayerState.INTERACT]
 	weapon_sprite.visible = visible_state and weapon_sprite.texture != null
 	if not weapon_sprite.visible:
 		return
 	var direction := last_direction.normalized()
 	if direction.length() < 0.1:
 		direction = Vector2.RIGHT
-	weapon_sprite.position = direction * (28.0 if state != PlayerState.SHOOT else 36.0) + Vector2(0, -26)
+	weapon_sprite.position = Vector2(0, -62) + direction * 18.0
 	weapon_sprite.rotation = direction.angle()
 	weapon_sprite.flip_v = direction.x < -0.1
 	weapon_sprite.scale = Vector2(0.75, 0.75) if state == PlayerState.SWAP_TOOL else Vector2.ONE

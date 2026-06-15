@@ -6,7 +6,11 @@ const MUSIC := {
 	"village": "res://assets/audio/music_village.wav",
 	"guild": "res://assets/audio/music_guild.wav",
 	"wasteland": "res://assets/audio/music_wasteland.wav",
-	"intro": "res://assets/audio/music_village.wav"
+	"intro": "res://assets/audio/music_intro.wav"
+}
+
+const VOICE := {
+	"intro_story": "res://assets/audio/voice_intro_story.wav"
 }
 
 const SFX := {
@@ -25,6 +29,7 @@ const SFX := {
 }
 
 var music_player: AudioStreamPlayer
+var voice_player: AudioStreamPlayer
 var sfx_players: Array[AudioStreamPlayer] = []
 var sfx_cursor := 0
 var current_music := ""
@@ -37,6 +42,9 @@ func _ready() -> void:
 			music_player.play()
 	)
 	add_child(music_player)
+	voice_player = AudioStreamPlayer.new()
+	voice_player.volume_db = -2.0
+	add_child(voice_player)
 	for i in range(8):
 		var player := AudioStreamPlayer.new()
 		player.volume_db = -8.0
@@ -55,6 +63,21 @@ func play_music(id: String) -> void:
 	current_music = id
 	music_player.stream = stream
 	music_player.play()
+
+func play_voice(id: String) -> void:
+	var path := String(VOICE.get(id, ""))
+	if path.is_empty():
+		return
+	var stream := ASSET_LOADER.load_wav(path)
+	if stream == null:
+		return
+	voice_player.stop()
+	voice_player.stream = stream
+	voice_player.play()
+
+func stop_voice() -> void:
+	if voice_player != null:
+		voice_player.stop()
 
 func play_sfx(id: String) -> void:
 	var path := String(SFX.get(id, ""))

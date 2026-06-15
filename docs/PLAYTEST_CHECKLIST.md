@@ -16,7 +16,7 @@ python scripts\tools\verify_visual_assets.py
 ## 啟動與存檔
 
 - 啟動後若有存檔，主選單顯示「繼續遊戲 / 新遊戲」。
-- 新遊戲第一次進入會播放 R-17 背景導入。
+- 新遊戲第一次進入會播放 R-17 背景導入、專用音樂與繁中旁白；按「開始行動」後旁白會停止。
 - 在村莊、接任務、完成任務或使用存檔點後，關閉再開遊戲可保留 HP、資源、任務、路線與 NPC 一次性獎勵狀態。
 - 存檔損壞時不應崩潰，應回到新遊戲流程。
 
@@ -24,6 +24,7 @@ python scripts\tools\verify_visual_assets.py
 
 - `A` 往左、`D` 往右，左右視角不能反。
 - `W` 往上、`S` 往下，八方向動畫能依移動方向切換。
+- `docs/player_direction_diagnostic.png` 中 `right D` 與 `left A` 應為左右鏡像，不可互換。
 - 主角應使用 `docs/art_direction_reference_r17_full_body.png` 來源建立的全身 R-17 回收機器人，不可出現人類頭髮、背包角色、半身裁切或人類與機器人重疊。
 - `assets/sprites/player/recycler_player_multiaction_8dir.png` 應為 `4032x1024`，單格 `112x128`，每個待機方向都要看得到頭、身體、手臂與腿部。
 - 受擊與死亡會有可見閃光、震動或回村維修提示。
@@ -32,6 +33,8 @@ python scripts\tools\verify_visual_assets.py
 
 - 目前裝備近戰武器時，滑鼠左鍵會先拔刀再揮砍。
 - 目前裝備遠程武器時，滑鼠左鍵會依滑鼠方向射擊，消耗彈藥並顯示槍口回饋。
+- 揮砍與射擊必須從 R-17 身體附近發出，不可像畫面突然多出一隻獨立手臂或獨立武器。
+- `docs/player_combat_pose_diagnostic.png` 應能看出拔刀、揮砍、射擊都跟主角身體連動。
 - `1-4` 或 `Q` 可切換快捷裝備。
 - 怪物受擊會顯示血條、傷害數字、擊退與污染液 / 火花效果。
 - Boss 受擊、死亡與掉落都可見。

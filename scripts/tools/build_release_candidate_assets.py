@@ -39,15 +39,18 @@ ACTIONS = [
 ]
 
 
-BASE_BOXES = {
-    0: (940, 18, 1072, 250),   # right
+SOURCE_BOXES = {
+    0: (210, 18, 364, 250),    # right
     1: (764, 18, 914, 250),    # down-right
     2: (38, 18, 198, 250),     # down/front
-    3: (366, 18, 520, 250),    # down-left
-    4: (210, 18, 364, 250),    # left
-    5: (186, 286, 318, 484),   # up-left
+    5: (366, 18, 520, 250),    # up-left/back-left
     6: (515, 18, 706, 250),    # up/back
-    7: (880, 286, 1000, 484),  # up-right
+}
+
+MIRROR_FROM = {
+    3: 1,  # down-left mirrors down-right
+    4: 0,  # left mirrors right
+    7: 5,  # up-right mirrors up-left
 }
 
 
@@ -177,13 +180,19 @@ def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame
 
 def build_player_atlas() -> None:
     ref = load_reference()
-    base_sprites = {idx: crop_foreground(ref, box) for idx, box in BASE_BOXES.items()}
+    base_sprites = {idx: crop_foreground(ref, box) for idx, box in SOURCE_BOXES.items()}
     sheet = Image.new("RGBA", (FRAME_W * FRAMES_PER_ACTION * len(ACTIONS), FRAME_H * DIRECTIONS), (0, 0, 0, 0))
     for action_index, action in enumerate(ACTIONS):
+        generated_frames: dict[tuple[int, int], Image.Image] = {}
+        for direction in SOURCE_BOXES.keys():
+            for frame in range(FRAMES_PER_ACTION):
+                generated_frames[(direction, frame)] = fit_to_frame(base_sprites[direction], action, direction, frame)
+        for target, source in MIRROR_FROM.items():
+            for frame in range(FRAMES_PER_ACTION):
+                generated_frames[(target, frame)] = ImageOps.mirror(generated_frames[(source, frame)])
         for direction in range(DIRECTIONS):
             for frame in range(FRAMES_PER_ACTION):
-                sprite = base_sprites[direction]
-                frame_image = fit_to_frame(sprite, action, direction, frame)
+                frame_image = generated_frames[(direction, frame)]
                 sheet.alpha_composite(frame_image, ((action_index * FRAMES_PER_ACTION + frame) * FRAME_W, direction * FRAME_H))
     out = SPRITES / "player" / "recycler_player_multiaction_8dir.png"
     ensure(out)
@@ -354,6 +363,66 @@ def synth(path: Path, seconds: float, freq: float, volume: float, kind: str) -> 
         out.writeframes(frames)
 
 
+def synth_music(path: Path, seconds: float, roots: list[float], mood: str) -> None:
+    ensure(path)
+    sample_rate = 22050
+    total = int(sample_rate * seconds)
+    bpm = 82.0 if mood in {"intro", "village"} else 96.0
+    beat = 60.0 / bpm
+    with wave.open(str(path), "w") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(sample_rate)
+        frames = bytearray()
+        for i in range(total):
+            t = i / sample_rate
+            section = int(t / (beat * 8.0)) % len(roots)
+            root = roots[section]
+            step = int(t / (beat * 0.5))
+            phase = (t % (beat * 0.5)) / (beat * 0.5)
+            fade_in = min(1.0, t / 3.0)
+            fade_out = min(1.0, max(0.0, (seconds - t) / 3.0))
+            env = fade_in * fade_out
+
+            chord = (
+                math.sin(t * root * 2 * math.pi) * 0.23
+                + math.sin(t * root * 1.5 * 2 * math.pi) * 0.16
+                + math.sin(t * root * 2.0 * 2 * math.pi) * 0.11
+            )
+            bass = math.sin(t * root * 0.5 * 2 * math.pi) * 0.20
+            arp_notes = [1.0, 1.25, 1.5, 2.0, 1.5, 1.25, 1.0, 0.75]
+            lead_freq = root * arp_notes[step % len(arp_notes)]
+            pluck_env = max(0.0, 1.0 - phase) ** 2
+            lead = math.sin(t * lead_freq * 2 * math.pi) * 0.16 * pluck_env
+            lead += math.sin(t * lead_freq * 2.01 * math.pi) * 0.05 * pluck_env
+
+            wind = (
+                math.sin(t * 0.37 * 2 * math.pi)
+                + math.sin(t * 0.19 * 2 * math.pi + 1.7)
+                + math.sin(t * 7.1 * 2 * math.pi) * 0.08
+            ) * 0.045
+            percussion = 0.0
+            if mood in {"wasteland", "guild"}:
+                hit_phase = t % (beat * 2.0)
+                if hit_phase < 0.045:
+                    percussion = (1.0 - hit_phase / 0.045) * math.sin(t * 78.0 * 2 * math.pi) * 0.22
+            if mood == "intro":
+                lead *= 0.58
+                wind *= 1.45
+            elif mood == "village":
+                chord *= 1.15
+                wind *= 0.55
+            elif mood == "wasteland":
+                bass *= 1.25
+                wind *= 2.1
+                lead *= 0.75
+
+            sample_value = (chord + bass + lead + wind + percussion) * env * 0.62
+            sample = int(max(-1.0, min(1.0, sample_value)) * 32767)
+            frames += sample.to_bytes(2, byteorder="little", signed=True)
+        out.writeframes(frames)
+
+
 def build_audio() -> None:
     audio = ROOT / "assets" / "audio"
     specs = {
@@ -366,6 +435,10 @@ def build_audio() -> None:
     }
     for name, data in specs.items():
         synth(audio / name, *data)
+    synth_music(audio / "music_intro.wav", 34.0, [146.8, 174.6, 130.8, 196.0], "intro")
+    synth_music(audio / "music_village.wav", 32.0, [196.0, 246.9, 220.0, 174.6], "village")
+    synth_music(audio / "music_guild.wav", 30.0, [164.8, 196.0, 220.0, 246.9], "guild")
+    synth_music(audio / "music_wasteland.wav", 34.0, [110.0, 130.8, 98.0, 146.8], "wasteland")
 
 
 def main() -> None:

@@ -68,6 +68,7 @@ func _build_title_screen() -> void:
 	stack.add_child(help)
 
 func _continue_game() -> void:
+	AudioManager.stop_voice()
 	if title_layer != null:
 		title_layer.queue_free()
 	SaveManager.load_game(true, true)
@@ -77,6 +78,8 @@ func _new_game() -> void:
 	_show_intro()
 
 func _show_intro() -> void:
+	AudioManager.play_music("intro")
+	AudioManager.play_voice("intro_story")
 	for child in title_layer.get_children():
 		child.queue_free()
 	var root := Control.new()
@@ -89,8 +92,8 @@ func _show_intro() -> void:
 	root.add_child(backdrop)
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(220, 140)
-	panel.custom_minimum_size = Vector2(900, 470)
+	panel.position = Vector2(180, 96)
+	panel.custom_minimum_size = Vector2(980, 560)
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	root.add_child(panel)
 	var stack := VBoxContainer.new()
@@ -98,12 +101,12 @@ func _show_intro() -> void:
 	panel.add_child(stack)
 
 	var title := Label.new()
-	title.text = "開場：R-17 甦醒"
+	title.text = "序章：R-17 甦醒"
 	title.add_theme_font_size_override("font_size", 30)
 	stack.add_child(title)
 
 	var body := Label.new()
-	body.text = "最後一座村莊的能源只剩七天。\n\n污染雨摧毀了農地，舊工廠仍在夜裡噴出毒霧。人類倖存者把最後一台回收機器人 R-17 推進維修艙，重新接上記憶核心。\n\n你的任務很簡單：出村、戰鬥、回收、升級，然後把資源帶回來。廢土不會等你準備好。"
+	body.text = "第一紀元的最後一年，天空不再下雨，只落下帶著金屬味的灰。\n\n人類把城市拆成燃料，把河床挖成電池，最後連記憶也拿去交換乾淨的水。舊工廠失控後，污染帶吞掉南方平原，只剩這座村莊還在廢鐵牆後微弱發光。\n\n你是 R-17，最後一台仍願意走進廢土的回收機器人。你的核心裡存著一段命令：帶回能讓大家活到明天的資源。\n\n四條路通往不同的污染區。每一次出門，都是一次交易：用鋼鐵身軀承受荒野，把廢墟裡的希望帶回來。"
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_size_override("font_size", 20)
 	stack.add_child(body)
@@ -114,11 +117,12 @@ func _show_intro() -> void:
 	stack.add_child(start_button)
 
 	var skip := Label.new()
-	skip.text = "開場只會在新遊戲第一次出現；存檔會記錄已看過。"
+	skip.text = "旁白播放中；按「開始行動」可略過並進入村莊。開場只會在新遊戲第一次出現，存檔會記錄已看過。"
 	skip.add_theme_font_size_override("font_size", 13)
 	stack.add_child(skip)
 
 func _start_new_run_after_intro() -> void:
+	AudioManager.stop_voice()
 	GameState.mark_intro_seen()
 	SaveManager.save_game(false)
 	if title_layer != null:

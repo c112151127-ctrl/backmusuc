@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -152,6 +152,17 @@ def verify_player_manifest(failures: list[str]) -> None:
                 continue
             if bbox[3] - bbox[1] < 104:
                 fail(f"R-17 idle frame for direction {direction} is not full-body enough: bbox={bbox}", failures)
+        idle_right = image.crop((0, 0, 112, 128))
+        idle_left = image.crop((0, 4 * 128, 112, 5 * 128))
+        if ImageChops.difference(idle_right, idle_left).getbbox() is None:
+            fail("R-17 A/D idle frames are identical; left and right would read as reversed or flat", failures)
+        if ImageChops.difference(ImageOps.mirror(idle_right), idle_left).getbbox() is not None:
+            fail("R-17 left idle frame must mirror the right idle frame for A/D direction consistency", failures)
+        shoot_action_x = 2 * 4 * 112
+        shoot_right = image.crop((shoot_action_x + 2 * 112, 0, shoot_action_x + 3 * 112, 128))
+        shoot_left = image.crop((shoot_action_x + 2 * 112, 4 * 128, shoot_action_x + 3 * 112, 5 * 128))
+        if ImageChops.difference(ImageOps.mirror(shoot_right), shoot_left).getbbox() is not None:
+            fail("R-17 left shoot frame must mirror the right shoot frame so gunfire follows A/D direction", failures)
 
 
 def verify_no_mojibake(failures: list[str]) -> None:
