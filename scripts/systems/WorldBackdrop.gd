@@ -36,6 +36,8 @@ func _draw() -> void:
 			if mode == "wasteland":
 				c = c.lerp(_wasteland_zone_color(x, y), _wasteland_zone_strength(x, y))
 				c = c.lerp(_route_noise_color(x, y), _route_noise_strength(x, y))
+			elif mode == "village":
+				c = c.lerp(_village_patch_color(x, y), _village_patch_strength(x, y))
 			var road_strength := _road_strength(x, y)
 			if road_strength > 0.0:
 				c = c.lerp(_road_color(), road_strength)
@@ -44,7 +46,10 @@ func _draw() -> void:
 			var texture := _texture_for_tile(x, y, road_strength)
 			if texture != null:
 				_draw_texture_variant(texture, rect, x, y)
-				draw_rect(rect, Color(c.r, c.g, c.b, 0.30 + road_strength * 0.24))
+				var tint_alpha := 0.18 + road_strength * 0.18
+				if mode == "village":
+					tint_alpha = 0.14 + road_strength * 0.14
+				draw_rect(rect, Color(c.r, c.g, c.b, tint_alpha))
 			else:
 				draw_rect(rect, c)
 			if road_strength > 0.0:
@@ -78,10 +83,16 @@ func _draw_road_detail(rect: Rect2, x: int, y: int, road_strength: float, rng: R
 
 func _road_strength(x: int, y: int) -> float:
 	if mode == "village":
-		var plaza: bool = x >= 14 and x <= 45 and y >= 9 and y <= 31
-		var vertical: bool = x >= 22 and x <= 26 and y >= 5 and y <= 40
-		var horizontal: bool = y >= 17 and y <= 21 and x >= 6 and x <= 58
-		return 0.75 if plaza or vertical or horizontal else 0.0
+		var cx := float(map_size.x) * 0.5
+		var cy := float(map_size.y) * 0.5
+		var plaza_shape := pow((float(x) - cx) / 10.5, 2.0) + pow((float(y) - cy) / 6.5, 2.0)
+		var plaza: bool = plaza_shape <= 1.0
+		var vertical_center := cx + sin(float(y) * 0.22) * 1.4
+		var horizontal_center := cy + sin(float(x) * 0.18) * 1.2
+		var vertical: bool = abs(float(x) - vertical_center) <= 2.2 and y >= 4 and y <= map_size.y - 2
+		var horizontal: bool = abs(float(y) - horizontal_center) <= 2.2 and x >= 3 and x <= map_size.x - 2
+		var shoulder: bool = plaza_shape <= 1.42 or abs(float(x) - vertical_center) <= 3.4 or abs(float(y) - horizontal_center) <= 3.4
+		return 0.78 if plaza or vertical or horizontal else (0.22 if shoulder else 0.0)
 	if mode == "guild":
 		var hall: bool = x >= 8 and x <= 42 and y >= 6 and y <= 23
 		var cross: bool = (x >= 23 and x <= 27) or (y >= 14 and y <= 17)
@@ -102,6 +113,18 @@ func _road_strength(x: int, y: int) -> float:
 		var branch: bool = abs(x - int(map_size.x * 0.5) - int(sin(float(y) * 0.11) * 4.0)) <= 1 and y > map_size.y * 0.30
 		return 0.45 if crystal_path or branch else 0.0
 	return 0.0
+
+func _village_patch_color(x: int, y: int) -> Color:
+	var wave := sin(float(x) * 0.17 + float(y) * 0.09)
+	if wave > 0.42:
+		return Color8(92, 74, 47)
+	if wave < -0.38:
+		return Color8(47, 77, 52)
+	return Color8(60, 53, 42)
+
+func _village_patch_strength(x: int, y: int) -> float:
+	var wave := sin(float(x) * 0.13 - float(y) * 0.19) + sin(float(x) * 0.035 + float(y) * 0.051)
+	return clampf(0.08 + wave * 0.08, 0.0, 0.24)
 
 func _wasteland_zone_color(x: int, y: int) -> Color:
 	var px: float = float(x) / max(1.0, float(map_size.x))
@@ -172,6 +195,8 @@ func _road_color() -> Color:
 			return Color8(69, 63, 82)
 		"old_factory":
 			return Color8(64, 71, 74)
+	if mode == "village":
+		return Color8(154, 122, 75)
 	return Color8(94, 82, 62)
 
 func _road_edge_color() -> Color:
@@ -212,7 +237,7 @@ func _accent_color() -> Color:
 
 func _base_color() -> Color:
 	if mode == "village":
-		return Color8(38, 34, 29)
+		return Color8(52, 48, 39)
 	if route_id == "toxic_marsh":
 		return Color8(26, 34, 27)
 	if route_id == "old_factory":
@@ -225,7 +250,7 @@ func _base_color() -> Color:
 
 func _alt_color() -> Color:
 	if mode == "village":
-		return Color8(72, 58, 42)
+		return Color8(111, 88, 55)
 	if route_id == "toxic_marsh":
 		return Color8(47, 78, 46)
 	if route_id == "old_factory":

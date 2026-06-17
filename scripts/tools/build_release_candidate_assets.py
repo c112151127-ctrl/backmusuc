@@ -24,7 +24,7 @@ REFERENCE_COPY = DOCS / "art_direction_reference_r17_full_body.png"
 
 FRAME_W = 112
 FRAME_H = 128
-FRAMES_PER_ACTION = 4
+FRAMES_PER_ACTION = 8
 DIRECTIONS = 8
 PLAYER_FRAME_DIR = SPRITES / "player" / "frames"
 PLAYER_ACTION_DIR = SPRITES / "player" / "actions"
@@ -119,6 +119,92 @@ def direction_vector(direction: int) -> tuple[float, float]:
     return math.cos(angle), math.sin(angle)
 
 
+def _transparent_polygon(canvas: Image.Image, points: list[tuple[float, float]]) -> None:
+    mask = Image.new("L", canvas.size, 0)
+    ImageDraw.Draw(mask).polygon(points, fill=255)
+    canvas.paste(Image.new("RGBA", canvas.size, (0, 0, 0, 0)), (0, 0), mask)
+
+
+def _clear_reference_arm_artifacts(canvas: Image.Image) -> None:
+    # The source sheet contains large side-arm silhouettes in some poses. They read
+    # as extra blades after normalization, so locomotion/action arms are redrawn
+    # consistently below instead of trusting each crop.
+    _transparent_polygon(canvas, [(0, 54), (24, 55), (35, 102), (24, 126), (0, 126)])
+    _transparent_polygon(canvas, [(112, 54), (88, 55), (77, 102), (88, 126), (112, 126)])
+
+
+def _draw_segmented_arm(draw: ImageDraw.ImageDraw, points: list[tuple[float, float]], hand_radius: int = 5) -> None:
+    if len(points) < 2:
+        return
+    for joint in points[:-1]:
+        draw.ellipse((joint[0] - 7, joint[1] - 7, joint[0] + 7, joint[1] + 7), fill=(24, 22, 19, 235))
+        draw.ellipse((joint[0] - 5, joint[1] - 5, joint[0] + 5, joint[1] + 5), fill=(190, 184, 162, 230))
+    for a, b in zip(points, points[1:]):
+        draw.line((a, b), fill=(26, 24, 22, 255), width=10)
+        draw.line((a, b), fill=(148, 145, 130, 255), width=6)
+        draw.line((a[0] + 1, a[1] - 1, b[0] + 1, b[1] - 1), fill=(221, 222, 197, 205), width=2)
+    hand = points[-1]
+    draw.ellipse((hand[0] - hand_radius - 1, hand[1] - hand_radius - 1, hand[0] + hand_radius + 1, hand[1] + hand_radius + 1), fill=(23, 32, 33, 255))
+    draw.ellipse((hand[0] - hand_radius, hand[1] - hand_radius, hand[0] + hand_radius, hand[1] + hand_radius), fill=(47, 222, 233, 245))
+
+
+def _draw_robot_arms(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
+    draw = ImageDraw.Draw(canvas, "RGBA")
+    dx, dy = direction_vector(direction)
+    nx, ny = -dy, dx
+    progress = frame / max(1, FRAMES_PER_ACTION - 1)
+    walk_cycle = math.sin(progress * math.tau)
+    cx, cy = FRAME_W * 0.5, FRAME_H * 0.66
+    depth_shift = -dy * 3
+    left_shoulder = (cx - 15 - dx * 2, cy - 17 + depth_shift)
+    right_shoulder = (cx + 15 - dx * 2, cy - 17 + depth_shift)
+
+    if action == "walk":
+        left_hand = (
+            left_shoulder[0] - 9 - dx * 2 + walk_cycle * 5,
+            left_shoulder[1] + 36 - walk_cycle * 4 + abs(dy) * 2,
+        )
+        right_hand = (
+            right_shoulder[0] + 9 - dx * 2 - walk_cycle * 5,
+            right_shoulder[1] + 36 + walk_cycle * 4 + abs(dy) * 2,
+        )
+    elif action in {"shoot", "slash", "draw_sword"}:
+        active_side = -1 if dx < -0.2 else 1
+        reach = 22 + progress * (8 if action == "shoot" else 16)
+        active_shoulder = left_shoulder if active_side < 0 else right_shoulder
+        inactive_shoulder = right_shoulder if active_side < 0 else left_shoulder
+        active_hand = (cx + dx * reach + active_side * abs(ny) * 5, cy + 10 + dy * (14 + progress * 8))
+        if action == "shoot":
+            inactive_hand = (inactive_shoulder[0] - active_side * 7 - dx * 2, inactive_shoulder[1] + 35)
+        else:
+            inactive_hand = (inactive_shoulder[0] - active_side * 8 - dx * 3, inactive_shoulder[1] + 31)
+        if active_side < 0:
+            left_hand = active_hand
+            right_hand = inactive_hand
+        else:
+            right_hand = active_hand
+            left_hand = inactive_hand
+    elif action == "swap_tool":
+        pulse = math.sin(progress * math.pi)
+        left_hand = (left_shoulder[0] - 12, left_shoulder[1] + 30 - pulse * 5)
+        right_hand = (right_shoulder[0] + 12, right_shoulder[1] + 30 - pulse * 5)
+    elif action == "interact":
+        left_hand = (cx - 24, cy + 14 - math.sin(progress * math.pi) * 8)
+        right_hand = (cx + 24, cy + 14 - math.sin(progress * math.pi) * 8)
+    elif action == "dead":
+        left_hand = (cx - 28, cy + 29)
+        right_hand = (cx + 28, cy + 31)
+    else:
+        idle = math.sin(progress * math.tau) * 1.5
+        left_hand = (left_shoulder[0] - 7 - dx * 2, left_shoulder[1] + 36 + idle)
+        right_hand = (right_shoulder[0] + 7 - dx * 2, right_shoulder[1] + 36 - idle)
+
+    left_elbow = ((left_shoulder[0] + left_hand[0]) * 0.5 - 4, (left_shoulder[1] + left_hand[1]) * 0.5 + 2)
+    right_elbow = ((right_shoulder[0] + right_hand[0]) * 0.5 + 4, (right_shoulder[1] + right_hand[1]) * 0.5 + 2)
+    _draw_segmented_arm(draw, [left_shoulder, left_elbow, left_hand])
+    _draw_segmented_arm(draw, [right_shoulder, right_elbow, right_hand])
+
+
 def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -> Image.Image:
     canvas = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(canvas, "RGBA")
@@ -130,7 +216,7 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
     body = body.resize((max(1, int(body.width * scale)), max(1, int(body.height * scale))), Image.Resampling.LANCZOS)
     bob = 0
     if action == "walk":
-        bob = [1, -2, 1, 0][frame % 4]
+        bob = [1, 0, -2, 0, 1, 0, -1, 0][frame % FRAMES_PER_ACTION]
     if action == "hit":
         body = ImageEnhance.Color(body).enhance(0.45)
         body = ImageEnhance.Brightness(body).enhance(1.22)
@@ -141,6 +227,9 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
         x = (FRAME_W - body.width) // 2
         y = FRAME_H - body.height - 10
     canvas.alpha_composite(body, (x, y))
+    if action != "dead":
+        _clear_reference_arm_artifacts(canvas)
+    _draw_robot_arms(canvas, action, direction, frame)
     _draw_action_overlay(canvas, action, direction, frame)
     return canvas
 
@@ -149,39 +238,44 @@ def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame
     draw = ImageDraw.Draw(canvas, "RGBA")
     dx, dy = direction_vector(direction)
     cx, cy = FRAME_W * 0.5, FRAME_H * 0.60
-    hand = (cx + dx * 17 - dy * 4, cy + dy * 10 + dx * 2)
-    wrist = (cx + dx * 7 - dy * 3, cy + dy * 5 + dx * 1)
+    progress = frame / max(1, FRAMES_PER_ACTION - 1)
+    nx, ny = -dy, dx
+    active_side = -1 if dx < -0.2 else 1
+    hand = (cx + dx * (24 + progress * 7) + active_side * abs(ny) * 5, cy + 10 + dy * (14 + progress * 7))
+    wrist = (cx + active_side * 16 + dx * 2, cy + 2 + dy * 4)
     if action == "shoot":
-        recoil = [0, -4, -2, 1][frame]
-        stock = (wrist[0] - dx * 9 + recoil * dx, wrist[1] - dy * 6 + recoil * dy)
-        end = (hand[0] + dx * 28 + recoil * dx, hand[1] + dy * 20 + recoil * dy)
-        draw.line((wrist, hand), fill=(42, 229, 238, 185), width=6)
-        draw.line((stock, end), fill=(26, 23, 20, 255), width=8)
-        draw.line((stock, end), fill=(186, 139, 86, 255), width=4)
-        draw.line((hand[0] - dy * 4, hand[1] + dx * 4, end[0] - dy * 4, end[1] + dx * 4), fill=(73, 229, 241, 210), width=2)
-        if frame in [1, 2]:
-            muzzle = (end[0] + dx * 5, end[1] + dy * 5)
+        base = (hand[0] - dx * 10 - nx * 3, hand[1] - dy * 8 - ny * 3)
+        muzzle = (hand[0] + dx * (26 + progress * 4), hand[1] + dy * (22 + progress * 4))
+        draw.line((base, muzzle), fill=(19, 17, 15, 255), width=11)
+        draw.line((base, muzzle), fill=(135, 132, 118, 255), width=7)
+        draw.line((base[0] + nx * 3, base[1] + ny * 3, muzzle[0] + nx * 3, muzzle[1] + ny * 3), fill=(226, 226, 197, 175), width=2)
+        core = (hand[0] + dx * 9, hand[1] + dy * 8)
+        draw.ellipse((core[0] - 5, core[1] - 5, core[0] + 5, core[1] + 5), fill=(43, 226, 238, 225), outline=(15, 42, 44, 255), width=2)
+        draw.rounded_rectangle((base[0] - 5, base[1] - 5, base[0] + 7, base[1] + 7), radius=3, fill=(178, 94, 46, 240), outline=(26, 20, 16, 255), width=2)
+        if frame in [2, 3, 4]:
             draw.ellipse((muzzle[0] - 6, muzzle[1] - 6, muzzle[0] + 6, muzzle[1] + 6), fill=(255, 205, 70, 230))
             draw.line((muzzle[0], muzzle[1], muzzle[0] + dx * 18, muzzle[1] + dy * 18), fill=(58, 239, 250, 210), width=3)
     elif action == "draw_sword":
-        grip = (wrist[0], wrist[1] + 7)
-        tip = (hand[0] + dx * (12 + frame * 5), hand[1] + dy * (10 + frame * 4))
-        draw.line((wrist, grip), fill=(42, 229, 238, 185), width=5)
-        draw.line((grip, tip), fill=(245, 239, 210, 255), width=3)
-        draw.line((grip[0] - dy * 5, grip[1] + dx * 5, grip[0] + dy * 5, grip[1] - dx * 5), fill=(205, 112, 45, 255), width=3)
+        grip = (hand[0] + dx * (4 + progress * 9), hand[1] + dy * (4 + progress * 7))
+        draw.ellipse((grip[0] - 5, grip[1] - 5, grip[0] + 5, grip[1] + 5), outline=(50, 228, 240, 210), width=2)
+        draw.line((wrist, grip), fill=(42, 229, 238, 145), width=3)
+        blade_tip = (grip[0] + dx * 28 + nx * 4, grip[1] + dy * 22 + ny * 4)
+        draw.line((grip, blade_tip), fill=(22, 19, 16, 240), width=7)
+        draw.line((grip, blade_tip), fill=(226, 223, 198, 230), width=4)
     elif action == "slash":
-        radius = 19 + frame * 6
+        radius = 19 + progress * 42
         center = (hand[0] + dx * 7, hand[1] + dy * 5)
         bbox = (center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius)
-        start = direction * 45 - 74
-        end = direction * 45 + 74
+        sweep = 38 + progress * 74
+        start = direction * 45 - sweep
+        end = direction * 45 + sweep
         draw.arc(bbox, start, end, fill=(255, 180, 54, 250), width=6)
         draw.arc((bbox[0] + 7, bbox[1] + 7, bbox[2] - 7, bbox[3] - 7), start + 10, end - 10, fill=(47, 229, 240, 220), width=3)
-        draw.line((wrist, hand), fill=(42, 229, 238, 185), width=5)
-        sword_tip = (hand[0] + dx * (24 + frame * 4), hand[1] + dy * (16 + frame * 3))
-        draw.line((hand, sword_tip), fill=(242, 236, 210, 250), width=3)
+        blade_tip = (hand[0] + dx * 34 + nx * 9, hand[1] + dy * 27 + ny * 9)
+        draw.line((hand, blade_tip), fill=(24, 20, 16, 245), width=8)
+        draw.line((hand, blade_tip), fill=(230, 226, 202, 235), width=5)
     elif action == "swap_tool":
-        pulse = 12 + frame * 5
+        pulse = 12 + progress * 30
         draw.ellipse((cx - pulse, cy - pulse, cx + pulse, cy + pulse), outline=(48, 232, 243, 160), width=3)
         draw.rounded_rectangle((cx + 18, cy - 8, cx + 35, cy + 9), radius=4, fill=(198, 112, 49, 230), outline=(36, 30, 24, 245), width=2)
     elif action == "interact":
@@ -242,14 +336,14 @@ def build_player_split_diagnostic() -> None:
     labels = [
         ("idle", 0, 0),
         ("idle", 4, 0),
-        ("walk", 0, 1),
-        ("walk", 4, 1),
-        ("shoot", 0, 2),
-        ("shoot", 4, 2),
-        ("slash", 0, 2),
-        ("slash", 4, 2),
-        ("hit", 2, 1),
-        ("dead", 2, 2),
+        ("walk", 0, 2),
+        ("walk", 4, 6),
+        ("shoot", 0, 4),
+        ("shoot", 4, 4),
+        ("slash", 0, 5),
+        ("slash", 4, 5),
+        ("hit", 2, 3),
+        ("dead", 2, 6),
     ]
     scale = 2
     tile_w = FRAME_W * scale
@@ -308,10 +402,20 @@ def save_icon(name: str, kind: str, accent: tuple[int, int, int]) -> None:
     red = (215, 52, 58)
     purple = (183, 88, 236)
     if kind == "blade":
-        d.line((18, 54, 63, 15), fill=(38, 34, 30, 255), width=9)
-        d.line((21, 51, 64, 14), fill=(238, 233, 205, 255), width=5)
-        d.line((25, 48, 51, 25), fill=accent + (230,), width=3)
-        d.rounded_rectangle((12, 48, 30, 59), radius=3, fill=rust + (255,), outline=(26, 21, 17, 255), width=2)
+        d.polygon([(17, 56), (57, 18), (72, 11), (65, 27), (26, 58)], fill=(31, 28, 24, 255))
+        d.polygon([(23, 51), (59, 18), (69, 14), (62, 25), (31, 53)], fill=(224, 220, 196, 255))
+        d.polygon([(28, 48), (57, 22), (64, 18), (55, 31), (35, 49)], fill=accent + (235,))
+        d.line((32, 50, 60, 21), fill=(255, 245, 198, 170), width=2)
+        d.rounded_rectangle((12, 47, 31, 60), radius=4, fill=rust + (255,), outline=(22, 18, 15, 255), width=2)
+        for bolt in [(18, 52), (26, 55)]:
+            d.ellipse((bolt[0] - 2, bolt[1] - 2, bolt[0] + 2, bolt[1] + 2), fill=gold + (255,))
+    elif kind == "hammer":
+        d.line((20, 56, 54, 29), fill=(34, 28, 22, 255), width=10)
+        d.line((22, 54, 55, 29), fill=rust + (255,), width=6)
+        d.rounded_rectangle((47, 13, 80, 34), radius=5, fill=(122, 126, 116, 255), outline=(23, 23, 22, 255), width=3)
+        d.rectangle((54, 16, 74, 31), fill=accent + (170,))
+        for x in [51, 61, 75]:
+            d.ellipse((x - 2, 20, x + 2, 24), fill=gold + (255,))
     elif kind == "rifle":
         d.rounded_rectangle((12, 33, 62, 45), radius=4, fill=(38, 34, 30, 255), outline=(14, 12, 11, 255), width=2)
         d.rectangle((28, 25, 58, 34), fill=accent + (245,))
@@ -361,7 +465,7 @@ def build_item_icons() -> None:
         "bio_crystal": ("resource", (180, 88, 236)),
         "rust_blade": ("blade", (198, 112, 52)),
         "spark_cutter": ("blade", (55, 224, 238)),
-        "breaker_hammer": ("blade", (210, 168, 84)),
+        "breaker_hammer": ("hammer", (210, 168, 84)),
         "pipe_rifle": ("rifle", (170, 92, 46)),
         "coil_launcher": ("rifle", (48, 220, 236)),
         "acid_sprayer": ("rifle", (102, 215, 76)),
@@ -405,14 +509,22 @@ def build_weapon_overlays() -> None:
         img = Image.new("RGBA", (96, 64), (0, 0, 0, 0))
         d = ImageDraw.Draw(img, "RGBA")
         if kind == "blade":
-            d.line((20, 48, 74, 13), fill=(22, 19, 17, 255), width=8)
-            d.line((23, 45, 75, 12), fill=(240, 235, 210, 255), width=4)
-            d.line((30, 40, 64, 19), fill=accent + (240,), width=2)
-            d.rounded_rectangle((14, 44, 31, 55), radius=3, fill=(172, 93, 44, 255), outline=(24, 20, 16, 255), width=2)
+            d.polygon([(16, 51), (63, 15), (82, 7), (72, 26), (28, 56)], fill=(20, 17, 15, 255))
+            d.polygon([(23, 46), (64, 17), (78, 10), (68, 23), (33, 49)], fill=(231, 227, 204, 255))
+            d.polygon([(30, 43), (61, 21), (71, 15), (58, 31), (38, 45)], fill=accent + (230,))
+            d.line((34, 45, 66, 18), fill=(255, 245, 206, 180), width=2)
+            d.rounded_rectangle((12, 43, 33, 57), radius=4, fill=(172, 93, 44, 255), outline=(23, 19, 15, 255), width=2)
+            d.rectangle((26, 40, 37, 46), fill=(44, 35, 25, 255))
+            for bolt in [(18, 48), (28, 52)]:
+                d.ellipse((bolt[0] - 2, bolt[1] - 2, bolt[0] + 2, bolt[1] + 2), fill=(224, 170, 73, 255))
         elif kind == "hammer":
-            d.line((23, 51, 59, 25), fill=(178, 98, 48, 255), width=7)
-            d.rounded_rectangle((50, 10, 82, 31), radius=4, fill=(126, 130, 120, 255), outline=(28, 29, 27, 255), width=3)
-            d.line((56, 14, 79, 28), fill=accent + (210,), width=2)
+            d.line((20, 54, 58, 26), fill=(25, 20, 16, 255), width=11)
+            d.line((22, 52, 59, 26), fill=(181, 101, 48, 255), width=7)
+            d.rounded_rectangle((49, 10, 87, 33), radius=5, fill=(126, 130, 120, 255), outline=(24, 24, 22, 255), width=3)
+            d.rectangle((57, 14, 80, 29), fill=accent + (168,))
+            d.line((54, 14, 84, 30), fill=(230, 220, 185, 145), width=2)
+            for bolt in [(54, 17), (66, 22), (80, 27)]:
+                d.ellipse((bolt[0] - 2, bolt[1] - 2, bolt[0] + 2, bolt[1] + 2), fill=(226, 174, 78, 245))
         elif kind == "rifle":
             d.rounded_rectangle((18, 31, 74, 43), radius=4, fill=(33, 30, 27, 255), outline=(12, 11, 10, 255), width=2)
             d.rectangle((34, 23, 66, 32), fill=accent + (245,))
@@ -540,7 +652,7 @@ def build_audio() -> None:
     }
     for name, data in specs.items():
         synth(audio / name, *data)
-    synth_music(audio / "music_intro.wav", 34.0, [146.8, 174.6, 130.8, 196.0], "intro")
+    synth_music(audio / "music_intro.wav", 56.0, [146.8, 174.6, 130.8, 196.0, 220.0], "intro")
     synth_music(audio / "music_village.wav", 32.0, [196.0, 246.9, 220.0, 174.6], "village")
     synth_music(audio / "music_guild.wav", 30.0, [164.8, 196.0, 220.0, 246.9], "guild")
     synth_music(audio / "music_wasteland.wav", 34.0, [110.0, 130.8, 98.0, 146.8], "wasteland")

@@ -90,10 +90,10 @@ func _check_enemy_behavior_contract() -> void:
 		enemy.free()
 
 func _check_baked_assets() -> void:
-	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(4032, 1024), "baked full-body R-17 player atlas exists at 9 actions x 8 directions x 4 frames")
+	_expect_png_size("res://assets/sprites/player/recycler_player_multiaction_8dir.png", Vector2i(8064, 1024), "baked full-body R-17 player atlas exists at 9 actions x 8 directions x 8 frames")
 	_expect_png_size("res://assets/sprites/player/frames/walk/dir_0/frame_0.png", Vector2i(112, 128), "R-17 split walk frame exists for right direction")
-	_expect_png_size("res://assets/sprites/player/frames/shoot/dir_4/frame_2.png", Vector2i(112, 128), "R-17 split shoot frame exists for left direction")
-	_expect_png_size("res://assets/sprites/player/actions/walk.png", Vector2i(448, 1024), "R-17 per-action walk sheet exists for review")
+	_expect_png_size("res://assets/sprites/player/frames/shoot/dir_4/frame_7.png", Vector2i(112, 128), "R-17 split shoot frame exists for left direction")
+	_expect_png_size("res://assets/sprites/player/actions/walk.png", Vector2i(896, 1024), "R-17 per-action walk sheet exists for review")
 	_expect_png_size("res://assets/sprites/enemies/polluted_enemy_six_types.png", Vector2i(672, 72), "baked enemy atlas has 6 enemy types plus boss")
 	_expect_png_size("res://assets/sprites/items/recycler_item_icons.png", Vector2i(352, 72), "baked high-detail item icon atlas has 4 resource icons")
 	_expect_png_size("res://assets/sprites/tiles/recycler_tileset.png", Vector2i(192, 32), "baked terrain tileset has village and wasteland tiles")
@@ -401,10 +401,20 @@ func _check_player_animation_contract() -> void:
 					var animation_name := "%s_%d" % [action_name, direction_index]
 					_expect(frame_set.has_animation(animation_name), "player animation exists: " + animation_name)
 					if frame_set.has_animation(animation_name):
-						_expect(frame_set.get_frame_count(animation_name) >= 3, "player animation has frames: " + animation_name)
+						_expect(frame_set.get_frame_count(animation_name) >= 8, "player animation has 8-frame motion: " + animation_name)
 			var first_frame := frame_set.get_frame_texture("idle_0", 0)
 			_expect(first_frame is Texture2D, "player animation frames load as textures")
 			_expect(not (first_frame is AtlasTexture), "player animation uses split PNG frames before atlas fallback")
+		if player.has_method("_aim_direction_from_global_target") and player.has_method("_projectile_spawn_global") and player.has_method("_attack_anchor_global"):
+			player.global_position = Vector2(400, 400)
+			player.last_direction = Vector2.RIGHT
+			var anchor: Vector2 = player._attack_anchor_global()
+			var aim_right: Vector2 = player._aim_direction_from_global_target(anchor + Vector2(240, 0))
+			var aim_down: Vector2 = player._aim_direction_from_global_target(anchor + Vector2(0, 240))
+			var muzzle: Vector2 = player._projectile_spawn_global()
+			_expect(aim_right.dot(Vector2.RIGHT) > 0.99, "player ranged aim uses muzzle anchor for right target")
+			_expect(aim_down.dot(Vector2.DOWN) > 0.99, "player ranged aim uses muzzle anchor for down target")
+			_expect(abs(muzzle.distance_to(anchor) - 46.0) < 0.1, "projectile spawn starts from weapon reach, not player feet")
 	instance.queue_free()
 	await get_tree().process_frame
 

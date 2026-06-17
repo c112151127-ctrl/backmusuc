@@ -71,4 +71,4 @@ func _release() -> void:
 	if pool_owner != null and pool_owner.has_method("release"):
 		pool_owner.release(self)
 	else:
-		queue_free()
+		call_deferred("queue_free")

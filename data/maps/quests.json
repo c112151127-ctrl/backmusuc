@@ -2,8 +2,11 @@
   "quests": [
     {
       "id": "clear_scrap_route",
-      "name": "清理廢鐵通道",
-      "description": "南門公路被污染體堵住，擊倒敵人並帶回足夠廢鐵，讓村莊恢復基本補給線。",
+      "name": "清理廢鐵公路",
+      "mode": "清剿",
+      "recommended_level": 1,
+      "story_step": "R-17 重新啟動後，第一條補給線必須恢復通行。",
+      "description": "南門外的廢鐵公路被污染體占住。清出道路、回收廢鐵，讓村莊能再次運送材料。",
       "route": "scrap_highway",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
@@ -17,8 +20,11 @@
     },
     {
       "id": "toxic_sample",
-      "name": "採集毒沼樣本",
-      "description": "西門排水區仍有可提煉晶核。收集污染晶核並壓制快速突襲的污染體。",
+      "name": "毒沼樣本回收",
+      "mode": "採集",
+      "recommended_level": 2,
+      "story_step": "維修機器人需要毒沼資料，才能校準 R-17 的外殼抗蝕層。",
+      "description": "西門排水區滲出綠色污染液。採回污染晶核並擊退靠近的飛行體。",
       "route": "toxic_marsh",
       "objectives": [
         { "type": "collect", "item": "bio_crystal", "amount": 2 },
@@ -31,8 +37,11 @@
     },
     {
       "id": "crystal_scar_recon",
-      "name": "偵查紫晶裂隙",
-      "description": "北門裂隙有強烈核心反應。R-17 必須標記礦脈並擊倒守衛污染體。",
+      "name": "紫晶裂隙偵查",
+      "mode": "探索",
+      "recommended_level": 3,
+      "story_step": "紫晶裂隙正在擴大，公會需要一台能承受污染脈衝的機器人進入。",
+      "description": "北門裂隙出現遠程污染體。沿晶脈調查、收集污染晶核並帶回紀錄。",
       "route": "crystal_scar",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 6 },
@@ -45,8 +54,11 @@
     },
     {
       "id": "old_factory_core",
-      "name": "奪回舊工廠核心",
-      "description": "東門工廠外圍仍有大型污染核心。擊倒精英與 Boss，帶回足以維持村莊的能源。",
+      "name": "舊工廠核心討伐",
+      "mode": "Boss 前哨",
+      "recommended_level": 4,
+      "story_step": "舊工廠仍在無人指令下運轉，污染核心把附近機械改造成敵人。",
+      "description": "東門工廠外圍有精英與 Boss 反應。擊敗污染核心，帶回可改裝的工業外骨架。",
       "route": "old_factory",
       "objectives": [
         { "type": "defeat", "counter": "defeat_enemy", "amount": 8 },
@@ -56,6 +68,41 @@
         "ammo": 18,
         "industrial_exoshell": 1,
         "acid_sprayer": 1
+      }
+    },
+    {
+      "id": "drainage_rescue",
+      "name": "排水站救援訊號",
+      "mode": "事件救援",
+      "recommended_level": 3,
+      "story_step": "斥候在毒沼留下斷續訊號，內容只剩下座標與求救代碼。",
+      "description": "進入西門毒沼，清出訊號站周邊敵人並回收足夠資源修復中繼器。",
+      "route": "toxic_marsh",
+      "objectives": [
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 5 },
+        { "type": "collect", "item": "scrap", "amount": 18 }
+      ],
+      "reward": {
+        "ammo": 10,
+        "magnet_breaker": 1
+      }
+    },
+    {
+      "id": "factory_sabotage",
+      "name": "工廠外圍破壞任務",
+      "mode": "破壞",
+      "recommended_level": 5,
+      "story_step": "如果不關閉舊工廠的外圍節點，村莊周邊會持續生成機械污染體。",
+      "description": "前往東門舊工廠，擊敗機械敵人並帶回異變核心，讓改裝站能研究反制裝置。",
+      "route": "old_factory",
+      "objectives": [
+        { "type": "defeat", "counter": "defeat_enemy", "amount": 10 },
+        { "type": "collect", "item": "mutant_core", "amount": 3 }
+      ],
+      "reward": {
+        "scrap": 36,
+        "spark_cutter": 1,
+        "ammo": 16
       }
     }
   ]

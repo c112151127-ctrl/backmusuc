@@ -13,7 +13,7 @@ func _ready() -> void:
 
 func fire_projectile(start: Vector2, dir: Vector2, damage: int, target_group := "enemy") -> bool:
 	if active_count >= max_projectiles:
-		GameState.notify("投射物已達上限")
+		GameState.notify("彈幕已達上限，請等待前一波子彈消散。")
 		return false
 	var projectile := _get_projectile()
 	if projectile == null:

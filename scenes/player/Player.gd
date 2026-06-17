@@ -159,7 +159,7 @@ func _ranged_attack() -> void:
 		ranged_id = String(GameState.equipment.get("ranged", "pipe_rifle"))
 		ranged = DataRegistry.get_equipment(ranged_id)
 	if not GameState.spend_ammo(1):
-		GameState.notify("彈藥不足，先回收補給或切換近戰。")
+		GameState.notify("彈藥不足，請回村補給或擊破箱子取得彈藥。")
 		return
 	last_direction = _aim_direction()
 	_set_timed_state(PlayerState.SHOOT, 0.22)
@@ -171,7 +171,7 @@ func _ranged_attack() -> void:
 	GameState.request_feedback("attack", shake)
 	ranged_timer = float(ranged.get("cooldown", 0.25))
 	var projectile_damage := 10 + GameState.get_stat_bonus("attack")
-	var projectile_start := _attack_anchor_global() + last_direction * 40.0
+	var projectile_start := _projectile_spawn_global()
 	var pools := get_tree().get_nodes_in_group("projectile_pool")
 	if not pools.is_empty() and pools[0].has_method("fire_projectile"):
 		if not pools[0].fire_projectile(projectile_start, last_direction, projectile_damage):
@@ -186,10 +186,13 @@ func _use_tool_action() -> void:
 	var tool := DataRegistry.get_equipment(GameState.active_attack_item_id())
 	AudioManager.play_sfx(String(tool.get("sfx_id", "interact")))
 	_spawn_attack_flash(String(tool.get("attack_vfx_id", "scan_pulse")), 0.8)
-	GameState.notify("R-17 掃描附近可回收目標。")
+	GameState.notify("R-17 展開掃描，標記附近可回收物。")
 
 func _aim_direction() -> Vector2:
-	var aim := get_global_mouse_position() - global_position
+	return _aim_direction_from_global_target(get_global_mouse_position())
+
+func _aim_direction_from_global_target(target: Vector2) -> Vector2:
+	var aim := target - _attack_anchor_global()
 	if aim.length() < 8.0:
 		aim = last_direction
 	if aim.length() < 0.05:
@@ -208,7 +211,7 @@ func _build_sprite_frames() -> void:
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
 			frames.add_animation(animation_name)
-			frames.set_animation_speed(animation_name, 8.0 if action_name in ["idle", "walk"] else 14.0)
+			frames.set_animation_speed(animation_name, 10.0 if action_name == "walk" else (8.0 if action_name == "idle" else 14.0))
 			frames.set_animation_loop(animation_name, action_name in ["idle", "walk"])
 			for frame_index in range(PixelArtFactory.PLAYER_FRAMES_PER_ACTION):
 				var split_frame := _split_frame_texture(action_name, direction_index, frame_index)
@@ -293,6 +296,12 @@ func _spawn_attack_flash(effect_id: String, strength: float) -> void:
 func _attack_anchor_global() -> Vector2:
 	return global_position + Vector2(0, -62)
 
+func _projectile_spawn_global() -> Vector2:
+	var direction := last_direction.normalized()
+	if direction.length() < 0.1:
+		direction = Vector2.RIGHT
+	return _attack_anchor_global() + direction * 46.0
+
 func _update_weapon_overlay() -> void:
 	if weapon_sprite == null:
 		return
@@ -302,17 +311,37 @@ func _update_weapon_overlay() -> void:
 	if asset_id != current_weapon_asset_id:
 		current_weapon_asset_id = asset_id
 		weapon_sprite.texture = ASSET_LOADER.load_png(DataRegistry.asset_path(asset_id)) if not asset_id.is_empty() else null
-	var visible_state := state in [PlayerState.SWAP_TOOL, PlayerState.INTERACT]
+	var visible_state := state in [
+		PlayerState.SHOOT,
+		PlayerState.DRAW_SWORD,
+		PlayerState.SLASH,
+		PlayerState.SWAP_TOOL,
+		PlayerState.INTERACT
+	]
 	weapon_sprite.visible = visible_state and weapon_sprite.texture != null
 	if not weapon_sprite.visible:
 		return
 	var direction := last_direction.normalized()
 	if direction.length() < 0.1:
 		direction = Vector2.RIGHT
-	weapon_sprite.position = Vector2(0, -62) + direction * 18.0
+	var progress := 1.0
+	if state == PlayerState.SHOOT:
+		progress = 1.0 - clampf(action_state_timer / 0.22, 0.0, 1.0)
+	elif state == PlayerState.DRAW_SWORD:
+		progress = 1.0 - clampf(action_state_timer / 0.10, 0.0, 1.0)
+	elif state == PlayerState.SLASH:
+		progress = 1.0 - clampf(action_state_timer / 0.24, 0.0, 1.0)
+	var anchor := Vector2(0, -62)
+	weapon_sprite.position = anchor + direction * (22.0 + progress * 11.0)
 	weapon_sprite.rotation = direction.angle()
+	if state == PlayerState.SLASH:
+		weapon_sprite.rotation += lerpf(-0.82, 0.72, progress)
+	elif state == PlayerState.DRAW_SWORD:
+		weapon_sprite.rotation += lerpf(-0.34, 0.0, progress)
+	elif state == PlayerState.SHOOT:
+		weapon_sprite.position -= direction * sin(progress * PI) * 6.0
 	weapon_sprite.flip_v = direction.x < -0.1
-	weapon_sprite.scale = Vector2(0.75, 0.75) if state == PlayerState.SWAP_TOOL else Vector2.ONE
+	weapon_sprite.scale = Vector2(0.68, 0.68) if state == PlayerState.SWAP_TOOL else Vector2(0.92, 0.92)
 
 func _on_feedback_requested(kind: String, strength: float) -> void:
 	match kind:
