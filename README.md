@@ -10,9 +10,10 @@
 - 主角素材由 `scripts/tools/build_release_candidate_assets.py` 生成到拆分 PNG、action sheet 與整張 atlas。
 - R-17 已支援 8 方向、每動作 8 幀：待機、走路、射擊、拔刀、揮砍、切換工具、互動、受擊、死亡。
 - 左鍵會依目前裝備行動：近戰武器揮砍，遠程武器射擊。
+- 玩家 body frame 不再烘入刀、槍或大型揮砍弧光；武器統一由 `assets/sprites/player/weapons/` overlay 呈現，降低重複手臂與裁切跑位問題。
 - 武器 icon、世界掉落 icon 與玩家手持 overlay 已改為機械廢土風格。
 - 公會任務資料已包含清剿、採集、探索、Boss 前哨、救援事件與破壞任務。
-- 開場故事語音已加入 `assets/audio/voice_intro_story.wav`，背景音樂包含 intro、village、guild、wasteland。
+- 開場故事語音已加入 `assets/audio/voice_intro_story.wav`，背景音樂包含 intro、village、guild、wasteland；Edge TTS 男聲目前在本機測試會回傳 `NoAudioReceived`，不可覆蓋正式語音檔。
 - 小地圖、人物面板、對話框、存檔、死亡重生、升級與四向廢土路線已在 vertical slice 中串接。
 
 ## 遊玩方式
@@ -64,6 +65,7 @@ python scripts\tools\verify_visual_assets.py
 - 裝備 icon：`assets/sprites/items/`
 - 武器 overlay：`assets/sprites/player/weapons/`
 - 診斷圖：`docs/player_split_frame_diagnostic.png`
+- 玩家動作 review 拼接圖：`docs/visual_review_action_montage.png`
 
 ## 驗證
 
@@ -74,6 +76,7 @@ python scripts\tools\verify_visual_assets.py
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PixelAssetBaker.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/ValidationRunner.tscn'
 & 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/AutomatedPlaytestRunner.tscn'
+& 'C:\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe' --headless --path 'C:\Code\Game\first-game' --scene 'res://scenes/tests/PerformanceRunner.tscn'
 ```
 
 視覺截圖驗證：
@@ -83,6 +86,8 @@ python scripts\tools\verify_visual_assets.py
 ```
 
 視覺 runner 會更新 `docs/visual_review_*.png`。
+
+效能 runner 會更新 `docs/performance_report.json`，目前壓測內容是 30 個敵人節點與 200 顆池化子彈的 projectile pool 壓力樣本。
 
 ## 協作規則
 

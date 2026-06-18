@@ -28,6 +28,8 @@ FRAMES_PER_ACTION = 8
 DIRECTIONS = 8
 PLAYER_FRAME_DIR = SPRITES / "player" / "frames"
 PLAYER_ACTION_DIR = SPRITES / "player" / "actions"
+PLAYER_WEAPON_DIR = SPRITES / "player" / "weapons"
+PLAYER_CLEANUP_AUDIT = DOCS / "player_asset_cleanup_audit.md"
 ACTIONS = [
     "idle",
     "walk",
@@ -170,14 +172,14 @@ def _draw_robot_arms(canvas: Image.Image, action: str, direction: int, frame: in
         )
     elif action in {"shoot", "slash", "draw_sword"}:
         active_side = -1 if dx < -0.2 else 1
-        reach = 22 + progress * (8 if action == "shoot" else 16)
+        reach = 17 + progress * (5 if action == "shoot" else 9)
         active_shoulder = left_shoulder if active_side < 0 else right_shoulder
         inactive_shoulder = right_shoulder if active_side < 0 else left_shoulder
-        active_hand = (cx + dx * reach + active_side * abs(ny) * 5, cy + 10 + dy * (14 + progress * 8))
+        active_hand = (cx + dx * reach + active_side * abs(ny) * 4, cy + 13 + dy * (10 + progress * 5))
         if action == "shoot":
-            inactive_hand = (inactive_shoulder[0] - active_side * 7 - dx * 2, inactive_shoulder[1] + 35)
+            inactive_hand = (inactive_shoulder[0] - active_side * 7 - dx * 2, inactive_shoulder[1] + 33)
         else:
-            inactive_hand = (inactive_shoulder[0] - active_side * 8 - dx * 3, inactive_shoulder[1] + 31)
+            inactive_hand = (inactive_shoulder[0] - active_side * 8 - dx * 2, inactive_shoulder[1] + 31)
         if active_side < 0:
             left_hand = active_hand
             right_hand = inactive_hand
@@ -230,50 +232,33 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
     if action != "dead":
         _clear_reference_arm_artifacts(canvas)
     _draw_robot_arms(canvas, action, direction, frame)
-    _draw_action_overlay(canvas, action, direction, frame)
+    _draw_body_action_cues(canvas, action, direction, frame)
     return canvas
 
 
-def _draw_action_overlay(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
+def _draw_body_action_cues(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
     draw = ImageDraw.Draw(canvas, "RGBA")
     dx, dy = direction_vector(direction)
     cx, cy = FRAME_W * 0.5, FRAME_H * 0.60
     progress = frame / max(1, FRAMES_PER_ACTION - 1)
-    nx, ny = -dy, dx
     active_side = -1 if dx < -0.2 else 1
-    hand = (cx + dx * (24 + progress * 7) + active_side * abs(ny) * 5, cy + 10 + dy * (14 + progress * 7))
-    wrist = (cx + active_side * 16 + dx * 2, cy + 2 + dy * 4)
+    hand = (cx + dx * (17 + progress * 5), cy + 13 + dy * (10 + progress * 5))
+
+    # Weapon art is intentionally not baked into body frames.  The runtime
+    # WeaponOverlay owns blades, guns, muzzle flashes and slash arcs so the
+    # body can be split into stable per-frame PNGs without duplicated arms.
     if action == "shoot":
-        base = (hand[0] - dx * 10 - nx * 3, hand[1] - dy * 8 - ny * 3)
-        muzzle = (hand[0] + dx * (26 + progress * 4), hand[1] + dy * (22 + progress * 4))
-        draw.line((base, muzzle), fill=(19, 17, 15, 255), width=11)
-        draw.line((base, muzzle), fill=(135, 132, 118, 255), width=7)
-        draw.line((base[0] + nx * 3, base[1] + ny * 3, muzzle[0] + nx * 3, muzzle[1] + ny * 3), fill=(226, 226, 197, 175), width=2)
-        core = (hand[0] + dx * 9, hand[1] + dy * 8)
-        draw.ellipse((core[0] - 5, core[1] - 5, core[0] + 5, core[1] + 5), fill=(43, 226, 238, 225), outline=(15, 42, 44, 255), width=2)
-        draw.rounded_rectangle((base[0] - 5, base[1] - 5, base[0] + 7, base[1] + 7), radius=3, fill=(178, 94, 46, 240), outline=(26, 20, 16, 255), width=2)
-        if frame in [2, 3, 4]:
-            draw.ellipse((muzzle[0] - 6, muzzle[1] - 6, muzzle[0] + 6, muzzle[1] + 6), fill=(255, 205, 70, 230))
-            draw.line((muzzle[0], muzzle[1], muzzle[0] + dx * 18, muzzle[1] + dy * 18), fill=(58, 239, 250, 210), width=3)
+        recoil = math.sin(progress * math.pi)
+        draw.ellipse((hand[0] - 7, hand[1] - 7, hand[0] + 7, hand[1] + 7), outline=(46, 231, 240, 130 + int(recoil * 70)), width=2)
+        draw.line((hand[0] - active_side * 5, hand[1] + 8, hand[0] + active_side * 5, hand[1] + 8), fill=(238, 166, 70, 160), width=2)
     elif action == "draw_sword":
-        grip = (hand[0] + dx * (4 + progress * 9), hand[1] + dy * (4 + progress * 7))
-        draw.ellipse((grip[0] - 5, grip[1] - 5, grip[0] + 5, grip[1] + 5), outline=(50, 228, 240, 210), width=2)
-        draw.line((wrist, grip), fill=(42, 229, 238, 145), width=3)
-        blade_tip = (grip[0] + dx * 28 + nx * 4, grip[1] + dy * 22 + ny * 4)
-        draw.line((grip, blade_tip), fill=(22, 19, 16, 240), width=7)
-        draw.line((grip, blade_tip), fill=(226, 223, 198, 230), width=4)
+        radius = 5 + progress * 4
+        draw.ellipse((hand[0] - radius, hand[1] - radius, hand[0] + radius, hand[1] + radius), outline=(50, 228, 240, 190), width=2)
+        draw.line((cx + active_side * 10, cy + 4, hand[0], hand[1]), fill=(42, 229, 238, 95), width=2)
     elif action == "slash":
-        radius = 19 + progress * 42
-        center = (hand[0] + dx * 7, hand[1] + dy * 5)
-        bbox = (center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius)
-        sweep = 38 + progress * 74
-        start = direction * 45 - sweep
-        end = direction * 45 + sweep
-        draw.arc(bbox, start, end, fill=(255, 180, 54, 250), width=6)
-        draw.arc((bbox[0] + 7, bbox[1] + 7, bbox[2] - 7, bbox[3] - 7), start + 10, end - 10, fill=(47, 229, 240, 220), width=3)
-        blade_tip = (hand[0] + dx * 34 + nx * 9, hand[1] + dy * 27 + ny * 9)
-        draw.line((hand, blade_tip), fill=(24, 20, 16, 245), width=8)
-        draw.line((hand, blade_tip), fill=(230, 226, 202, 235), width=5)
+        pulse = math.sin(progress * math.pi)
+        draw.ellipse((hand[0] - 6, hand[1] - 6, hand[0] + 6, hand[1] + 6), outline=(255, 182, 54, 120 + int(pulse * 80)), width=2)
+        draw.line((cx + active_side * 10, cy + 8, hand[0], hand[1]), fill=(255, 182, 54, 95), width=2)
     elif action == "swap_tool":
         pulse = 12 + progress * 30
         draw.ellipse((cx - pulse, cy - pulse, cx + pulse, cy + pulse), outline=(48, 232, 243, 160), width=3)
@@ -359,6 +344,51 @@ def build_player_split_diagnostic() -> None:
     out = DOCS / "player_split_frame_diagnostic.png"
     ensure(out)
     preview.save(out)
+
+
+def write_player_cleanup_audit() -> None:
+    active_roots = [
+        PLAYER_FRAME_DIR.relative_to(ROOT),
+        PLAYER_ACTION_DIR.relative_to(ROOT),
+        PLAYER_WEAPON_DIR.relative_to(ROOT),
+        Path("assets/sprites/player/recycler_player_multiaction_8dir.png"),
+        Path("data/art/player_animation_manifest.json"),
+    ]
+    legacy_candidates = [
+        Path("assets/sprites/player/recycler_player_sprite_sheet.svg"),
+        Path("assets/sprites/player/recycler_player_sprite_sheet.svg.import"),
+        Path("assets/sprites/player/recycler_player_sprite_sheet.png"),
+        Path("assets/sprites/player/recycler_player_sprite_sheet.png.import"),
+        Path("assets/sprites/player/recycler_player_multiaction_8dir.svg"),
+    ]
+    lines = [
+        "# Player Asset Cleanup Audit",
+        "",
+        "本輪依專案規則沒有批量刪除任何檔案。正式玩家資產已改成分離式 PNG：身體逐格、動作 sheet、武器 overlay 各自管理。",
+        "",
+        "## 目前正式使用",
+    ]
+    for path in active_roots:
+        lines.append(f"- `{path.as_posix()}`")
+    lines.extend([
+        "",
+        "## 建議人工確認後單檔刪除的舊候選",
+        "",
+        "下列檔案若未被 Godot import 或 README 文件引用，可由使用者人工逐一刪除；AI 不會使用批量刪除命令。",
+    ])
+    for path in legacy_candidates:
+        status = "存在" if (ROOT / path).exists() else "不存在"
+        lines.append(f"- `{path.as_posix()}`：{status}")
+    lines.extend([
+        "",
+        "## 驗證規則",
+        "",
+        "- 玩家身體幀不應包含刀、槍、槍口火光或大型揮砍弧光。",
+        "- 走路與待機幀必須保留左右手，不可因裁切消失。",
+        "- 武器圖只從 `assets/sprites/player/weapons/` 讀取，避免重複手臂與重複武器。",
+    ])
+    ensure(PLAYER_CLEANUP_AUDIT)
+    PLAYER_CLEANUP_AUDIT.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def icon_canvas() -> tuple[Image.Image, ImageDraw.ImageDraw]:
@@ -499,41 +529,51 @@ def build_weapon_overlays() -> None:
         "recycler_glove": ("tool", (66, 210, 188)),
         "magnet_breaker": ("tool", (124, 188, 228)),
     }
-    out_dir = SPRITES / "player" / "weapons"
+    out_dir = PLAYER_WEAPON_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, (kind, accent) in specs.items():
         source_box = WEAPON_MODULE_BOXES.get(name)
         if source_box is not None:
-            fit_reference_asset(ref, source_box, (96, 64), 0.92).save(out_dir / f"{name}_overlay.png")
+            weapon = fit_reference_asset(ref, source_box, (128, 80), 0.76)
+            d = ImageDraw.Draw(weapon, "RGBA")
+            d.ellipse((18, 62, 110, 77), fill=(0, 0, 0, 52))
+            d.rounded_rectangle((10, 9, 118, 70), radius=8, outline=(54, 234, 244, 28), width=1)
+            weapon.save(out_dir / f"{name}_overlay.png")
             continue
-        img = Image.new("RGBA", (96, 64), (0, 0, 0, 0))
+        img = Image.new("RGBA", (128, 80), (0, 0, 0, 0))
         d = ImageDraw.Draw(img, "RGBA")
+        d.ellipse((18, 62, 110, 77), fill=(0, 0, 0, 66))
         if kind == "blade":
-            d.polygon([(16, 51), (63, 15), (82, 7), (72, 26), (28, 56)], fill=(20, 17, 15, 255))
-            d.polygon([(23, 46), (64, 17), (78, 10), (68, 23), (33, 49)], fill=(231, 227, 204, 255))
-            d.polygon([(30, 43), (61, 21), (71, 15), (58, 31), (38, 45)], fill=accent + (230,))
-            d.line((34, 45, 66, 18), fill=(255, 245, 206, 180), width=2)
-            d.rounded_rectangle((12, 43, 33, 57), radius=4, fill=(172, 93, 44, 255), outline=(23, 19, 15, 255), width=2)
-            d.rectangle((26, 40, 37, 46), fill=(44, 35, 25, 255))
-            for bolt in [(18, 48), (28, 52)]:
+            d.polygon([(14, 59), (82, 15), (111, 8), (93, 35), (33, 65)], fill=(18, 15, 13, 255))
+            d.polygon([(23, 53), (81, 18), (104, 12), (88, 30), (38, 57)], fill=(224, 221, 199, 255))
+            d.polygon([(31, 50), (78, 22), (95, 17), (80, 32), (44, 51)], fill=accent + (225,))
+            d.line((38, 51, 88, 19), fill=(255, 244, 201, 190), width=2)
+            d.line((70, 29, 92, 21), fill=(45, 230, 240, 180), width=2)
+            d.rounded_rectangle((10, 49, 39, 68), radius=5, fill=(159, 83, 38, 255), outline=(22, 18, 14, 255), width=3)
+            d.rectangle((30, 45, 44, 54), fill=(44, 35, 25, 255), outline=(19, 16, 12, 255))
+            for bolt in [(18, 55), (31, 62), (35, 50)]:
                 d.ellipse((bolt[0] - 2, bolt[1] - 2, bolt[0] + 2, bolt[1] + 2), fill=(224, 170, 73, 255))
         elif kind == "hammer":
-            d.line((20, 54, 58, 26), fill=(25, 20, 16, 255), width=11)
-            d.line((22, 52, 59, 26), fill=(181, 101, 48, 255), width=7)
-            d.rounded_rectangle((49, 10, 87, 33), radius=5, fill=(126, 130, 120, 255), outline=(24, 24, 22, 255), width=3)
-            d.rectangle((57, 14, 80, 29), fill=accent + (168,))
-            d.line((54, 14, 84, 30), fill=(230, 220, 185, 145), width=2)
-            for bolt in [(54, 17), (66, 22), (80, 27)]:
+            d.line((19, 66, 74, 28), fill=(21, 17, 13, 255), width=15)
+            d.line((23, 63, 76, 28), fill=(172, 88, 42, 255), width=9)
+            d.rounded_rectangle((66, 12, 118, 40), radius=6, fill=(119, 124, 112, 255), outline=(22, 22, 20, 255), width=3)
+            d.rectangle((78, 17, 108, 35), fill=accent + (176,))
+            d.line((71, 17, 114, 37), fill=(230, 220, 185, 150), width=2)
+            d.rectangle((62, 19, 71, 36), fill=(88, 74, 52, 255), outline=(22, 18, 14, 255))
+            for bolt in [(73, 20), (90, 25), (110, 33)]:
                 d.ellipse((bolt[0] - 2, bolt[1] - 2, bolt[0] + 2, bolt[1] + 2), fill=(226, 174, 78, 245))
         elif kind == "rifle":
-            d.rounded_rectangle((18, 31, 74, 43), radius=4, fill=(33, 30, 27, 255), outline=(12, 11, 10, 255), width=2)
-            d.rectangle((34, 23, 66, 32), fill=accent + (245,))
-            d.rectangle((70, 34, 91, 38), fill=(232, 176, 72, 255))
-            d.line((25, 44, 38, 58), fill=(171, 94, 48, 255), width=5)
+            d.rounded_rectangle((18, 36, 92, 51), radius=5, fill=(29, 27, 24, 255), outline=(12, 11, 10, 255), width=3)
+            d.rectangle((40, 25, 84, 37), fill=accent + (245,), outline=(18, 20, 18, 255))
+            d.rectangle((88, 40, 120, 44), fill=(232, 176, 72, 255), outline=(34, 24, 13, 255))
+            d.line((29, 52, 45, 69), fill=(171, 94, 48, 255), width=6)
+            d.ellipse((53, 31, 63, 41), fill=(45, 230, 240, 220), outline=(11, 31, 34, 255), width=2)
         else:
-            d.rounded_rectangle((34, 20, 66, 45), radius=7, fill=accent + (235,), outline=(24, 22, 18, 255), width=2)
-            d.ellipse((42, 12, 58, 29), fill=(56, 226, 236, 170))
-            d.line((24, 47, 74, 20), fill=(175, 96, 47, 230), width=4)
+            d.rounded_rectangle((46, 24, 84, 55), radius=9, fill=accent + (235,), outline=(24, 22, 18, 255), width=3)
+            d.ellipse((55, 13, 75, 34), fill=(56, 226, 236, 170), outline=(15, 44, 47, 220), width=2)
+            d.line((28, 62, 101, 24), fill=(175, 96, 47, 230), width=5)
+            for x in [50, 64, 78]:
+                d.line((x, 28, x + 8, 52), fill=(235, 230, 202, 70), width=2)
         img.save(out_dir / f"{name}_overlay.png")
 
 
@@ -665,6 +705,7 @@ def main() -> None:
     build_weapon_overlays()
     build_audio()
     write_manifest()
+    write_player_cleanup_audit()
     print("Built release-candidate R-17 assets, item icons, audio, and animation manifest")
 
 

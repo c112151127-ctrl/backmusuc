@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+import wave
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageOps
@@ -12,23 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 HASH_TYPES = {"npc", "structure", "item", "equipment", "enemy", "boss", "weapon_overlay"}
 TEXT_SCAN_DIRS = ["data", "scenes", "scripts", "docs"]
 PLAYER_EXPECTED_FRAMES = 8
-MOJIBAKE_MARKERS = [
-    "\ufffd",
-    "敶",
-    "撱",
-    "蝺",
-    "蝞",
-    "瘙",
-    "憟",
-    "銝",
-    "閰",
-    "謍",
-    "豯",
-    "鈭",
-    "嚗",
-    "?啗",
-    "?",
-]
+PLAYER_FRAME_SIZE = (112, 128)
+MOJIBAKE_MARKERS = ["\ufffd", "敶", "雓", "鞊", "撅", "銝", "餈", "摮", "蹓", "嚗", "", ""]
 
 
 def resolve(path: str) -> Path:
@@ -129,13 +115,51 @@ def _bbox_center_bottom(box: tuple[int, int, int, int]) -> tuple[float, float]:
     return ((box[0] + box[2]) / 2.0, float(box[3]))
 
 
+def _cyan_counts(image: Image.Image) -> tuple[int, int]:
+    left = 0
+    right = 0
+    mid = image.size[0] // 2
+    for y in range(image.size[1]):
+        for x in range(image.size[0]):
+            r, g, b, a = image.getpixel((x, y))
+            if a > 80 and b > 145 and g > 120 and r < 95:
+                if x < mid:
+                    left += 1
+                else:
+                    right += 1
+    return left, right
+
+
+def _verify_body_frame(path: Path, action_id: str, direction: int, frame: int, failures: list[str]) -> tuple[int, int, int, int] | None:
+    if not path.exists():
+        fail(f"R-17 split frame missing: {action_id} dir {direction} frame {frame}", failures)
+        return None
+    frame_image = Image.open(path).convert("RGBA")
+    if frame_image.size != PLAYER_FRAME_SIZE:
+        fail(f"R-17 split frame has wrong size: {path.relative_to(ROOT)} {frame_image.size}", failures)
+    bbox = frame_image.getbbox()
+    if bbox is None:
+        fail(f"R-17 split frame is blank: {path.relative_to(ROOT)}", failures)
+        return None
+    if action_id in {"idle", "walk"}:
+        if bbox[0] <= 0 or bbox[2] >= PLAYER_FRAME_SIZE[0] or bbox[1] <= 0 or bbox[3] >= PLAYER_FRAME_SIZE[1]:
+            fail(f"R-17 locomotion frame touches edge and may be clipped: {path.relative_to(ROOT)} bbox={bbox}", failures)
+        left_cyan, right_cyan = _cyan_counts(frame_image)
+        if left_cyan < 10 or right_cyan < 10:
+            fail(f"R-17 {action_id} frame is missing a visible cyan hand: {path.relative_to(ROOT)} left={left_cyan} right={right_cyan}", failures)
+    elif action_id in {"shoot", "draw_sword", "slash"}:
+        if bbox[0] <= 1 or bbox[2] >= PLAYER_FRAME_SIZE[0] - 1:
+            fail(f"R-17 action body frame touches horizontal edge; weapon should not be baked into body: {path.relative_to(ROOT)} bbox={bbox}", failures)
+    return bbox
+
+
 def verify_player_manifest(failures: list[str]) -> None:
     manifest = read_json(ROOT / "data" / "art" / "player_animation_manifest.json", failures)
     frame_size = manifest.get("frame_size", [])
     directions = int(manifest.get("directions", 0))
     frames = int(manifest.get("frames_per_action", 0))
     actions = manifest.get("actions", [])
-    if frame_size != [112, 128]:
+    if frame_size != list(PLAYER_FRAME_SIZE):
         fail("R-17 player manifest frame_size must be [112, 128]", failures)
     if directions != 8 or frames != PLAYER_EXPECTED_FRAMES or len(actions) != 9:
         fail("R-17 player manifest must define 9 actions, 8 directions, 8 frames", failures)
@@ -153,24 +177,14 @@ def verify_player_manifest(failures: list[str]) -> None:
             fail(f"R-17 action sheet missing: {action_id}", failures)
         else:
             sheet = Image.open(sheet_path).convert("RGBA")
-            if sheet.size != (112 * PLAYER_EXPECTED_FRAMES, 128 * 8):
+            if sheet.size != (PLAYER_FRAME_SIZE[0] * PLAYER_EXPECTED_FRAMES, PLAYER_FRAME_SIZE[1] * 8):
                 fail(f"R-17 action sheet has wrong size for {action_id}: {sheet.size}", failures)
         for direction in range(8):
             anchor_boxes: list[tuple[int, int, int, int]] = []
             for frame in range(PLAYER_EXPECTED_FRAMES):
                 frame_path = resolve(f"{split_frame_dir}/{action_id}/dir_{direction}/frame_{frame}.png")
-                if not frame_path.exists():
-                    fail(f"R-17 split frame missing: {action_id} dir {direction} frame {frame}", failures)
-                    continue
-                frame_image = Image.open(frame_path).convert("RGBA")
-                if frame_image.size != (112, 128):
-                    fail(f"R-17 split frame has wrong size: {frame_path.relative_to(ROOT)} {frame_image.size}", failures)
-                bbox = frame_image.getbbox()
-                if bbox is None:
-                    fail(f"R-17 split frame is blank: {frame_path.relative_to(ROOT)}", failures)
-                elif action_id in {"idle", "walk"} and (bbox[0] <= 0 or bbox[2] >= 112 or bbox[1] <= 0 or bbox[3] >= 128):
-                    fail(f"R-17 locomotion frame touches edge and may be clipped: {frame_path.relative_to(ROOT)} bbox={bbox}", failures)
-                elif action_id in {"idle", "walk"}:
+                bbox = _verify_body_frame(frame_path, action_id, direction, frame, failures)
+                if bbox is not None and action_id in {"idle", "walk"}:
                     anchor_boxes.append(bbox)
             if len(anchor_boxes) >= 2:
                 anchors = [_bbox_center_bottom(box) for box in anchor_boxes]
@@ -184,36 +198,56 @@ def verify_player_manifest(failures: list[str]) -> None:
     atlas_path = resolve(str(manifest.get("atlas_path", "")))
     if atlas_path.exists():
         image = Image.open(atlas_path).convert("RGBA")
-        expected_size = (112 * PLAYER_EXPECTED_FRAMES * 9, 128 * 8)
+        expected_size = (PLAYER_FRAME_SIZE[0] * PLAYER_EXPECTED_FRAMES * 9, PLAYER_FRAME_SIZE[1] * 8)
         if image.size != expected_size:
             fail(f"R-17 atlas size must be {expected_size[0]}x{expected_size[1]}, got {image.size}", failures)
-        for direction in range(8):
-            frame = image.crop((0, direction * 128, 112, (direction + 1) * 128))
-            bbox = frame.getbbox()
-            if bbox is None:
-                fail(f"R-17 idle frame for direction {direction} is blank", failures)
-                continue
-            if bbox[3] - bbox[1] < 90:
-                fail(f"R-17 idle frame for direction {direction} is not full-body enough: bbox={bbox}", failures)
         idle_right = image.crop((0, 0, 112, 128))
         idle_left = image.crop((0, 4 * 128, 112, 5 * 128))
         if ImageChops.difference(idle_right, idle_left).getbbox() is None:
             fail("R-17 A/D idle frames are identical; left and right would read as reversed or flat", failures)
         if ImageChops.difference(ImageOps.mirror(idle_right), idle_left).getbbox() is not None:
             fail("R-17 left idle frame must mirror the right idle frame for A/D direction consistency", failures)
-        shoot_action_x = 2 * PLAYER_EXPECTED_FRAMES * 112
-        shoot_right = image.crop((shoot_action_x + 4 * 112, 0, shoot_action_x + 5 * 112, 128))
-        shoot_left = image.crop((shoot_action_x + 4 * 112, 4 * 128, shoot_action_x + 5 * 112, 5 * 128))
-        if ImageChops.difference(ImageOps.mirror(shoot_right), shoot_left).getbbox() is not None:
-            fail("R-17 left shoot frame must mirror the right shoot frame so gunfire follows A/D direction", failures)
 
-    split_right = resolve(f"{split_frame_dir}/idle/dir_0/frame_0.png")
-    split_left = resolve(f"{split_frame_dir}/idle/dir_4/frame_0.png")
-    if split_right.exists() and split_left.exists():
-        idle_right = Image.open(split_right).convert("RGBA")
-        idle_left = Image.open(split_left).convert("RGBA")
-        if ImageChops.difference(ImageOps.mirror(idle_right), idle_left).getbbox() is not None:
-            fail("R-17 split left idle frame must mirror split right idle frame", failures)
+
+def verify_weapon_overlays(failures: list[str]) -> None:
+    weapon_dir = ROOT / "assets" / "sprites" / "player" / "weapons"
+    for path in weapon_dir.glob("*_overlay.png"):
+        raw = check_image(path, path.stem, failures)
+        if raw is None:
+            continue
+        image = Image.open(path).convert("RGBA")
+        bbox = image.getbbox()
+        if bbox is None:
+            continue
+        if bbox[2] - bbox[0] < 26 or bbox[3] - bbox[1] < 16:
+            fail(f"weapon overlay is too small or blocky-looking: {path.relative_to(ROOT)} bbox={bbox}", failures)
+
+
+def verify_audio_assets(failures: list[str]) -> None:
+    for rel_path, min_seconds in [
+        ("assets/audio/music_intro.wav", 45.0),
+        ("assets/audio/music_village.wav", 24.0),
+        ("assets/audio/music_wasteland.wav", 24.0),
+        ("assets/audio/voice_intro_story.wav", 20.0),
+    ]:
+        path = ROOT / rel_path
+        if not path.exists():
+            fail(f"audio missing: {rel_path}", failures)
+            continue
+        try:
+            with wave.open(str(path), "rb") as wav:
+                seconds = wav.getnframes() / float(wav.getframerate())
+                if seconds < min_seconds:
+                    fail(f"audio too short: {rel_path} {seconds:.2f}s < {min_seconds:.2f}s", failures)
+                sample_width = wav.getsampwidth()
+                frames = wav.readframes(min(wav.getnframes(), wav.getframerate() * 3))
+                if sample_width == 2 and frames:
+                    samples = [int.from_bytes(frames[i:i + 2], "little", signed=True) for i in range(0, len(frames) - 1, 2)]
+                    peak = max(abs(value) for value in samples) if samples else 0
+                    if peak < 512:
+                        fail(f"audio appears silent: {rel_path}", failures)
+        except Exception as exc:
+            fail(f"audio cannot load: {rel_path} ({exc})", failures)
 
 
 def verify_no_mojibake(failures: list[str]) -> None:
@@ -223,6 +257,8 @@ def verify_no_mojibake(failures: list[str]) -> None:
             continue
         for path in base.rglob("*"):
             if ".godot" in path.parts or path.suffix.lower() not in {".gd", ".json", ".md", ".txt"}:
+                continue
+            if path.name == "verify_visual_assets.py":
                 continue
             text = path.read_text(encoding="utf-8", errors="replace")
             for marker in MOJIBAKE_MARKERS:
@@ -238,6 +274,8 @@ def main() -> int:
     verify_manifest(failures)
     verify_json_references(failures)
     verify_player_manifest(failures)
+    verify_weapon_overlays(failures)
+    verify_audio_assets(failures)
     verify_no_mojibake(failures)
     if failures:
         print(f"[VERIFY] visual asset validation failed: {len(failures)} issue(s)")

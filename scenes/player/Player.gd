@@ -159,7 +159,7 @@ func _ranged_attack() -> void:
 		ranged_id = String(GameState.equipment.get("ranged", "pipe_rifle"))
 		ranged = DataRegistry.get_equipment(ranged_id)
 	if not GameState.spend_ammo(1):
-		GameState.notify("彈藥不足，請回村補給或擊破箱子取得彈藥。")
+		GameState.notify("彈藥不足：先用近戰清出空間，或回村補給。")
 		return
 	last_direction = _aim_direction()
 	_set_timed_state(PlayerState.SHOOT, 0.22)
@@ -186,7 +186,7 @@ func _use_tool_action() -> void:
 	var tool := DataRegistry.get_equipment(GameState.active_attack_item_id())
 	AudioManager.play_sfx(String(tool.get("sfx_id", "interact")))
 	_spawn_attack_flash(String(tool.get("attack_vfx_id", "scan_pulse")), 0.8)
-	GameState.notify("R-17 展開掃描，標記附近可回收物。")
+	GameState.notify("R-17 啟動掃描：附近可回收材料已標記。")
 
 func _aim_direction() -> Vector2:
 	return _aim_direction_from_global_target(get_global_mouse_position())
@@ -331,17 +331,39 @@ func _update_weapon_overlay() -> void:
 		progress = 1.0 - clampf(action_state_timer / 0.10, 0.0, 1.0)
 	elif state == PlayerState.SLASH:
 		progress = 1.0 - clampf(action_state_timer / 0.24, 0.0, 1.0)
-	var anchor := Vector2(0, -62)
-	weapon_sprite.position = anchor + direction * (22.0 + progress * 11.0)
+	var anchor := Vector2(0, -59)
+	var reach := 24.0
+	var side := Vector2(-direction.y, direction.x)
+	weapon_sprite.offset = Vector2.ZERO
+	weapon_sprite.centered = true
+	weapon_sprite.z_index = 6 if direction.y >= -0.15 else -1
+	if state == PlayerState.SHOOT:
+		reach = 36.0
+		anchor = Vector2(0, -61)
+	elif state == PlayerState.SLASH:
+		reach = 29.0 + sin(progress * PI) * 8.0
+		anchor = Vector2(0, -58)
+	elif state == PlayerState.DRAW_SWORD:
+		reach = 18.0 + progress * 8.0
+		anchor = Vector2(0, -56)
+	elif state == PlayerState.SWAP_TOOL:
+		reach = 20.0
+		anchor = Vector2(0, -55)
+	weapon_sprite.position = anchor + direction * reach + side * sin(progress * PI) * 5.0
 	weapon_sprite.rotation = direction.angle()
 	if state == PlayerState.SLASH:
-		weapon_sprite.rotation += lerpf(-0.82, 0.72, progress)
+		weapon_sprite.rotation += lerpf(-0.58, 0.84, progress)
 	elif state == PlayerState.DRAW_SWORD:
-		weapon_sprite.rotation += lerpf(-0.34, 0.0, progress)
+		weapon_sprite.rotation += lerpf(-0.42, -0.08, progress)
 	elif state == PlayerState.SHOOT:
-		weapon_sprite.position -= direction * sin(progress * PI) * 6.0
+		weapon_sprite.position -= direction * sin(progress * PI) * 5.0
 	weapon_sprite.flip_v = direction.x < -0.1
-	weapon_sprite.scale = Vector2(0.68, 0.68) if state == PlayerState.SWAP_TOOL else Vector2(0.92, 0.92)
+	var scale := 0.62
+	if state == PlayerState.SWAP_TOOL or state == PlayerState.INTERACT:
+		scale = 0.50
+	elif state == PlayerState.SHOOT:
+		scale = 0.58
+	weapon_sprite.scale = Vector2(scale, scale)
 
 func _on_feedback_requested(kind: String, strength: float) -> void:
 	match kind:

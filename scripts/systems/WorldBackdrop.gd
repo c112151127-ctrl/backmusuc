@@ -46,14 +46,16 @@ func _draw() -> void:
 			var texture := _texture_for_tile(x, y, road_strength)
 			if texture != null:
 				_draw_texture_variant(texture, rect, x, y)
-				var tint_alpha := 0.18 + road_strength * 0.18
+				var tint_alpha := 0.34 + road_strength * 0.24
 				if mode == "village":
-					tint_alpha = 0.14 + road_strength * 0.14
+					tint_alpha = 0.44 + road_strength * 0.24
 				draw_rect(rect, Color(c.r, c.g, c.b, tint_alpha))
 			else:
 				draw_rect(rect, c)
 			if road_strength > 0.0:
 				_draw_road_detail(rect, x, y, road_strength, rng)
+			if mode == "village":
+				_draw_village_organic_detail(rect, x, y, road_strength, rng)
 			if mode == "wasteland" and rng.randf() < 0.055:
 				var crack_start := rect.position + Vector2(rng.randf_range(4, 12), rng.randf_range(6, 24))
 				var crack_end := crack_start + Vector2(rng.randf_range(8, 24), rng.randf_range(-8, 10))
@@ -80,6 +82,20 @@ func _draw_road_detail(rect: Rect2, x: int, y: int, road_strength: float, rng: R
 			var start := rect.position + Vector2(rng.randf_range(4, 12), rng.randf_range(7, 23))
 			var end := start + Vector2(rng.randf_range(9, 24), rng.randf_range(-6, 8))
 			draw_line(start, end, Color(0.13, 0.11, 0.08, 0.28), 1.0)
+
+func _draw_village_organic_detail(rect: Rect2, x: int, y: int, road_strength: float, rng: RandomNumberGenerator) -> void:
+	if road_strength <= 0.0:
+		if rng.randf() < 0.10:
+			draw_circle(rect.position + Vector2(rng.randf_range(5, 27), rng.randf_range(5, 27)), rng.randf_range(2.0, 5.0), Color(0.20, 0.37, 0.17, 0.32))
+		if rng.randf() < 0.06:
+			draw_line(rect.position + Vector2(rng.randf_range(4, 10), rng.randf_range(8, 24)), rect.position + Vector2(rng.randf_range(18, 29), rng.randf_range(6, 26)), Color(0.09, 0.16, 0.08, 0.26), 1.0)
+		return
+	if rng.randf() < 0.18:
+		draw_circle(rect.position + Vector2(rng.randf_range(5, 27), rng.randf_range(5, 27)), rng.randf_range(1.2, 3.0), Color(0.78, 0.61, 0.34, 0.18 + road_strength * 0.10))
+	if rng.randf() < 0.24:
+		var start := rect.position + Vector2(rng.randf_range(3, 12), rng.randf_range(7, 25))
+		var end := start + Vector2(rng.randf_range(9, 24), rng.randf_range(-7, 7))
+		draw_line(start, end, Color(0.34, 0.24, 0.13, 0.28), 1.0)
 
 func _road_strength(x: int, y: int) -> float:
 	if mode == "village":
@@ -117,10 +133,10 @@ func _road_strength(x: int, y: int) -> float:
 func _village_patch_color(x: int, y: int) -> Color:
 	var wave := sin(float(x) * 0.17 + float(y) * 0.09)
 	if wave > 0.42:
-		return Color8(92, 74, 47)
+		return Color8(128, 97, 54)
 	if wave < -0.38:
-		return Color8(47, 77, 52)
-	return Color8(60, 53, 42)
+		return Color8(53, 93, 48)
+	return Color8(78, 65, 43)
 
 func _village_patch_strength(x: int, y: int) -> float:
 	var wave := sin(float(x) * 0.13 - float(y) * 0.19) + sin(float(x) * 0.035 + float(y) * 0.051)
@@ -196,7 +212,7 @@ func _road_color() -> Color:
 		"old_factory":
 			return Color8(64, 71, 74)
 	if mode == "village":
-		return Color8(154, 122, 75)
+		return Color8(178, 128, 67)
 	return Color8(94, 82, 62)
 
 func _road_edge_color() -> Color:
@@ -237,7 +253,7 @@ func _accent_color() -> Color:
 
 func _base_color() -> Color:
 	if mode == "village":
-		return Color8(52, 48, 39)
+		return Color8(74, 69, 45)
 	if route_id == "toxic_marsh":
 		return Color8(26, 34, 27)
 	if route_id == "old_factory":
@@ -250,7 +266,7 @@ func _base_color() -> Color:
 
 func _alt_color() -> Color:
 	if mode == "village":
-		return Color8(111, 88, 55)
+		return Color8(139, 104, 58)
 	if route_id == "toxic_marsh":
 		return Color8(47, 78, 46)
 	if route_id == "old_factory":

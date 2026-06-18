@@ -36,6 +36,7 @@ func _capture_scene(scene_id: String, packed_scene: PackedScene) -> void:
 		await get_tree().process_frame
 	_save_viewport_image("visual_review_%s" % scene_id)
 	if scene_id == "village":
+		await _capture_player_action_review()
 		await _capture_inventory_panel()
 	if scene_id == "wasteland":
 		await _capture_wasteland_road_area()
@@ -59,6 +60,36 @@ func _capture_inventory_panel() -> void:
 	for _i in range(4):
 		await get_tree().process_frame
 	await _capture_fullscreen_map()
+
+func _capture_player_action_review() -> void:
+	var players := get_tree().get_nodes_in_group("player")
+	if players.is_empty():
+		return
+	var player := players[0] as Node2D
+	player.global_position = Vector2(2100, 1420)
+	GameState.player_position = player.global_position
+	if player.has_node("AnimatedSprite2D"):
+		var animated := player.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		animated.play("walk_0")
+	for _i in range(8):
+		await get_tree().process_frame
+	_save_viewport_image("visual_review_player_walk")
+	player.set("last_direction", Vector2.RIGHT)
+	player.set("attack_timer", 0.0)
+	GameState.use_quick_slot(0)
+	if player.has_method("_melee_attack"):
+		player.call("_melee_attack", false)
+	for _i in range(8):
+		await get_tree().process_frame
+	_save_viewport_image("visual_review_player_slash")
+	player.set("ranged_timer", 0.0)
+	GameState.use_quick_slot(1)
+	player.set("last_direction", Vector2.RIGHT)
+	if player.has_method("_ranged_attack"):
+		player.call("_ranged_attack")
+	for _i in range(8):
+		await get_tree().process_frame
+	_save_viewport_image("visual_review_player_shoot")
 
 func _capture_fullscreen_map() -> void:
 	var panels := get_tree().get_nodes_in_group("minimap_panel")
