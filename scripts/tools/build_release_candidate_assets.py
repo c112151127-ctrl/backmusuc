@@ -12,11 +12,8 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 ROOT = Path(__file__).resolve().parents[2]
 SPRITES = ROOT / "assets" / "sprites"
 DOCS = ROOT / "docs"
-REFERENCE_SOURCE = Path(
-    r"C:\Users\wuwu6\AppData\Local\Temp\codex-clipboard-23e1c8dd-9b16-4a6a-a8a0-fe0a591e045d.png"
-)
+REFERENCE_SOURCE = SPRITES / "player" / "source" / "r17_reference.png"
 REFERENCE_FALLBACKS = [
-    Path(r"C:\Users\wuwu6\.codex\generated_images\019e9e33-9677-73b2-8b87-c6acad59966e\ig_0754933d1d3f43ca016a2c1881a16881919ef893001a05800f.png"),
     DOCS / "art_direction_reference_r17_full_body.png",
     DOCS / "art_direction_reference_r17_v4.png",
 ]
@@ -128,11 +125,31 @@ def _transparent_polygon(canvas: Image.Image, points: list[tuple[float, float]])
 
 
 def _clear_reference_arm_artifacts(canvas: Image.Image) -> None:
-    # The source sheet contains large side-arm silhouettes in some poses. They read
-    # as extra blades after normalization, so locomotion/action arms are redrawn
-    # consistently below instead of trusting each crop.
-    _transparent_polygon(canvas, [(0, 54), (24, 55), (35, 102), (24, 126), (0, 126)])
-    _transparent_polygon(canvas, [(112, 54), (88, 55), (77, 102), (88, 126), (112, 126)])
+    """Remove arms/weapons from the cropped reference body before redrawing.
+
+    The reference sheet has many action poses where hands, guns, blades, or
+    forearm silhouettes are already baked into the body crop. If we keep those
+    pixels and then generate action arms on top, the in-game player appears to
+    have duplicated hands. This mask keeps the head, torso, pelvis, and legs,
+    while clearing the side/lower-arm regions where duplicate limbs and weapons
+    usually appear.
+    """
+    # Broad side masks: remove old arms and long weapon silhouettes.
+    _transparent_polygon(canvas, [(0, 42), (31, 44), (39, 96), (26, 128), (0, 128)])
+    _transparent_polygon(canvas, [(112, 42), (81, 44), (73, 96), (86, 128), (112, 128)])
+
+    # Lower-center masks: remove fists, rifles, blades, and hand residue that
+    # cross in front of the belly without damaging the head/chest silhouette.
+    _transparent_polygon(canvas, [(17, 77), (41, 72), (45, 111), (29, 127), (12, 127)])
+    _transparent_polygon(canvas, [(95, 77), (71, 72), (67, 111), (83, 127), (100, 127)])
+
+    # Keep the legs readable but clear weapon barrels around the hips.
+    _transparent_polygon(canvas, [(0, 88), (20, 88), (28, 112), (19, 128), (0, 128)])
+    _transparent_polygon(canvas, [(112, 88), (92, 88), (84, 112), (93, 128), (112, 128)])
+
+    # Restore a compact torso core by avoiding masks around the center column.
+    # No operation is required here; this comment documents the intentional
+    # negative space at x ~= 39..73.
 
 
 def _draw_segmented_arm(draw: ImageDraw.ImageDraw, points: list[tuple[float, float]], hand_radius: int = 5) -> None:
@@ -236,29 +253,106 @@ def fit_to_frame(sprite: Image.Image, action: str, direction: int, frame: int) -
     return canvas
 
 
+def _draw_rotated_polyline(
+    draw: ImageDraw.ImageDraw,
+    origin: tuple[float, float],
+    direction: tuple[float, float],
+    length: float,
+    width: int,
+    color: tuple[int, int, int, int],
+) -> tuple[float, float]:
+    dx, dy = direction
+    start = (origin[0] - dx * length * 0.18, origin[1] - dy * length * 0.18)
+    end = (origin[0] + dx * length * 0.82, origin[1] + dy * length * 0.82)
+    draw.line((start, end), fill=(20, 18, 15, 255), width=width + 4)
+    draw.line((start, end), fill=color, width=width)
+    draw.line((start[0] - dy * 2, start[1] + dx * 2, end[0] - dy * 2, end[1] + dx * 2), fill=(225, 219, 188, 160), width=max(1, width // 3))
+    return end
+
+
+def _draw_baked_rifle(draw: ImageDraw.ImageDraw, hand: tuple[float, float], direction: tuple[float, float], progress: float) -> None:
+    dx, dy = direction
+    nx, ny = -dy, dx
+    recoil = math.sin(progress * math.pi)
+    grip = (hand[0] - dx * (8 + recoil * 3), hand[1] - dy * (8 + recoil * 3))
+    muzzle = _draw_rotated_polyline(draw, grip, direction, 46, 8, (146, 93, 55, 255))
+    draw.line(
+        (grip[0] + nx * 5, grip[1] + ny * 5, grip[0] - dx * 13 + nx * 7, grip[1] - dy * 13 + ny * 7),
+        fill=(50, 44, 38, 255),
+        width=6,
+    )
+    draw.ellipse((hand[0] - 6, hand[1] - 6, hand[0] + 6, hand[1] + 6), fill=(42, 225, 236, 235))
+    draw.ellipse((hand[0] - 9, hand[1] - 9, hand[0] + 9, hand[1] + 9), outline=(42, 225, 236, 150), width=2)
+    draw.rectangle(
+        (grip[0] + nx * 4 - 4, grip[1] + ny * 4 - 3, grip[0] + nx * 4 + 12, grip[1] + ny * 4 + 3),
+        fill=(35, 32, 28, 230),
+    )
+    flash = 8 + recoil * 10
+    draw.polygon(
+        [
+            (muzzle[0] + dx * flash, muzzle[1] + dy * flash),
+            (muzzle[0] - dx * 2 + nx * (4 + recoil * 5), muzzle[1] - dy * 2 + ny * (4 + recoil * 5)),
+            (muzzle[0] - dx * 2 - nx * (4 + recoil * 5), muzzle[1] - dy * 2 - ny * (4 + recoil * 5)),
+        ],
+        fill=(255, 178, 56, 170),
+    )
+
+
+def _draw_baked_blade(draw: ImageDraw.ImageDraw, hand: tuple[float, float], direction: tuple[float, float], progress: float, orange: bool = False) -> None:
+    dx, dy = direction
+    nx, ny = -dy, dx
+    blade_len = 40 + progress * 10
+    hilt = (hand[0] - dx * 7, hand[1] - dy * 7)
+    tip = (hand[0] + dx * blade_len, hand[1] + dy * blade_len)
+    edge_color = (255, 180, 48, 220) if orange else (43, 228, 240, 220)
+    fill_color = (228, 214, 176, 255)
+    draw.polygon(
+        [
+            (hilt[0] + nx * 5, hilt[1] + ny * 5),
+            (tip[0], tip[1]),
+            (hilt[0] - nx * 5, hilt[1] - ny * 5),
+        ],
+        fill=(18, 17, 15, 255),
+    )
+    draw.polygon(
+        [
+            (hilt[0] + nx * 3, hilt[1] + ny * 3),
+            (tip[0] - dx * 4, tip[1] - dy * 4),
+            (hilt[0] - nx * 3, hilt[1] - ny * 3),
+        ],
+        fill=fill_color,
+    )
+    draw.line((hilt, tip), fill=edge_color, width=2)
+    draw.line((hand[0] - nx * 8, hand[1] - ny * 8, hand[0] + nx * 8, hand[1] + ny * 8), fill=(142, 77, 39, 255), width=5)
+
+
 def _draw_body_action_cues(canvas: Image.Image, action: str, direction: int, frame: int) -> None:
     draw = ImageDraw.Draw(canvas, "RGBA")
     dx, dy = direction_vector(direction)
+    length = max(0.001, math.sqrt(dx * dx + dy * dy))
+    dx, dy = dx / length, dy / length
     cx, cy = FRAME_W * 0.5, FRAME_H * 0.60
     progress = frame / max(1, FRAMES_PER_ACTION - 1)
     active_side = -1 if dx < -0.2 else 1
     hand = (cx + dx * (17 + progress * 5), cy + 13 + dy * (10 + progress * 5))
 
-    # Weapon art is intentionally not baked into body frames.  The runtime
-    # WeaponOverlay owns blades, guns, muzzle flashes and slash arcs so the
-    # body can be split into stable per-frame PNGs without duplicated arms.
     if action == "shoot":
-        recoil = math.sin(progress * math.pi)
-        draw.ellipse((hand[0] - 7, hand[1] - 7, hand[0] + 7, hand[1] + 7), outline=(46, 231, 240, 130 + int(recoil * 70)), width=2)
-        draw.line((hand[0] - active_side * 5, hand[1] + 8, hand[0] + active_side * 5, hand[1] + 8), fill=(238, 166, 70, 160), width=2)
+        _draw_baked_rifle(draw, hand, (dx, dy), progress)
     elif action == "draw_sword":
         radius = 5 + progress * 4
         draw.ellipse((hand[0] - radius, hand[1] - radius, hand[0] + radius, hand[1] + radius), outline=(50, 228, 240, 190), width=2)
-        draw.line((cx + active_side * 10, cy + 4, hand[0], hand[1]), fill=(42, 229, 238, 95), width=2)
+        _draw_baked_blade(draw, hand, (dx, dy), progress * 0.45, False)
     elif action == "slash":
         pulse = math.sin(progress * math.pi)
-        draw.ellipse((hand[0] - 6, hand[1] - 6, hand[0] + 6, hand[1] + 6), outline=(255, 182, 54, 120 + int(pulse * 80)), width=2)
-        draw.line((cx + active_side * 10, cy + 8, hand[0], hand[1]), fill=(255, 182, 54, 95), width=2)
+        _draw_baked_blade(draw, hand, (dx, dy), progress, True)
+        arc_r = 36 + progress * 8
+        draw.arc(
+            (cx - arc_r, cy - arc_r, cx + arc_r, cy + arc_r),
+            int(math.degrees(math.atan2(dy, dx)) - 80),
+            int(math.degrees(math.atan2(dy, dx)) + 55),
+            fill=(255, 180, 48, 115 + int(pulse * 90)),
+            width=4,
+        )
     elif action == "swap_tool":
         pulse = 12 + progress * 30
         draw.ellipse((cx - pulse, cy - pulse, cx + pulse, cy + pulse), outline=(48, 232, 243, 160), width=3)

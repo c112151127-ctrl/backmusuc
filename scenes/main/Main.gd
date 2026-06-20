@@ -14,7 +14,11 @@ func _ready() -> void:
 		_build_title_screen()
 
 func _build_title_screen() -> void:
+	# 主選單只播放背景音樂，不播放旁白。
+	# 旁白只會在按下「開始遊戲」後的序章頁播放。
+	AudioManager.stop_voice()
 	AudioManager.play_music("intro")
+
 	title_layer = CanvasLayer.new()
 	add_child(title_layer)
 
@@ -57,7 +61,7 @@ func _build_title_screen() -> void:
 	stack.add_child(continue_button)
 
 	var new_button := Button.new()
-	new_button.text = "新遊戲"
+	new_button.text = "開始遊戲"
 	new_button.pressed.connect(_new_game)
 	stack.add_child(new_button)
 
@@ -78,10 +82,17 @@ func _new_game() -> void:
 	_show_intro()
 
 func _show_intro() -> void:
+	# 按下「開始遊戲」後才播放這段旁白。
 	AudioManager.play_music("intro")
 	AudioManager.play_voice("intro_story")
+
+	if title_layer == null:
+		title_layer = CanvasLayer.new()
+		add_child(title_layer)
+
 	for child in title_layer.get_children():
 		child.queue_free()
+
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	title_layer.add_child(root)
@@ -96,6 +107,7 @@ func _show_intro() -> void:
 	panel.custom_minimum_size = Vector2(980, 560)
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	root.add_child(panel)
+
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 16)
 	panel.add_child(stack)

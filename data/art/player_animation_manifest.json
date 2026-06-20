@@ -8,7 +8,7 @@
   "atlas_path": "res://assets/sprites/player/recycler_player_multiaction_8dir.png",
   "split_frame_dir": "res://assets/sprites/player/frames",
   "action_sheet_dir": "res://assets/sprites/player/actions",
-  "reference_path": "res://docs/art_direction_reference_r17_full_body.png",
+  "reference_path": "res://assets/sprites/player/source/r17_reference.png",
   "direction_order": [
     "right",
     "down_right",

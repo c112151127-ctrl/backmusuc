@@ -12,8 +12,8 @@
 ## 建議人工確認後單檔刪除的舊候選
 
 下列檔案若未被 Godot import 或 README 文件引用，可由使用者人工逐一刪除；AI 不會使用批量刪除命令。
-- `assets/sprites/player/recycler_player_sprite_sheet.svg`：存在
-- `assets/sprites/player/recycler_player_sprite_sheet.svg.import`：存在
+- `assets/sprites/player/recycler_player_sprite_sheet.svg`：不存在
+- `assets/sprites/player/recycler_player_sprite_sheet.svg.import`：不存在
 - `assets/sprites/player/recycler_player_sprite_sheet.png`：不存在
 - `assets/sprites/player/recycler_player_sprite_sheet.png.import`：不存在
 - `assets/sprites/player/recycler_player_multiaction_8dir.svg`：不存在
