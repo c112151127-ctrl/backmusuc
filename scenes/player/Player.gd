@@ -4,8 +4,9 @@ const PIXEL := preload("res://scripts/utils/PixelArtFactory.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/components/Projectile.gd")
 const ATTACK_FLASH_SCRIPT := preload("res://scripts/components/AttackFlash.gd")
 const ASSET_LOADER := preload("res://scripts/utils/RuntimeAssetLoader.gd")
-const PLAYER_ATLAS_PATH := "res://assets/sprites/player/recycler_player_multiaction_8dir.png"
+const PLAYER_ATLAS_PATH := "res://docs/recycler_player_multiaction_8dir_preview.png"
 const PLAYER_FRAME_DIR := "res://assets/sprites/player/frames"
+const PREFER_SPLIT_FRAME_FILES := false
 
 @export var move_speed: float = 180.0
 
@@ -206,21 +207,30 @@ func _direction_index() -> int:
 func _build_sprite_frames() -> void:
 	var frames := SpriteFrames.new()
 	var atlas: Texture2D = ASSET_LOADER.load_png(PLAYER_ATLAS_PATH)
+
 	for action_index in range(PixelArtFactory.PLAYER_ACTIONS.size()):
 		var action_name := String(PixelArtFactory.PLAYER_ACTIONS[action_index])
+
 		for direction_index in range(8):
 			var animation_name := "%s_%d" % [action_name, direction_index]
+
 			frames.add_animation(animation_name)
 			frames.set_animation_speed(animation_name, 10.0 if action_name == "walk" else (8.0 if action_name == "idle" else 14.0))
 			frames.set_animation_loop(animation_name, action_name in ["idle", "walk"])
+
 			for frame_index in range(PixelArtFactory.PLAYER_FRAMES_PER_ACTION):
-				var split_frame := _split_frame_texture(action_name, direction_index, frame_index)
-				if split_frame != null:
-					frames.add_frame(animation_name, split_frame)
+				var tex: Texture2D = null
+
+				if PREFER_SPLIT_FRAME_FILES:
+					tex = _split_frame_texture(action_name, direction_index, frame_index)
+
+				if tex != null:
+					frames.add_frame(animation_name, tex)
 				elif atlas != null:
 					frames.add_frame(animation_name, _atlas_frame(atlas, action_index, direction_index, frame_index))
 				else:
 					frames.add_frame(animation_name, PIXEL.new().player_texture(direction_index, action_index, frame_index))
+
 	sprite.sprite_frames = frames
 
 func _split_frame_texture(action_name: String, direction_index: int, frame_index: int) -> Texture2D:
