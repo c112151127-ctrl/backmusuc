@@ -12,20 +12,24 @@ func _ready() -> void:
 	if OS.has_feature("headless"):
 		SceneRouter.change_to("village", "default")
 	else:
-		_show_intro()
+		_build_title_screen()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if intro_active and event.is_action_pressed("ui_accept"):
-		_finish_intro_to_title()
+		_finish_intro_to_game()
 
 func _build_title_screen() -> void:
-	# 主選單只播放背景音樂，不播放旁白。
-	# 旁白只會在按下「開始遊戲」後的序章頁播放。
+	# 主選單先顯示，旁白不在這裡播放。
 	AudioManager.stop_voice()
 	AudioManager.play_music("intro")
+	intro_active = false
 
-	title_layer = CanvasLayer.new()
-	add_child(title_layer)
+	if title_layer == null or not is_instance_valid(title_layer):
+		title_layer = CanvasLayer.new()
+		add_child(title_layer)
+	else:
+		for child in title_layer.get_children():
+			child.queue_free()
 
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -78,6 +82,7 @@ func _build_title_screen() -> void:
 
 func _continue_game() -> void:
 	AudioManager.stop_voice()
+	intro_active = false
 	if title_layer != null:
 		title_layer.queue_free()
 	SaveManager.load_game(true, true)
@@ -85,27 +90,23 @@ func _continue_game() -> void:
 func _new_game() -> void:
 	AudioManager.stop_voice()
 	GameState.reset_new_run(true)
-	GameState.mark_intro_seen()
-	SaveManager.save_game(false)
-	if title_layer != null:
-		title_layer.queue_free()
-	SceneRouter.change_to("village", "default")
+	_show_intro()
 
 func _show_intro() -> void:
-	# 載入主場景後立刻播放開場旁白；旁白結束或按 Enter 後再顯示開始畫面。
+	# 按下開始遊戲後才播放序章旁白；旁白結束或按 Enter 後正式進入村莊。
 	intro_active = true
 	AudioManager.play_music("intro")
 	AudioManager.play_voice("intro_story")
 
-	if AudioManager.voice_player != null and not AudioManager.voice_player.finished.is_connected(_finish_intro_to_title):
-		AudioManager.voice_player.finished.connect(_finish_intro_to_title)
+	if AudioManager.voice_player != null and not AudioManager.voice_player.finished.is_connected(_finish_intro_to_game):
+		AudioManager.voice_player.finished.connect(_finish_intro_to_game)
 
 	if title_layer == null or not is_instance_valid(title_layer):
 		title_layer = CanvasLayer.new()
 		add_child(title_layer)
-
-	for child in title_layer.get_children():
-		child.queue_free()
+	else:
+		for child in title_layer.get_children():
+			child.queue_free()
 
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -138,29 +139,28 @@ func _show_intro() -> void:
 	stack.add_child(body)
 
 	var skip := Label.new()
-	skip.text = "旁白播放中；按 Enter 可跳過。旁白結束後會顯示開始遊戲畫面。"
+	skip.text = "旁白播放中；按 Enter 可跳過。旁白結束後會進入遊戲。"
 	skip.add_theme_font_size_override("font_size", 13)
 	stack.add_child(skip)
 
 	if AudioManager.voice_player == null or not AudioManager.voice_player.playing:
-		call_deferred("_finish_intro_to_title")
+		call_deferred("_finish_intro_to_game")
 
-func _finish_intro_to_title() -> void:
+func _finish_intro_to_game() -> void:
 	if not intro_active:
 		return
 	intro_active = false
-	if AudioManager.voice_player != null and AudioManager.voice_player.finished.is_connected(_finish_intro_to_title):
-		AudioManager.voice_player.finished.disconnect(_finish_intro_to_title)
-	AudioManager.stop_voice()
-	_build_title_screen()
-	
-func _start_new_run_after_intro() -> void:
+	if AudioManager.voice_player != null and AudioManager.voice_player.finished.is_connected(_finish_intro_to_game):
+		AudioManager.voice_player.finished.disconnect(_finish_intro_to_game)
 	AudioManager.stop_voice()
 	GameState.mark_intro_seen()
 	SaveManager.save_game(false)
 	if title_layer != null:
 		title_layer.queue_free()
 	SceneRouter.change_to("village", "default")
+
+func _start_new_run_after_intro() -> void:
+	_finish_intro_to_game()
 
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
