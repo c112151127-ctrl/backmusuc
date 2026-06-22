@@ -319,7 +319,7 @@ func _update_weapon_overlay() -> void:
 	if weapon_sprite != null:
 		weapon_sprite.visible = false
 	current_weapon_asset_id = ""
-
+	
 func _on_feedback_requested(kind: String, strength: float) -> void:
 	match kind:
 		"player_hit":
