@@ -1,6 +1,7 @@
 extends Node2D
 
 var title_layer: CanvasLayer
+var intro_active := false
 
 func _ready() -> void:
 	if not OS.has_feature("headless"):
@@ -11,7 +12,11 @@ func _ready() -> void:
 	if OS.has_feature("headless"):
 		SceneRouter.change_to("village", "default")
 	else:
-		_build_title_screen()
+		_show_intro()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if intro_active and event.is_action_pressed("ui_accept"):
+		_finish_intro_to_title()
 
 func _build_title_screen() -> void:
 	# 主選單只播放背景音樂，不播放旁白。
@@ -78,15 +83,24 @@ func _continue_game() -> void:
 	SaveManager.load_game(true, true)
 
 func _new_game() -> void:
+	AudioManager.stop_voice()
 	GameState.reset_new_run(true)
-	_show_intro()
+	GameState.mark_intro_seen()
+	SaveManager.save_game(false)
+	if title_layer != null:
+		title_layer.queue_free()
+	SceneRouter.change_to("village", "default")
 
 func _show_intro() -> void:
-	# 按下「開始遊戲」後才播放這段旁白。
+	# 載入主場景後立刻播放開場旁白；旁白結束或按 Enter 後再顯示開始畫面。
+	intro_active = true
 	AudioManager.play_music("intro")
 	AudioManager.play_voice("intro_story")
 
-	if title_layer == null:
+	if AudioManager.voice_player != null and not AudioManager.voice_player.finished.is_connected(_finish_intro_to_title):
+		AudioManager.voice_player.finished.connect(_finish_intro_to_title)
+
+	if title_layer == null or not is_instance_valid(title_layer):
 		title_layer = CanvasLayer.new()
 		add_child(title_layer)
 
@@ -123,16 +137,23 @@ func _show_intro() -> void:
 	body.add_theme_font_size_override("font_size", 20)
 	stack.add_child(body)
 
-	var start_button := Button.new()
-	start_button.text = "開始行動"
-	start_button.pressed.connect(_start_new_run_after_intro)
-	stack.add_child(start_button)
-
 	var skip := Label.new()
-	skip.text = "旁白播放中；按「開始行動」可略過並進入村莊。開場只會在新遊戲第一次出現，存檔會記錄已看過。"
+	skip.text = "旁白播放中；按 Enter 可跳過。旁白結束後會顯示開始遊戲畫面。"
 	skip.add_theme_font_size_override("font_size", 13)
 	stack.add_child(skip)
 
+	if AudioManager.voice_player == null or not AudioManager.voice_player.playing:
+		call_deferred("_finish_intro_to_title")
+
+func _finish_intro_to_title() -> void:
+	if not intro_active:
+		return
+	intro_active = false
+	if AudioManager.voice_player != null and AudioManager.voice_player.finished.is_connected(_finish_intro_to_title):
+		AudioManager.voice_player.finished.disconnect(_finish_intro_to_title)
+	AudioManager.stop_voice()
+	_build_title_screen()
+	
 func _start_new_run_after_intro() -> void:
 	AudioManager.stop_voice()
 	GameState.mark_intro_seen()

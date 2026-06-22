@@ -40,6 +40,7 @@ func _ready() -> void:
 	weapon_sprite.name = "WeaponOverlay"
 	weapon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	weapon_sprite.z_index = 5
+	weapon_sprite.visible = false
 	add_child(weapon_sprite)
 	camera_base_offset = camera.offset
 	if not GameState.feedback_requested.is_connected(_on_feedback_requested):
@@ -313,67 +314,11 @@ func _projectile_spawn_global() -> Vector2:
 	return _attack_anchor_global() + direction * 46.0
 
 func _update_weapon_overlay() -> void:
-	if weapon_sprite == null:
-		return
-	var item_id := GameState.active_attack_item_id()
-	var item := DataRegistry.get_equipment(item_id)
-	var asset_id := String(item.get("weapon_sprite_asset_id", ""))
-	if asset_id != current_weapon_asset_id:
-		current_weapon_asset_id = asset_id
-		weapon_sprite.texture = ASSET_LOADER.load_png(DataRegistry.asset_path(asset_id)) if not asset_id.is_empty() else null
-	var visible_state := state in [
-		PlayerState.SHOOT,
-		PlayerState.DRAW_SWORD,
-		PlayerState.SLASH,
-		PlayerState.SWAP_TOOL,
-		PlayerState.INTERACT
-	]
-	weapon_sprite.visible = visible_state and weapon_sprite.texture != null
-	if not weapon_sprite.visible:
-		return
-	var direction := last_direction.normalized()
-	if direction.length() < 0.1:
-		direction = Vector2.RIGHT
-	var progress := 1.0
-	if state == PlayerState.SHOOT:
-		progress = 1.0 - clampf(action_state_timer / 0.22, 0.0, 1.0)
-	elif state == PlayerState.DRAW_SWORD:
-		progress = 1.0 - clampf(action_state_timer / 0.10, 0.0, 1.0)
-	elif state == PlayerState.SLASH:
-		progress = 1.0 - clampf(action_state_timer / 0.24, 0.0, 1.0)
-	var anchor := Vector2(0, -59)
-	var reach := 24.0
-	var side := Vector2(-direction.y, direction.x)
-	weapon_sprite.offset = Vector2.ZERO
-	weapon_sprite.centered = true
-	weapon_sprite.z_index = 6 if direction.y >= -0.15 else -1
-	if state == PlayerState.SHOOT:
-		reach = 36.0
-		anchor = Vector2(0, -61)
-	elif state == PlayerState.SLASH:
-		reach = 29.0 + sin(progress * PI) * 8.0
-		anchor = Vector2(0, -58)
-	elif state == PlayerState.DRAW_SWORD:
-		reach = 18.0 + progress * 8.0
-		anchor = Vector2(0, -56)
-	elif state == PlayerState.SWAP_TOOL:
-		reach = 20.0
-		anchor = Vector2(0, -55)
-	weapon_sprite.position = anchor + direction * reach + side * sin(progress * PI) * 5.0
-	weapon_sprite.rotation = direction.angle()
-	if state == PlayerState.SLASH:
-		weapon_sprite.rotation += lerpf(-0.58, 0.84, progress)
-	elif state == PlayerState.DRAW_SWORD:
-		weapon_sprite.rotation += lerpf(-0.42, -0.08, progress)
-	elif state == PlayerState.SHOOT:
-		weapon_sprite.position -= direction * sin(progress * PI) * 5.0
-	weapon_sprite.flip_v = direction.x < -0.1
-	var scale := 0.62
-	if state == PlayerState.SWAP_TOOL or state == PlayerState.INTERACT:
-		scale = 0.50
-	elif state == PlayerState.SHOOT:
-		scale = 0.58
-	weapon_sprite.scale = Vector2(scale, scale)
+	# 目前的新角色動作圖已經把射擊與揮砍武器畫進角色幀內。
+	# 保留這個函式給 equipment_changed 訊號呼叫，但不要再疊一張 WeaponOverlay，避免身上出現重複武器。
+	if weapon_sprite != null:
+		weapon_sprite.visible = false
+	current_weapon_asset_id = ""
 
 func _on_feedback_requested(kind: String, strength: float) -> void:
 	match kind:
